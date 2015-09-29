@@ -7,7 +7,7 @@ pLEASE is the spiritual successor to all of my previous LEED/LEEM Data analysis 
 
 pLEASE provides a full GUI for analysis for LEED and LEEM data sets sdpecifically geared towards viewing and analyzing LEED/LEEM-I(V) data.
 
-# Functionality:
+## Functionality:
 * Full GUI written with the Qt Framework via the python bindings PyQt4
 * View LEED and LEEM data sets from a variety of data formats (jpg, png, tiff, and raw bary data)
 * Point-and-Click I(V) curve extraction from single  pixel (LEEM) and adjustable sized rectangular box regions (LEED)
