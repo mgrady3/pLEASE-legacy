@@ -50,7 +50,7 @@ class ErrorConsole(QtGui.QWidget):
         # widget to receive and display messages from custom_stream ie. std_out
         self.textEdit = QtGui.QTextEdit()
         vbox = QtGui.QVBoxLayout()
-        vbox.addWidget(self.textedit)
+        vbox.addWidget(self.textEdit)
         self.setLayout(vbox)
 
         # style formatting

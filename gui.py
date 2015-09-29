@@ -5,6 +5,7 @@ analysis suite
 
 Maxwell Grady 2015
 """
+import terminal
 import sys
 import matplotlib.pyplot as plt
 import pyLEEM_Styles as PLS
@@ -41,8 +42,14 @@ class Viewer(QtGui.QWidget):
         self.move((resolution.width() / 2) - (self.frameSize().width() / 2),
                   (resolution.height() / 2) - (self.frameSize().height() / 2))
 
+        self.already_catching_output = False  # flag for re-routing sys.stdout
+
         # begin GUI setup
         self.init_UI()
+
+        if self._ERROR:
+            # re-route sys.stdout to console window
+            self.init_console()
 
         # final action
         self.show()
@@ -80,11 +87,19 @@ class Viewer(QtGui.QWidget):
         self.LEED_Tab = QtGui.QWidget()
         self.LEEM_Tab = QtGui.QWidget()
         self.Config_Tab = QtGui.QWidget()
-        self.tabs.addTab(self.LEED_Tab, "LEED-FFT")
+        self.tabs.addTab(self.LEED_Tab, "LEED-IV")
         self.tabs.addTab(self.LEEM_Tab, "LEEM-IV")
         self.tabs.addTab(self.Config_Tab, "CONFIG")
 
-        # Setup LEED Tab
+        self.init_LEED_Tab()
+        self.init_LEEM_Tab()
+        self.init_Config_Tab()
+
+    def init_LEED_Tab(self):
+        """
+
+        :return none:
+        """
         self.LEED_IV_fig, (self.LEED_img_ax, self.LEED_IV_ax) = plt.subplots(1, 2, figsize=(6,6), dpi=100)
         self.LEED_IV_canvas = FigureCanvas(self.LEED_IV_fig)
         self.LEED_IV_canvas.setParent(self.LEED_Tab)
@@ -99,6 +114,31 @@ class Viewer(QtGui.QWidget):
 
         self.LEED_Tab.setLayout(LEED_Tab_Layout_V1)
 
+    def init_LEEM_Tab(self):
+        """
+
+        :return none:
+        """
+        self.LEEM_fig, (self.LEEM_ax, self.IV_ax) = plt.subplots(1, 2, figsize=(3,6))
+        self.LEEM_canvas = FigureCanvas(self.LEEM_fig)
+        self.LEEM_canvas.setParent(self.LEEM_Tab)
+        self.LEEM_toolbar = NavigationToolbar(self.LEEM_canvas, self)
+
+        LEEM_Tab_Layout_V1 = QtGui.QVBoxLayout()
+        LEEM_Tab_Layout_H1 = QtGui.QHBoxLayout()
+
+        LEEM_Tab_Layout_V1.addWidget(self.LEEM_canvas)
+        # LEED_Tab_Layout_V1.addStretch(1)
+        LEEM_Tab_Layout_V1.addWidget(self.LEEM_toolbar)
+
+        self.LEEM_Tab.setLayout(LEEM_Tab_Layout_V1)
+
+    def init_Config_Tab(self):
+        """
+
+        :return none:
+        """
+        pass
 
     def init_menu(self):
         """
@@ -138,6 +178,34 @@ class Viewer(QtGui.QWidget):
         vbox1.addWidget(self.menubar)
         vbox1.addWidget(self.tabs)
         self.setLayout(vbox1)
+
+    def init_console(self):
+        """
+
+        :return none:
+        """
+        if self.already_catching_output:
+            return
+        self.message_console = terminal.ErrorConsole()
+        self.message_console.setWindowTitle('Message Console')
+        self.message_console.setMinimumWidth(self.max_width/4)
+        self.message_console.setMinimumHeight(self.max_height/5)
+        self.message_console.move(0,0)
+        self.message_console.setFocus()
+        self.message_console.raise_()
+        self.already_catching_output = True
+
+        self.welcome()
+
+    @staticmethod
+    def welcome():
+        """
+
+        :return none:
+        """
+        print("Welcome to pythone Low-energy Electron Analyis SuitE: pLEASE")
+        print("Begin by loading a LEED or LEEM data set")
+
 
     @staticmethod
     def Quit():
