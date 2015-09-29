@@ -20,3 +20,14 @@ pLEASE provides a full GUI for analysis for LEED and LEEM data sets sdpecificall
 pyLEED_LEEM and newLEED are more or less finished projects
 
 pLEASE is a work in progress to merge those two programs into one unified GUI
+
+### Requirements:
+* Python distribution 2.7 or 3.x (No Support for Legacy Python versions < 2.7)
+* Numpy
+* Scipy
+* Matplotlib
+* Pandas
+* openCV
+* seaborn
+* Qt & PyQt4
+* QDarkStyle (a QSS package which sets the overall look and feel of the GUI) 
