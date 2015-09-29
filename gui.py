@@ -49,10 +49,14 @@ class Viewer(QtGui.QWidget):
 
         if self._ERROR:
             # re-route sys.stdout to console window
-            self.init_console()
+            self.init_Console()
 
         # final action
         self.show()
+
+    # Top-Level Initialization Functions
+    # These functions simply place calls to second-level init functions in an orderly manner
+    # or are brief enough to not need any separate functions
 
     def init_UI(self):
         """
@@ -63,6 +67,48 @@ class Viewer(QtGui.QWidget):
         self.init_tabs()
         self.init_menu()
         self.init_layout()
+
+    def init_Data(self):
+        """
+
+        :return none:
+        """
+        pass
+
+    def init_Plot_Axes(self):
+        """
+
+        :return none:
+        """
+        pass
+
+    def init_Img_Axes(self):
+        """
+
+        :return none:
+        """
+
+    def init_Console(self):
+        """
+
+        :return none:
+        """
+        if self.already_catching_output:
+            return
+        self.message_console = terminal.ErrorConsole()
+        self.message_console.setWindowTitle('Message Console')
+        self.message_console.setMinimumWidth(self.max_width/4)
+        self.message_console.setMinimumHeight(self.max_height/5)
+        self.message_console.move(0,0)
+        self.message_console.setFocus()
+        self.message_console.raise_()
+        self.already_catching_output = True
+        self.welcome()
+
+    # Second Level initialization functions
+    # These functions do the runt of the UI, image, and plot initialization
+    # they sometimes delegate to third level functions in order to keep
+    # functions short and ordered
 
     def init_styles(self):
         """
@@ -91,6 +137,7 @@ class Viewer(QtGui.QWidget):
         self.tabs.addTab(self.LEEM_Tab, "LEEM-IV")
         self.tabs.addTab(self.Config_Tab, "CONFIG")
 
+        # call third-level init functions for each tab individually
         self.init_LEED_Tab()
         self.init_LEEM_Tab()
         self.init_Config_Tab()
@@ -178,24 +225,6 @@ class Viewer(QtGui.QWidget):
         vbox1.addWidget(self.menubar)
         vbox1.addWidget(self.tabs)
         self.setLayout(vbox1)
-
-    def init_console(self):
-        """
-
-        :return none:
-        """
-        if self.already_catching_output:
-            return
-        self.message_console = terminal.ErrorConsole()
-        self.message_console.setWindowTitle('Message Console')
-        self.message_console.setMinimumWidth(self.max_width/4)
-        self.message_console.setMinimumHeight(self.max_height/5)
-        self.message_console.move(0,0)
-        self.message_console.setFocus()
-        self.message_console.raise_()
-        self.already_catching_output = True
-
-        self.welcome()
 
     @staticmethod
     def welcome():
