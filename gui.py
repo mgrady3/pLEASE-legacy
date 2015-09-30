@@ -6,6 +6,7 @@ analysis suite
 Maxwell Grady 2015
 """
 import data
+import logging
 import terminal
 import sys
 import LEEMFUNCTIONS as LF
@@ -410,7 +411,7 @@ class Viewer(QtGui.QWidget):
                         return
                     else:
                         self.leeddat.wd = entry
-
+                    logging.info('Calling external module function ...')
                     self.leeddat.dat_3d = self.leeddat.load_LEED_TIFF(new_dir)
                     print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
                     if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
