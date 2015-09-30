@@ -5,10 +5,12 @@ analysis suite
 
 Maxwell Grady 2015
 """
+import data
 import terminal
 import sys
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-import pyLEEM_Styles as PLS
+import styles as pls
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt4 import QtGui, QtCore
@@ -46,6 +48,7 @@ class Viewer(QtGui.QWidget):
 
         # begin GUI setup
         self.init_UI()
+        self.init_Data()
 
         if self._ERROR:
             # re-route sys.stdout to console window
@@ -73,7 +76,9 @@ class Viewer(QtGui.QWidget):
 
         :return none:
         """
-        pass
+        self.leeddat = data.LeedData()
+        self.leemdat = data.LeemData()
+        self.has_loaded_data = False
 
     def init_Plot_Axes(self):
         """
@@ -115,7 +120,7 @@ class Viewer(QtGui.QWidget):
         setup dictionary variable containing QSS style strings
         :return none:
         """
-        pstyles = PLS.pyLEEM_Styles()
+        pstyles = pls.pyLEEM_Styles()
         self.styles = pstyles.get_styles()  # get_styles() returns a dictionary of key, qss string pairs
 
     def init_tabs(self):
@@ -208,9 +213,15 @@ class Viewer(QtGui.QWidget):
 
         # LEED Menu
         LEEDMenu = self.menubar.addMenu('LEED Actions')
+        loadLEEdAction = QtGui.QAction('Load LEED Data', self)
+        loadLEEdAction.setShortcut('Ctrl+D')
+        loadLEEdAction.triggered.connect(self.load_LEED_Data)
+        LEEDMenu.addAction(loadLEEdAction)
 
         # LEEM Menu
         LEEMMenu = self.menubar.addMenu('LEEM Actions')
+
+
 
         # Settings Menu
         settingsMenu = self.menubar.addMenu('Settings')
@@ -241,4 +252,76 @@ class Viewer(QtGui.QWidget):
         print('Exiting ...')
         QtCore.QCoreApplication.instance().quit()
 
+    # Core Functionality
 
+    def load_LEED_Data(self):
+        """
+        Helper function for loading data
+        Queries user for what type of data to load
+        Attempts to match user input to valid data types
+        Then calls appropriate loading function
+        :return none:
+        """
+        entry, ok = QtGui.QInputDialog.getText(self, "Please Enter Data Type to Load",
+                                              "Enter a valid data type from list: TIFF, PNG, DAT")
+        if not ok:
+            print('Loading Canceled ...')
+            return
+        else:
+            entry = str(entry)  # convert from QString to String
+            valid_extensions = ['TIFF', 'TIF' 'PNG', 'DAT']
+            if not (entry in valid_extensions) and not (entry in [k.lower() for k in valid_extensions]):
+                print("Error - Invalid data type entered")
+                print("Please enter a data type from the following choices:")
+                print("TIFF, TIF, PNG, DAT")
+                self.load_LEED_Data()
+                return
+            else:
+                if entry == 'TIFF' or entry == 'tiff' or entry == 'TIF' or entry == 'tif':
+                    new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing TIFF files"))
+                    if new_dir == '':
+                        print('Loading Canceled ...')
+                        return
+                    print('New Data Directory set to {}'.format(new_dir))
+                    self.leeddat.dat_3d = self.leeddat.load_LEED_TIFF(new_dir)
+                    self.LEED_IV_ax.set_aspect('auto')
+                    self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
+                    self.LEED_IV_canvas.draw()
+                    self.has_loaded_data = True
+
+                elif entry == 'PNG' or entry == 'png':
+                    new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing PNG files"))
+                    if new_dir == '':
+                        print('Loading Canceled ...')
+                        return
+                    print('New Data Directory set to {}'.format(new_dir))
+                    self.leeddat.dat_3d = self.leeddat.load_LEED_TIFF(new_dir)
+                    return
+
+                else:
+                    new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing DAT files"))
+                    if new_dir == '':
+                        print('Loading Canceled ...')
+                        return
+                    print('New Data Directory set to {}'.format(new_dir))
+
+                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Height", "Enter Positive Int >= 2", value=544, min=2, max=2000)
+                    if not ok:
+                        print("Loading Raw Data Canceled ...")
+                        return
+                    else:
+                        self.leeddat.ht = entry
+
+                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Width", "Enter Positive Int >= 2", value=576, min=2, max=2000)
+                    if not ok:
+                        print("Loading Raw Data Canceled ...")
+                        return
+                    else:
+                        self.leeddat.wd = entry
+
+                    self.leeddat.dat_3d = self.leeddat.load_LEED_TIFF(new_dir)
+                    self.LEED_IV_ax.set_aspect('auto')
+                    self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
+                    self.LEED_IV_canvas.draw()
+                    self.has_loaded_data = True
+                    return
