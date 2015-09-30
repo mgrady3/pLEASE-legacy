@@ -27,7 +27,10 @@ pLEASE is a work in progress to merge those two programs into one unified GUI
 * Scipy
 * Matplotlib
 * Pandas
+* *Qt & PyQt4 
+* Note: All the above are contained in the Anaconda Python Distribution which I HIGHLY recommend be used for running this code
+* Note: The following packages need to be manually installed but are available via Pip
 * openCV
 * seaborn
-* Qt & PyQt4
 * QDarkStyle (a QSS package which sets the overall look and feel of the GUI) 
+
