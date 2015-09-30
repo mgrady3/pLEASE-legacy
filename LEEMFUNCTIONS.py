@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import progressbar as pb
 from PIL import Image
 
 DEF_IMHEIGHT = 600
@@ -39,11 +40,12 @@ def process_LEEM_Data(dirname, ht, wd):
     :return dat_arr: 3d numpy array
     """
     print('Processing Data ...')
+    progress = pb.ProgressBar()
     arr_list = []
     files = [name for name in os.listdir(dirname) if name.endswith('.dat')]
     print('First file is {}.'.format(files[0]))
     flag = True
-    for fl in files:
+    for fl in progress(files):
         with open(os.path.join(dirname, fl), 'rb') as f:
             # dynamically calculate file header length
             hdln = len(f.read()) - (2*ht*wd)

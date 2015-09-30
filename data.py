@@ -19,23 +19,20 @@ class LeedData(object):
 
     """
 
-    def __init__(self):
+    def __init__(self, br=20):
         self.dat_3d = np.zeros((10, 10, 10))  # placeholder for main data
         self.elist = []  # list of energy values
         self.data_dir = ''  # placeholder for path to currently stored data
         # Image settings will be set to appropriate values via the User inside gui.py
         self.ht = 0  # Height of image used in loading Raw data
         self.wd = 0  # Width of image used in loading Raw data
+        self.box_rad = br  # default value is 20 yielding a 40x40 rectangular integration window
 
     def load_LEED_PNG(self, dirname):
         # maybe not needed
         prev_dir = self.data_dir
-        data = LF.get_img_array(dirname, ext='.png')
-        print('New Data shape: {}'.format(data.shape))
-        if data.shape[2] != len(self.elist):
-            print('! Warning: New Data does not match current energy parameters !')
-            print('Updating Energy parameters ...')
-        return np.array(data)
+
+        return np.array(LF.get_img_array(dirname, ext='.png'))
 
     def load_LEED_RAW(self, dirname):
         """
@@ -67,12 +64,8 @@ class LeedData(object):
         """
         # maybe not needed
         prev_dir = self.data_dir
-        data = LF.get_img_array(dirname, ext='.tif')
-        print('New Data shape: {}'.format(data.shape))
-        if data.shape[2] != len(self.elist):
-            print('! Warning: New Data does not match current energy parameters !')
-            print('Updating Energy parameters ...')
-        return np.array(data)
+
+        return np.array(LF.get_img_array(dirname, ext='.tif'))
 
 
 class LeemData(object):
