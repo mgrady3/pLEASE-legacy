@@ -10,6 +10,7 @@ container for energy parameters which corresponds directly to the
 third axis of the numpy array.
 """
 import os
+import sys
 import numpy as np
 import LEEMFUNCTIONS as LF
 
@@ -49,7 +50,7 @@ class LeedData(object):
             # image parameters were correctly set through GUI
             return LF.process_LEEM_Data(dirname, self.ht, self.wd)
         else:
-            # image parmeters were not set through GUI
+            # image parameters were not set through GUI
             print('!Warning: Invalid Image Parameters while loading RAW data!')
             print('Returning Empty array ...')
             return np.zeros((500, 500, 100))  # placeholder array
