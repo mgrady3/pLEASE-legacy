@@ -6,6 +6,7 @@ analysis suite
 Maxwell Grady 2015
 """
 import data
+import os
 import terminal
 import sys
 import LEEMFUNCTIONS as LF
@@ -94,6 +95,12 @@ class Viewer(QtGui.QWidget):
         self.shifted_rects = []
         self.shifted_rect_coords = []
         self.current_selections = []
+        self.smoothed_selections = []  # staging for smoothed data
+        self.current_plotted_data = []  # store only curves currently displayed
+        self.cor_data = None  # placeholder for corrected data to be output as text
+        self.ex_back = None  # placeholder for extracted background to output as text
+        self.raw_selections = None  # placeholder for raw data to output as text
+        self.avg_back = None  # placeholer for average background curve to output as text
 
         self.colors = sns.color_palette("Set2", 10)
         self.smooth_colors = sns.color_palette("Set2", 10)
@@ -102,6 +109,9 @@ class Viewer(QtGui.QWidget):
         self.smooth_window_type = 'hanning'  # default value
         self.smooth_wndow_len = 8  # default value
         self.smooth_file_output = False
+
+        self.background = []
+        self.background_curves = []
 
 
     def init_Plot_Axes(self):
@@ -307,14 +317,51 @@ class Viewer(QtGui.QWidget):
         setEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEED'))
         LEEDMenu.addAction(setEnergyAction)
 
+        subtractAction = QtGui.QAction('Subtract Background', self)
+        subtractAction.setShortcut('Ctrl+B')
+        subtractAction.triggered.connect(self.subtract_background)
+        LEEDMenu.addAction(subtractAction)
+
+        shiftAction = QtGui.QAction('Shift Selecttions', self)
+        shiftAction.setShortcut('Ctrl+S')
+        shiftAction.setStatusTip('Shift User Selections based on Beam Maximum')
+        shiftAction.triggered.connect(self.shift_user_selection)
+        LEEDMenu.addAction(shiftAction)
+
+        clearAction = QtGui.QAction('Clear Current I(V)', self)
+        clearAction.setShortcut('Ctrl+C')
+        clearAction.setStatusTip('Clear Current Selected I(V)')
+        clearAction.triggered.connect(self.clear_leed_click)
+        LEEDMenu.addAction(clearAction)
+
+        clearPlotsOnlyAction = QtGui.QAction('Clear Plots', self)
+        clearPlotsOnlyAction.setShortcut('Ctrl+Shift+C')
+        clearPlotsOnlyAction.setStatusTip('Clear Current Plots')
+        clearPlotsOnlyAction.triggered.connect(self.clear_leed_plots_only)
+        LEEDMenu.addAction(clearPlotsOnlyAction)
+
         # LEEM Menu
         LEEMMenu = self.menubar.addMenu('LEEM Actions')
-        setEnergyAction = QtGui.QAction('Set Energy Parameters', self)
-        setEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEEM'))
-        LEEMMenu.addAction(setEnergyAction)
+
 
         # Settings Menu
         settingsMenu = self.menubar.addMenu('Settings')
+        smoothAction = QtGui.QAction('Toggle Data Smoothing', self)
+        smoothAction.setShortcut('Ctrl+Shift+S')
+        smoothAction.setStatusTip('Turn on/off Data Smoothing')
+        smoothAction.triggered.connect(self.toggle_LEED_Smoothing)
+        settingsMenu.addAction(smoothAction)
+
+        setEnergyAction = QtGui.QAction('Set Energy Parameters', self)
+        setEnergyAction.setShortcut('Ctrl+Shift+E')
+        setEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEEM'))
+        settingsMenu.addAction(setEnergyAction)
+
+        boxAction = QtGui.QAction('Set Integration Window', self)
+        boxAction.setShortcut('Ctrl+Shift+B')
+        boxAction.setStatusTip('Set Integration Window Radius')
+        boxAction.triggered.connect(self.set_integration_window)
+        settingsMenu.addAction(boxAction)
 
     def init_layout(self):
         """
@@ -326,6 +373,15 @@ class Viewer(QtGui.QWidget):
         vbox1.addWidget(self.menubar)
         vbox1.addWidget(self.tabs)
         self.setLayout(vbox1)
+
+    def closeEvent(self, event):
+        """
+        Override closeEvent() to call quit()
+        If main window is closed - app will Quit instead of leaving the console open
+        :param event:
+        :return:
+        """
+        self.Quit()
 
     @staticmethod
     def welcome():
@@ -531,6 +587,15 @@ class Viewer(QtGui.QWidget):
         # self.init_Plots()
         self.LEED_IV_canvas.draw()
 
+    def clear_leed_plots_only(self):
+        """
+
+        :return none:
+        """
+        print('Clearing Plots ...')
+        self.LEED_IV_ax.clear()
+        self.LEED_IV_canvas.draw()
+
     def plot_leed_IV(self):
         """
         Loop through currently selected integration windows
@@ -634,3 +699,361 @@ class Viewer(QtGui.QWidget):
             return
         self.leeddat.box_rad = entry
         print('New Integration Window set to {} x {}.'.format(2*self.leeddat.box_rad, 2*self.leeddat.box_rad))
+
+    def subtract_background(self):
+        """
+        For all curves currently selected, perform a background subtraction
+        This is accomplished by calculating the average intensity of the perimeter
+        of each integration window and subtracting this value from each pixel in the
+        integration window. This is repeated for each energy value so that the background
+        subtracted can change as a function of energy.
+        It may be useful to analyze the function I_back(V) at a later time thus for each curve
+        the background which was subtracted is stored as a list of intensities so they can be
+        plotted against Energy.
+        :return none:
+        """
+        self.background_curves = []
+        print('Starting Background Subtraction Procedure ...')
+        for idx, tup in enumerate(self.rect_coords):
+            data_subset = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
+                                              tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+                                              :]
+            adj_ilist = []  # create list to hold adjusted intensities
+            # iterate over each image in the data subset
+
+            # manually cast to int16 to prevent integer overflow when subtracting from an array of unsigned integers!!!
+
+            bkgnd = []
+            for img in np.rollaxis(data_subset, 2).astype(np.int16):
+                # perimeter sum
+                ps = (img[0, 0:] + img[0:, -1] + img[-1, :] + img[0:, 0]).sum()  # sum edges
+                ps -= (img[0,0] + img[0, -1] + img[-1, -1] + img[-1, 0])  # subtract corners for double counting
+
+                num_pixels = 2*(2*(2*self.leeddat.box_rad)-2)
+                ps /= num_pixels
+                bkgnd.append(ps)  # store average perimeter pixel value
+
+                if self._DEBUG:
+                    print("Average Background calculated as {}".format(ps))
+                    print("Raw Sum: {}".format(img.sum()))
+
+                img -= int(ps)  # subtract background from each pixel
+
+                if self._DEBUG:
+                    print("Adjusted Sum: {}".format(img[img >= 0].sum()))
+                    print img
+
+                # calculate new total intensity of the integration window counting only positive values
+                # there should be no negatives but we discard them just incase
+                adj_ilist.append(img[img >= 0].sum())
+
+            self.background_curves.append(bkgnd)
+
+            self.current_selections.append((adj_ilist, self.colors[idx]))
+
+        avg_background = [sum(l)/len(l) for l in zip(*self.background_curves)]
+        print("Finished Subtracting Background ...")
+        print("Re-plotting original data and corrected data")
+
+        # pop out a new window and plot side by side
+        # self.pop_window = QtGui.QWidget()
+        self.pop_window1 = QtGui.QWidget()  # raw data
+        self.pop_window2 = QtGui.QWidget()  # corrected data
+        self.pop_window3 = QtGui.QWidget()  # extracted backgrounds
+        self.pop_window4 = QtGui.QWidget()  # average background
+
+        windows = [self.pop_window1, self.pop_window2, self.pop_window3, self.pop_window4]
+
+        # figures and axes
+        self.nfig1, self.nplot_ax1 = plt.subplots(1,1, figsize=(10,10), dpi=100)
+        self.nfig2, self.nplot_ax2 = plt.subplots(1,1, figsize=(10,10), dpi=100)
+        self.nfig3, self.nplot_ax3 = plt.subplots(1,1, figsize=(10,10), dpi=100)
+        self.nfig4, self.nplot_ax4 = plt.subplots(1,1, figsize=(10,10), dpi=100)
+
+        axlist = [self.nplot_ax1, self.nplot_ax2, self.nplot_ax3, self.nplot_ax4]
+
+        # canvases
+        self.ncanvas1 = FigureCanvas(self.nfig1)  # raw data
+        self.ncanvas2 = FigureCanvas(self.nfig2)  # corrected data
+        self.ncanvas3 = FigureCanvas(self.nfig3)  # extracted backgrounds
+        self.ncanvas4 = FigureCanvas(self.nfig4)  # average background
+        self.ncanvas1.setParent(self.pop_window1)  # raw data
+        self.ncanvas2.setParent(self.pop_window2)  # corrected data
+        self.ncanvas3.setParent(self.pop_window3)  # extracted backgrounds
+        self.ncanvas4.setParent(self.pop_window4)  # average background
+
+        canvases = [self.ncanvas1, self.ncanvas2, self.ncanvas3, self.ncanvas4]
+
+        # toolbars
+        self.nmpl_toolbar1 = NavigationToolbar(self.ncanvas1, self.pop_window1)  # raw data
+        self.nmpl_toolbar2 = NavigationToolbar(self.ncanvas2, self.pop_window2)  # corrected data
+        self.nmpl_toolbar3 = NavigationToolbar(self.ncanvas3, self.pop_window3)  # extracted backgrounds
+        self.nmpl_toolbar4 = NavigationToolbar(self.ncanvas4, self.pop_window4)  # average background
+
+        # format layout in pop_windows
+        # raw data
+        nvbox = QtGui.QVBoxLayout()
+        nvbox.addWidget(self.ncanvas1)
+        nhbox = QtGui.QHBoxLayout()
+        nvbox.addLayout(nhbox)
+        nvbox.addWidget(self.nmpl_toolbar1)
+        # raw data output button
+        rawoutbut = QtGui.QPushButton("Output to Text", self)
+        rawoutbut.clicked.connect(lambda: self.output_to_text(data=self.raw_selections, smth=self.smooth_file_output))  # output button
+        nhbox.addStretch(1)
+        nhbox.addWidget(rawoutbut)
+        self.pop_window1.setLayout(nvbox)
+
+        # corrected data
+        nvbox = QtGui.QVBoxLayout()
+        nvbox.addWidget(self.ncanvas2)
+        nhbox = QtGui.QHBoxLayout()
+
+        nhbox.addWidget(self.nmpl_toolbar2)
+        # corrected data output button
+        coroutputbutton = QtGui.QPushButton("Output to Text", self)
+        coroutputbutton.clicked.connect(lambda: self.output_to_text(data=self.cor_data, smth=self.smooth_file_output))  # output button
+        nhbox.addStretch(1)
+        nhbox.addWidget(coroutputbutton)
+        nvbox.addLayout(nhbox)
+        self.pop_window2.setLayout(nvbox)
+
+        # extracted backgrounds
+        nvbox = QtGui.QVBoxLayout()
+        nvbox.addWidget(self.ncanvas3)
+        nhbox = QtGui.QHBoxLayout()
+        nvbox.addLayout(nhbox)
+        nhbox.addWidget(self.nmpl_toolbar3)
+        # extracted background output button
+        exbackoutbut = QtGui.QPushButton("Output to Text", self)
+        exbackoutbut.clicked.connect(lambda: self.output_to_text(data=self.ex_back, smth=self.smooth_file_output))  # output button
+        nhbox.addStretch(1)
+        nhbox.addWidget(exbackoutbut)
+        self.pop_window3.setLayout(nvbox)
+
+        # average background
+        nvbox = QtGui.QVBoxLayout()
+        nvbox.addWidget(self.ncanvas4)
+        nhbox = QtGui.QHBoxLayout()
+        nvbox.addLayout(nhbox)
+        nvbox.addWidget(self.nmpl_toolbar4)
+        avgbackoutbut = QtGui.QPushButton("Output to Text", self)
+        avgbackoutbut.clicked.connect(lambda: self.output_to_text(data=self.avg_back, smth=self.smooth_file_output))  # output button
+        nhbox.addStretch(1)
+        nhbox.addWidget(avgbackoutbut)
+        self.pop_window4.setLayout(nvbox)
+
+        num_curves = len(self.current_selections)
+        last_raw_curve_idx = num_curves/2 -1
+        if self._DEBUG:
+            print("Number of total curves to plot = {}".format(num_curves))
+            print("Index of last raw curve = {}".format(last_raw_curve_idx))
+
+        avg_bknd_curve_list = []
+        a = []
+
+        # raw data
+        self.raw_selections = self.current_selections[0:last_raw_curve_idx +1]
+        for tup in self.current_selections[0:last_raw_curve_idx +1]:
+            # plot raw data for all currently selected curves
+
+            self.nplot_ax1.plot(self.leeddat.elist, tup[0], color=tup[1])
+
+        # corrected data
+        for tup in self.current_selections[last_raw_curve_idx + 1:]:
+            avg_bknd_curve_list.append(tup[0])
+            a = [sum(l)/len(l) for l in zip(*avg_bknd_curve_list )]
+            # plot background corrected data for all currentyl selected curves
+            self.nplot_ax2.plot(self.leeddat.elist, tup[0], color=tup[1])  # corrected data
+            self.cor_data = tup[0]  # currently only works when one curve is selected
+
+        # self.nplot_ax2.plot(self.leeddat.elist, a, color=self.colors[-1])
+
+        # extracted backgrounds
+        self.ex_back = self.background_curves
+        for idx, l in enumerate(self.background_curves):
+            # plot I_back(V) for each currently selected curve
+            self.nplot_ax3.plot(self.leeddat.elist, l, color=self.colors[idx])
+
+        # average background
+        self.avg_back = avg_background
+        self.nplot_ax4.plot(self.leeddat.elist, avg_background, color=self.colors[-1])
+
+        # styles and labels
+        titles = ["Raw Data", "Background Adjusted Data", "Calculated Background", "Averaged Background"]
+        rect1 = self.nfig1.patch
+        rect2 = self.nfig2.patch
+        rect3 = self.nfig3.patch
+        rect4 = self.nfig4.patch
+
+        if not self._Style:
+            rect1.set_facecolor((189/255., 195/255., 199/255.))
+            rect2.set_facecolor((189/255., 195/255., 199/255.))
+            rect3.set_facecolor((189/255., 195/255., 199/255.))
+            rect4.set_facecolor((189/255., 195/255., 199/255.))
+
+            for idx, ax in enumerate(axlist):
+                    ax.set_title(titles[idx], color='k')
+                    ax.set_xlabel("Energy [eV]", color='k')
+                    ax.set_ylabel("Intensity [arb. units]", color='k')
+                    ax.tick_params(labelcolor='k', top='off', right='off')
+
+        else:
+
+            rect1.set_facecolor((68/255., 67/255., 67/255.))
+            rect2.set_facecolor((68/255., 67/255., 67/255.))
+            rect3.set_facecolor((68/255., 67/255., 67/255.))
+            rect4.set_facecolor((68/255., 67/255., 67/255.))
+
+            for idx, ax in enumerate(axlist):
+                    ax.set_title(titles[idx], color='w')
+                    ax.set_xlabel("Energy [eV]", color='w')
+                    ax.set_ylabel("Intensity [arb. units]", color='w')
+                    ax.tick_params(labelcolor='w', top='off', right='off')
+
+        for can in canvases:
+            can.draw()
+
+        for w in windows:
+            w.show()
+
+    def output_to_text(self, data=None, smth=False):
+        """
+        Write out data to text files in columar format
+        :param data: container for data to be output; may be single list or list of lists
+        :param smth: bool to decide if smooth() should be applied to data before output; default to False
+        :return none:
+        """
+        if data is None:
+            # no data passed as input; do nothing
+            print('No Data!!! ...')
+            return
+        multi_output = False  # boolean flag for whether or not outputting multiple files is needed
+        subtype = None  # type check for possible sub-containers in main data container
+
+        if type(data) is list:
+            # check for sub-containers
+            if type(data[0]) is list:
+                # main data is a container of containers
+                # there may be multiple curves to output into separate files
+                multi_output = True
+                subtype = 'list'
+            elif type(data[0]) is tuple:
+                # main data is a container of containers
+                # there may be multiple curves to output into separate files
+                multi_output = True
+                subtype = 'tuple'
+            elif type(data[0]) is int or type(data[0]) is float:
+                # main data container is simply a list of numbers
+                # only one output file is needed
+                multi_output = False
+                subtype = None
+            else:
+                print("Invalid Call to output_to_text()")
+                print("data param should be list, list of lists, or list of tuples")
+                return
+        else:
+            print("Invalid Call to output_to_text()")
+            print("data param should be list, list of lists, or list of tuples")
+            return
+
+        # Begin File Output Logic
+        # Query User for directory to output to
+        out_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory for File Output",
+                                                             options=QtGui.QFileDialog.ShowDirsOnly))
+        out_dir = LF.parse_dir(out_dir)  # get rid of trailing '/untitled/' if it exists
+        if out_dir == '':
+            print('File Output Canceled...')
+            return
+        instrc = """ Enter name for textfile. No Spaces, No Extension.
+    If multiple files are to be output - the same base name will be used for each.
+    A consecutive number will be appended to the end of the file name.
+                """
+        # Query User for filename
+        entry, ok = QtGui.QInputDialog.getText(self, "Enter Filename without Extension", instrc)
+        if not ok:
+            print("File Output Canceled ...")
+            return
+        entry = str(entry)  # convert from QString to String
+        if not multi_output:
+            # handle single file output
+            name = entry + '.txt'
+            if smth:
+                # generate smoothed (V, I) pairs
+                smth_dat = LF.smooth(data, self.smooth_window_len, self.smooth_window_type)
+                IV_combo = [(self.leeddat.elist[index], smth_dat[index]) for index, _ in enumerate(self.leeddat.elist)]
+            else:
+                # generate raw (V, I) pairs
+                IV_combo = [(self.leeddat.elist[index], data[index]) for index, _ in enumerate(self.leeddat.elist)]
+            print('Writing Text Output: {}'.format(os.path.join(out_dir, name)))
+            with open(os.path.join(out_dir, name), 'w') as f:
+                for tup in IV_combo:
+                    f.write(str(tup[0]) + '\t' + str(tup[1]) + '\n')
+
+        else:
+            # handle multiple file output
+            # loop over each subcontainer in the main data construct
+            for idx, cnt in enumerate(data):
+                name = entry + '_' + str(idx + 1) + '.txt'
+                if smth:
+                    # generate smoothed (V, I) pairs
+                    if subtype == 'list':
+                        smth_dat = LF.smooth(data[idx], self.smooth_window_len, self.smooth_window_type)
+                    elif subtype == 'tuple':
+                        smth_dat = LF.smooth(data[idx][0], self.smooth_window_len, self.smooth_window_type)
+                    else:
+                        print('Error in data type passed to output_to_text()')
+                        print('File output canceled ...')
+                        return
+                    IV_combo = [(self.leeddat.elist[index], smth_dat[index]) for index, _ in enumerate(self.leeddat.elist)]
+                else:
+                    # generate raw (V, I) pairs
+                    if subtype == 'list':
+                        IV_combo = [(self.leeddat.elist[index], data[idx][index]) for index, _ in enumerate(self.leeddat.elist)]
+                    elif subtype == 'tuple':
+                        IV_combo = [(self.leeddat.elist[index], data[idx][0][index]) for index, _ in enumerate(self.leeddat.elist)]
+                    else:
+                        print('Error in data type passed to output_to_text()')
+                        print('File output canceled ...')
+                        return
+                print('Writing Text Output: {}'.format(os.path.join(out_dir, name)))
+                with open(os.path.join(out_dir, name), 'w') as f:
+                    for tup in IV_combo:
+                        f.write(str(tup[0]) + '\t' + str(tup[1]) + '\n')
+        print('Done Writing Files ...')
+
+    def shift_user_selection(self):
+        self.shifted_rects = []
+        self.shifted_rect_coords = []
+        for tup in self.rect_coords:
+            int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
+                                          tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+                                          :]
+
+            maxLoc = LF.find_local_maximum(int_win[:, :, -1])  # (x,y)
+            # print('Old Beam Center: (r,c) =  {}'.format(tup))
+            r_u, c_u = tup  # user selected coordinates
+            c_3, r_3 = maxLoc  # beam center offset relative to top left corner of integration window
+            new_xy = (c_u + c_3 - 2*self.leeddat.box_rad, r_u + r_3 - 2*self.leeddat.box_rad)
+            # print('New Beam Center: (r,c) = {}'.format((r_u - self.leeddat.box_rad + r_3,
+            #                                            c_u - self.leeddat.box_rad + c_3)))
+
+            self.shifted_rects.append(patches.Rectangle(xy=new_xy,
+                                                        width=2*self.leeddat.box_rad,
+                                                        height=2*self.leeddat.box_rad,
+                                                        fill=False
+                                                        ))
+            self.shifted_rect_coords.append((r_u + r_3 - self.leeddat.box_rad,
+                                             c_u + c_3 - self.leeddat.box_rad))  # beam center in (r,c) coordinates
+
+        # remove currently selected rectangles
+        while self.rects:
+            self.rects.pop().remove()
+        # plot corrected rectangles
+        for idx, _ in enumerate(self.shifted_rects):
+            self.LEED_img_ax.add_artist(self.shifted_rects[idx])
+            self.shifted_rects[idx].set_lw(1)
+            self.shifted_rects[idx].set_color(self.colors[idx])
+            self.LEED_IV_canvas.draw()
+        self.rects = self.shifted_rects[:]
+        self.rect_coords = self.shifted_rect_coords[:]

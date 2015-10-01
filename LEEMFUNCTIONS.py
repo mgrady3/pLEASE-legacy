@@ -2,6 +2,7 @@
 import os
 import sys
 import numpy as np
+import cv2
 import progressbar as pb
 from PIL import Image
 
@@ -285,3 +286,19 @@ def parse_dir(dirname):
         print('This is often caused by an error in the QFileDialog implementation.')
         print('Attempting to fix path automatically ...')
     return '/'.join(splt)
+
+
+def find_local_maximum(window):
+    """
+    *** NOTE: This function makes use of OpenCV which adds another potentially
+    ***       hard to compile (on Windows) module dependence
+    Find the center of the LEED beam selected by the user in (r,c) format
+    :param window: 3d numpy array consisting of a subset of the main data set. This is an integration window
+     selected by the user which contains a LEED beam
+    :return maxLoc: tuple containing the location of the beam maximum
+    """
+    radius = 25  # TODO: User Defined Setting
+    orig = window.copy()
+    blur = cv2.GaussianBlur(window, (radius, radius), 0)
+    (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blur)
+    return maxLoc
