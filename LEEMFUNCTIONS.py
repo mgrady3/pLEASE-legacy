@@ -1,5 +1,6 @@
 
 import os
+import sys
 import numpy as np
 import progressbar as pb
 from PIL import Image
@@ -41,7 +42,7 @@ def process_LEEM_Data(dirname, ht, wd):
     :return dat_arr: 3d numpy array
     """
     print('Processing Data ...')
-    progress = pb.ProgressBar()
+    progress = pb.ProgressBar(fd=sys.stdout)
     arr_list = []
     files = [name for name in os.listdir(dirname) if name.endswith('.dat')]
     print('First file is {}.'.format(files[0]))

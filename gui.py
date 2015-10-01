@@ -177,8 +177,8 @@ class Viewer(QtGui.QWidget):
             return
         self.message_console = terminal.ErrorConsole()
         self.message_console.setWindowTitle('Message Console')
-        self.message_console.setMinimumWidth(self.max_width/4)
-        self.message_console.setMinimumHeight(self.max_height/5)
+        self.message_console.setMinimumWidth(self.max_width/3)
+        self.message_console.setMinimumHeight(self.max_height/3)
         self.message_console.move(0,0)
         self.message_console.setFocus()
         self.message_console.raise_()
@@ -442,7 +442,7 @@ class Viewer(QtGui.QWidget):
         # Get Final Energy in eV
         entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Final Energy in eV (must be larger than Start Energy)",
                                                  "Enter a decimal for Final Energy > Start Energy",
-                                                 value=20.5, min=start_e, max=5000)
+                                                 value=150, min=start_e, max=5000)
         if not ok:
             print('New Energy settings canceled ...')
             return
