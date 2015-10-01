@@ -1,6 +1,5 @@
 import gui
 import sys
-import terminal
 import qdarkstyle
 from PyQt4 import QtGui
 
