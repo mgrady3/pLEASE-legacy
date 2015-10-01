@@ -10,7 +10,6 @@ container for energy parameters which corresponds directly to the
 third axis of the numpy array.
 """
 import os
-import sys
 import numpy as np
 import LEEMFUNCTIONS as LF
 

@@ -383,7 +383,7 @@ class Viewer(QtGui.QWidget):
                         print('Loading Canceled ...')
                         return
                     print('New Data Directory set to {}'.format(new_dir))
-                    self.leeddat.dat_3d = self.leeddat.load_LEED_TIFF(new_dir)
+                    self.leeddat.dat_3d = self.leeddat.load_LEED_PNG(new_dir)
                     print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
                     if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
                         print('! Warning: New Data does not match current energy parameters !')
@@ -411,7 +411,7 @@ class Viewer(QtGui.QWidget):
                     else:
                         self.leeddat.wd = entry
 
-                    self.leeddat.dat_3d = self.leeddat.load_LEED_TIFF(new_dir)
+                    self.leeddat.dat_3d = self.leeddat.load_LEED_RAW(new_dir)
                     print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
                     if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
                         print('! Warning: New Data does not match current energy parameters !')

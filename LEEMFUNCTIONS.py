@@ -46,7 +46,6 @@ def process_LEEM_Data(dirname, ht, wd):
     print('First file is {}.'.format(files[0]))
     flag = True
     for fl in progress(files):
-        print(fl)
         with open(os.path.join(dirname, fl), 'rb') as f:
             # dynamically calculate file header length
             hdln = len(f.read()) - (2*ht*wd)
