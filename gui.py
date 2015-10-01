@@ -98,7 +98,10 @@ class Viewer(QtGui.QWidget):
         self.colors = sns.color_palette("Set2", 10)
         self.smooth_colors = sns.color_palette("Set2", 10)
 
-        self.smth_leed_plot = False
+        self.smooth_leed_plot = False
+        self.smooth_window_type = 'hanning'  # default value
+        self.smooth_wndow_len = 8  # default value
+        self.smooth_file_output = False
 
 
     def init_Plot_Axes(self):
@@ -339,7 +342,8 @@ class Viewer(QtGui.QWidget):
         print('Exiting ...')
         QtCore.QCoreApplication.instance().quit()
 
-    # Core Functionality
+    # Core Functionality:
+    # LEED Functions and Processes #
 
     def load_LEED_Data(self):
         """
@@ -553,7 +557,7 @@ class Viewer(QtGui.QWidget):
                                           tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
                                           :]
             ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
-            if self.smth_leed_plot:
+            if self.smooth_leed_plot:
                 print('Plotting and Storing Smoothed Data ...')
                 self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
                 self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type),
@@ -566,3 +570,67 @@ class Viewer(QtGui.QWidget):
 
         self.LEED_IV_canvas.draw()
         return
+
+    def toggle_LEED_Smoothing(self):
+        """
+
+        :return none:
+        """
+
+        if self.smooth_leed_plot:
+            # smoothing already enabled - disable it
+            self.smooth_leed_plot = False
+            self.smooth_file_output = False
+            print('Smoothing Disabled ...')
+            return
+        # Otherwise smoothing was disabled
+        # now Query user for settings and enable smoothing
+
+        # Query user for window type
+        msg = '''Please enter the window type to use for data smoothing:\n
+        Acceptable entries are flat, hanning, hamming, bartlett, or blackman
+              '''
+        entry, ok = QtGui.QInputDialog.getText(self, "Choose Window Type", msg)
+        if not ok:
+            return
+        else:
+            if entry not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+                #print '''Invalid Entry - try again: acceptable entries are\n
+                #      flat, hanning, hamming, bartlett, or blackman '''
+                reply = QtGui.QMessageBox.question(self, 'Invalid Entry:', 'Invalid Entry for Smoothing Window:\nTry again?',
+                                                   QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
+                                                   QtGui.QMessageBox.No)
+                if reply == QtGui.QMessageBox.Yes:
+                    self.toggle_LEED_Smoothing()
+                    return
+                else: return
+            else:
+                self.smooth_window_type = str(entry)
+
+        # Query user for window length
+        entry, ok = QtGui.QInputDialog.getInt(self, "Choose Window Length", "Enter Positive Even Int >= 4", value=14, min=4, max=40)
+        if not ok:
+            return
+        else:
+            if not (entry % 2 == 0) and (entry >= 4):
+                print('Window_Length entry, {}, was odd - Using next even integer {}.'.format(entry, entry + 1))
+                entry += 1
+                self.smooth_window_len = int(entry)
+            else:
+                self.smooth_window_len = int(entry)
+        self.smooth_leed_plot = True
+        self.smooth_file_output = True
+        print('Smoothing Enabled: Window = {}; Window Length = {}'.format(self.smooth_window_type, self.smooth_window_len))
+        return
+
+    def set_integration_window(self):
+        """
+
+        :return none:
+        """
+        entry, ok = QtGui.QInputDialog.getInt(self, "Set Integration Window Half Length",
+                                              "Enter a valid integer >= 2.", value=20, min=2, max=2000)
+        if not ok:
+            return
+        self.leeddat.box_rad = entry
+        print('New Integration Window set to {} x {}.'.format(2*self.leeddat.box_rad, 2*self.leeddat.box_rad))
