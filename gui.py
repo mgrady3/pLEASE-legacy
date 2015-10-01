@@ -112,6 +112,8 @@ class Viewer(QtGui.QWidget):
 
         self.background = []
         self.background_curves = []
+        self.use_avg = False
+        self.last_avg = []
 
 
     def init_Plot_Axes(self):
@@ -313,14 +315,16 @@ class Viewer(QtGui.QWidget):
         extractAction.triggered.connect(self.plot_leed_IV)
         LEEDMenu.addAction(extractAction)
 
-        setEnergyAction = QtGui.QAction('Set Energy Parameters', self)
-        setEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEED'))
-        LEEDMenu.addAction(setEnergyAction)
-
         subtractAction = QtGui.QAction('Subtract Background', self)
         subtractAction.setShortcut('Ctrl+B')
         subtractAction.triggered.connect(self.subtract_background)
         LEEDMenu.addAction(subtractAction)
+
+        averageAction = QtGui.QAction('Average I(V)', self)
+        averageAction.setShortcut('Ctrl+A')
+        averageAction.setStatusTip('Average currently selected I(V) curves')
+        averageAction.triggered.connect(self.average_current_IV)
+        LEEDMenu.addAction(averageAction)
 
         shiftAction = QtGui.QAction('Shift Selecttions', self)
         shiftAction.setShortcut('Ctrl+S')
@@ -335,7 +339,7 @@ class Viewer(QtGui.QWidget):
         LEEDMenu.addAction(clearAction)
 
         clearPlotsOnlyAction = QtGui.QAction('Clear Plots', self)
-        clearPlotsOnlyAction.setShortcut('Ctrl+Shift+C')
+        clearPlotsOnlyAction.setShortcut('Ctrl+Alt+C')
         clearPlotsOnlyAction.setStatusTip('Clear Current Plots')
         clearPlotsOnlyAction.triggered.connect(self.clear_leed_plots_only)
         LEEDMenu.addAction(clearPlotsOnlyAction)
@@ -362,6 +366,11 @@ class Viewer(QtGui.QWidget):
         boxAction.setStatusTip('Set Integration Window Radius')
         boxAction.triggered.connect(self.set_integration_window)
         settingsMenu.addAction(boxAction)
+
+        setEnergyAction = QtGui.QAction('Set Energy Parameters', self)
+        setEnergyAction.setShortcut('Ctrl+Shift+N')
+        setEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEED'))
+        settingsMenu.addAction(setEnergyAction)
 
     def init_layout(self):
         """
@@ -635,6 +644,39 @@ class Viewer(QtGui.QWidget):
 
         self.LEED_IV_canvas.draw()
         return
+
+    def average_current_IV(self):
+        """
+        Average the I values of the current selected curves then re-plot the average versus elist.
+        Useful for plotting symmetric curves and also checking average background.
+        :return none:
+        """
+        if (self.rect_count == 0) or (not self.rects) or (not self.rect_coords):
+            print('Not Data Selected to Plot')
+            return
+        current_curves = []
+        for idx, tup in enumerate(self.rect_coords):
+            int_win = self.leeddat.dat_3d[tup[0] - self.leeddat.box_rad:tup[0] + self.leeddat.box_rad,
+                                          tup[1] - self.leeddat.box_rad:tup[1] + self.leeddat.box_rad,
+                                          :]
+            current_curves.append([img.sum() for img in np.rollaxis(int_win, 2)])
+
+        # calculate average intensity at each point given all entries in current_curves
+        # this creates a single list of intensity values to be plotted against energy
+
+        average_int = [float(sum(l))/float(len(l)) for l in zip(*current_curves)]
+
+        if self.use_avg:
+            print('Local Average Background Stored')
+            self.background = average_int
+        else:
+            print('Average I(V) curve data stored')
+            self.last_average = average_int
+        self.use_avg = False
+        self.LEED_IV_ax.clear()
+        self.LEED_IV_ax.plot(self.leeddat.elist, average_int, color=self.colors[-1])
+        self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
+        self.LEED_IV_canvas.draw()
 
     def toggle_LEED_Smoothing(self):
         """
