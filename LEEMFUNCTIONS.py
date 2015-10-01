@@ -1,4 +1,4 @@
-import logging
+
 import os
 import numpy as np
 import progressbar as pb
@@ -40,8 +40,7 @@ def process_LEEM_Data(dirname, ht, wd):
     :param wd: integer pixel width of image
     :return dat_arr: 3d numpy array
     """
-    # print('Processing Data ...')
-    logging.info('Processing Data ...')
+    print('Processing Data ...')
     progress = pb.ProgressBar()
     arr_list = []
     files = [name for name in os.listdir(dirname) if name.endswith('.dat')]
