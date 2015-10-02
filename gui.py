@@ -262,19 +262,41 @@ class Viewer(QtGui.QWidget):
 
         :return none:
         """
-        self.LEEM_fig, (self.LEEM_ax, self.IV_ax) = plt.subplots(1, 2, figsize=(3,6))
+        self.LEEM_fig, (self.LEEM_ax, self.IV_ax) = plt.subplots(1, 2, figsize=(6,6))
         self.LEEM_canvas = FigureCanvas(self.LEEM_fig)
         self.LEEM_canvas.setParent(self.LEEM_Tab)
+        # Hey look, now it expands just like we wanted ...
+        self.LEEM_canvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Expanding)
         self.LEEM_toolbar = NavigationToolbar(self.LEEM_canvas, self)
 
-        LEEM_Tab_Layout_V1 = QtGui.QVBoxLayout()
-        LEEM_Tab_Layout_H1 = QtGui.QHBoxLayout()
+        # divide layout into three main containers
+        LEEM_Tab_Main_VBox = QtGui.QVBoxLayout()
+        LEEM_Tab_Image_Slider_HBox = QtGui.QHBoxLayout()
+        LEEM_Tab_ToolBar_HBox = QtGui.QHBoxLayout()  # may be implemented later
 
-        LEEM_Tab_Layout_V1.addWidget(self.LEEM_canvas)
-        # LEED_Tab_Layout_V1.addStretch(1)
-        LEEM_Tab_Layout_V1.addWidget(self.LEEM_toolbar)
+        # Slider Layout
+        self.image_slider = QtGui.QSlider(QtCore.Qt.Horizontal, self.LEEM_Tab)
+        self.image_slider.setMaximumHeight(200)
+        self.image_slider.valueChanged[int].connect(self.update_image_slider)
+        self.image_slider.setTickInterval(10)
+        self.image_slider.setTickPosition(QtGui.QSlider.TicksAbove)
 
-        self.LEEM_Tab.setLayout(LEEM_Tab_Layout_V1)
+        self.image_slider_label = QtGui.QLabel(self)
+        self.image_slider_label.setText("Electron Energy [eV]")
+
+        self.image_slider_value_label = QtGui.QLabel(self)
+        self.image_slider_value_label.setText("0"+"eV")
+
+        LEEM_Tab_Image_Slider_HBox.addWidget(self.image_slider_label)
+        LEEM_Tab_Image_Slider_HBox.addWidget(self.image_slider)
+        LEEM_Tab_Image_Slider_HBox.addWidget(self.image_slider_value_label)
+
+        LEEM_Tab_Main_VBox.addWidget(self.LEEM_canvas)
+        LEEM_Tab_Main_VBox.addLayout(LEEM_Tab_Image_Slider_HBox)
+        LEEM_Tab_Main_VBox.addWidget(self.LEEM_toolbar)
+
+        self.LEEM_Tab.setLayout(LEEM_Tab_Main_VBox)
 
     def init_Config_Tab(self):
         """
@@ -301,6 +323,12 @@ class Viewer(QtGui.QWidget):
         exitAction.setStatusTip('Quit PyLEEM')
         exitAction.triggered.connect(self.Quit)
         fileMenu.addAction(exitAction)
+
+        outputAction = QtGui.QAction('Output to Text', self)
+        outputAction.setShortcut('Ctrl+O')
+        outputAction.triggered.connect(self.output_data)
+        fileMenu.addAction(outputAction)
+
 
         # LEED Menu
         LEEDMenu = self.menubar.addMenu('LEED Actions')
@@ -387,25 +415,29 @@ class Viewer(QtGui.QWidget):
         """
         Override closeEvent() to call quit()
         If main window is closed - app will Quit instead of leaving the console open
-        :param event:
-        :return:
+        with the main window closed
+        :param event: close event from main QWidget
+        :return none:
         """
         self.Quit()
 
     @staticmethod
     def welcome():
         """
-
         :return none:
         """
-        print("Welcome to pythone Low-energy Electron Analyis SuitE: pLEASE")
+        print("Welcome to python Low-energy Electron Analyis SuitE: pLEASE")
         print("Begin by loading a LEED or LEEM data set")
-
+        return
 
     @staticmethod
     def Quit():
+        """
+        :return none:
+        """
         print('Exiting ...')
         QtCore.QCoreApplication.instance().quit()
+        return
 
     # Core Functionality:
     # LEED Functions and Processes #
@@ -959,6 +991,14 @@ class Viewer(QtGui.QWidget):
         for w in windows:
             w.show()
 
+    def output_data(self):
+        """
+        Helper function to call output_to_text with proper data set selected
+        :return none:
+        """
+        # TODO: implement query for selection of LEED or LEEM data to output
+        pass
+
     def output_to_text(self, data=None, smth=False):
         """
         Write out data to text files in columar format
@@ -1099,3 +1139,16 @@ class Viewer(QtGui.QWidget):
             self.LEED_IV_canvas.draw()
         self.rects = self.shifted_rects[:]
         self.rect_coords = self.shifted_rect_coords[:]
+
+    # Core Functionality:
+    # LEEM Functions and Processes #
+
+    def update_image_slider(self, value):
+        """
+        Update the Slider label value to the new electron energy
+        Call show_LEEM_Data() to display the correct LEEM image
+        :argument value: integer value from slider representing filenumber
+        :return none:
+        """
+
+        self.image_slider_value_label.setText(str(LF.filenumber_to_energy(self.leemdat.elist, value)) + " eV")
