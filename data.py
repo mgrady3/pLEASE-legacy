@@ -73,5 +73,11 @@ class LeemData(object):
 
     """
     def __init__(self):
+        self.ht = 0  # image height to be set by User
+        self.wd = 0  # image width to be set by User
+        self.hdln = 0  # image header length to be set by User
         self.dat_3d = np.zeros((10, 10, 10))  # placeholder for main data
         self.elist = []  # list of energy values
+        self.data_dir = ''
+        self.img_mask_count_dir = ''
+        self.curimg = 0

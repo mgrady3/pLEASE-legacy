@@ -8,6 +8,7 @@ from PIL import Image
 
 DEF_IMHEIGHT = 600
 DEF_IMWIDTH = 592
+DEF_IMHEAD = 520
 
 
 def filenumber_to_energy(el, im):
@@ -30,7 +31,7 @@ def energy_to_filenumber(el, val):
     return el.index(val)
 
 
-def process_LEEM_Data(dirname, ht, wd):
+def process_LEEM_Data(dirname, ht=0, wd=0):
     """
     read in all .dat files in current data directory
     process each .dat file into a numpy array
@@ -51,7 +52,12 @@ def process_LEEM_Data(dirname, ht, wd):
     for fl in progress(files):
         with open(os.path.join(dirname, fl), 'rb') as f:
             # dynamically calculate file header length
-            hdln = len(f.read()) - (2*ht*wd)
+            if ht == 0 and wd == 0:
+                hdln = DEF_IMHEAD
+                ht = DEF_IMHEIGHT
+                wd = DEF_IMWIDTH
+            else: hdln = len(f.read()) - (2*ht*wd)
+
             if flag:
                 print('Calculated Header Length of First File: {}'.format(hdln))
                 # only print first file header length

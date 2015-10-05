@@ -86,6 +86,8 @@ class Viewer(QtGui.QWidget):
         self.leeddat = data.LeedData()
         self.leemdat = data.LeemData()
         self.has_loaded_data = False
+        self.hasplotted = False
+        self.hasdisplayed = False
         self.border_color = (58/255., 83/255., 155/255.)
 
         self.rect_count = 0
@@ -115,6 +117,10 @@ class Viewer(QtGui.QWidget):
         self.use_avg = False
         self.last_avg = []
 
+        self.circs = []
+        self.leem_IV_list = []
+        self.leem_IV_mask = []
+
 
     def init_Plot_Axes(self):
         """
@@ -137,15 +143,15 @@ class Viewer(QtGui.QWidget):
 
         # Format LEEM IV Axis
         if not self._Style:
-            self.IV_ax.set_title("LEEM I(V)", fontsize=20)
-            self.IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
-            self.IV_ax.set_xlabel("Energy (eV)", fontsize=16)
-            self.IV_ax.tick_params(labelcolor='b', top='off', right='off')
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20)
+            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
+            self.LEEM_IV_ax.tick_params(labelcolor='b', top='off', right='off')
         else:
-            self.IV_ax.set_title("LEEM I(V)", fontsize=20, color='white')
-            self.IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='white')
-            self.IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='white')
-            self.IV_ax.tick_params(labelcolor='w', top='off', right='off')
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20, color='white')
+            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='white')
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='white')
+            self.LEEM_IV_ax.tick_params(labelcolor='w', top='off', right='off')
 
         rect = self.LEEM_fig.patch
         # 228, 241, 254
@@ -262,7 +268,7 @@ class Viewer(QtGui.QWidget):
 
         :return none:
         """
-        self.LEEM_fig, (self.LEEM_ax, self.IV_ax) = plt.subplots(1, 2, figsize=(6,6))
+        self.LEEM_fig, (self.LEEM_ax, self.LEEM_IV_ax) = plt.subplots(1, 2, figsize=(6,6))
         self.LEEM_canvas = FigureCanvas(self.LEEM_fig)
         self.LEEM_canvas.setParent(self.LEEM_Tab)
         # Hey look, now it expands just like we wanted ...
@@ -332,10 +338,10 @@ class Viewer(QtGui.QWidget):
 
         # LEED Menu
         LEEDMenu = self.menubar.addMenu('LEED Actions')
-        loadLEEdAction = QtGui.QAction('Load LEED Data', self)
-        loadLEEdAction.setShortcut('Ctrl+D')
-        loadLEEdAction.triggered.connect(self.load_LEED_Data)
-        LEEDMenu.addAction(loadLEEdAction)
+        loadLEEDAction = QtGui.QAction('Load LEED Data', self)
+        loadLEEDAction.setShortcut('Ctrl+D')
+        loadLEEDAction.triggered.connect(self.load_LEED_Data)
+        LEEDMenu.addAction(loadLEEDAction)
 
         extractAction = QtGui.QAction('Extract I(V)', self)
         extractAction.setShortcut('Ctrl+E')
@@ -374,6 +380,11 @@ class Viewer(QtGui.QWidget):
 
         # LEEM Menu
         LEEMMenu = self.menubar.addMenu('LEEM Actions')
+        loadLEEMAction = QtGui.QAction('Load LEEM Data', self)
+        loadLEEMAction.setShortcut('Ctrl+M')
+        loadLEEMAction.triggered.connect(self.load_LEEM)
+        LEEMMenu.addAction(loadLEEMAction)
+
 
 
         # Settings Menu
@@ -1143,6 +1154,68 @@ class Viewer(QtGui.QWidget):
     # Core Functionality:
     # LEEM Functions and Processes #
 
+    def load_LEEM(self):
+        """
+
+        :return none:
+        """
+        if self.hasplotted:
+            self.clear_LEEM_IV()
+        self.LEEM_ax.clear()
+        self.LEEM_IV_ax.clear()
+        prev_ddir = self.leemdat.data_dir  # in case of error in loading data, keep reference to previous data directory
+        ddir = QtGui.QFileDialog.getExistingDirectory(self, "Select Data Directory")  # note this is a QString
+
+        if ddir == '':
+            # Error Loading Data
+            print('Error Loading LEEM Data ...')
+            return
+        self.leemdat.data_dir = str(ddir)  # manually cast from QString to String
+        self.leemdat.img_mask_count_dir = os.path.join(str(ddir), 'img_mask_count')
+        if not os.path.exists(self.leemdat.img_mask_count_dir):
+            os.mkdir(self.leemdat.img_mask_count_dir)
+        print('Setting LEEM Data directory to {}'.format(self.leemdat.data_dir))
+
+        entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Height", "Enter Positive Int >= 2", value=544, min=2, max=2000)
+        if not ok:
+            print("Loading Raw Data Canceled ...")
+            return
+        else:
+            self.leemdat.ht = entry
+
+        entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Width", "Enter Positive Int >= 2", value=576, min=2, max=2000)
+        if not ok:
+            print("Loading Raw Data Canceled ...")
+            return
+        else:
+            self.leemdat.wd = entry
+
+        try:
+            self.leemdat.dat_3d = LF.process_LEEM_Data(self.leemdat.data_dir,
+                                                       self.leemdat.ht,
+                                                       self.leemdat.wd)
+        except ValueError:
+            print('Error Loading LEEM Data: Please Recheck Image Settings')
+            print('Resetting data directory to previous setting, {}'.format(prev_ddir))
+            return
+
+        # Assuming that data loading was successful - self.leemdat.dat_3d is now a 3d numpy array
+        # Generate energy list to correspond to the third array axis
+        print('Data Loaded successfully: {}'.format(self.leeddat.dat_3d.shape))
+        self.set_energy_parameters(dat='LEEM')
+        self.format_slider()
+        self.hasdisplayed = True
+
+        if not self.has_loaded_data:
+            self.update_image_slider(100)
+            self.has_loaded_data = True
+            return
+        self.update_image_slider(0)
+        return
+
+    def format_slider(self):
+        self.image_slider.setRange(0, self.leeddat.dat_3d.shape[2]-1)
+
     def update_image_slider(self, value):
         """
         Update the Slider label value to the new electron energy
@@ -1152,3 +1225,26 @@ class Viewer(QtGui.QWidget):
         """
 
         self.image_slider_value_label.setText(str(LF.filenumber_to_energy(self.leemdat.elist, value)) + " eV")
+        self.show_LEEM_Data(self.leemdat.dat_3d, value)
+
+    def clear_LEEM_IV(self):
+        pass
+
+    def show_LEEM_Data(self, data, imgnum):
+        """
+
+        :param data:
+        :param imgnum:
+        :return none:
+        """
+        self.leemdat.curimg = imgnum
+        img = data[0:, 0:, self.leemdat.curimg]
+
+        if self._Style:
+            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16, color='white')
+        else:
+            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16)
+
+        self.LEEM_ax.imshow(img, cmap=cm.Greys_r)
+        self.LEEM_canvas.draw()
+        return
