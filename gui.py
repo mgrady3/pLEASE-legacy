@@ -316,7 +316,7 @@ class Viewer(QtGui.QWidget):
         Setup Menu bar at top of main window
         :return none:
         """
-        if sys.platform=='darwin':
+        if sys.platform == 'darwin':
             QtGui.qt_mac_set_native_menubar(False)
 
         self.menubar = QtGui.QMenuBar()
