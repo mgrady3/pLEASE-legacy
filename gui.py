@@ -324,16 +324,17 @@ class Viewer(QtGui.QWidget):
 
         # File Menu
         fileMenu = self.menubar.addMenu('File')
-        exitAction = QtGui.QAction('Quit', self)
-        exitAction.setShortcut('Ctrl+Q')
-        exitAction.setStatusTip('Quit PyLEEM')
-        exitAction.triggered.connect(self.Quit)
-        fileMenu.addAction(exitAction)
 
         outputAction = QtGui.QAction('Output to Text', self)
         outputAction.setShortcut('Ctrl+O')
         outputAction.triggered.connect(self.output_data)
         fileMenu.addAction(outputAction)
+
+        exitAction = QtGui.QAction('Quit', self)
+        exitAction.setShortcut('Ctrl+Q')
+        exitAction.setStatusTip('Quit PyLEEM')
+        exitAction.triggered.connect(self.Quit)
+        fileMenu.addAction(exitAction)
 
 
         # LEED Menu
@@ -544,8 +545,8 @@ class Viewer(QtGui.QWidget):
 
         # Get Starting Energy in eV
         entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Starting Energy in eV",
-                                                 "Enter a decimal for Starting Energy >0.0",
-                                                 value=20.5, min=0.0, max=5000)
+                                                 "Enter a decimal for Starting Energy in eV",
+                                                 value=20.5, min=-500, max=5000)
         if not ok:
             print('New Energy settings canceled ...')
             return
@@ -554,7 +555,7 @@ class Viewer(QtGui.QWidget):
         # Get Final Energy in eV
         entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Final Energy in eV (must be larger than Start Energy)",
                                                  "Enter a decimal for Final Energy > Start Energy",
-                                                 value=150, min=start_e, max=5000)
+                                                 value=150, min=-500, max=5000)
         if not ok:
             print('New Energy settings canceled ...')
             return
@@ -1160,6 +1161,8 @@ class Viewer(QtGui.QWidget):
         :return none:
         """
         if self.hasplotted:
+            # if curves already displayed, just clear the IV plots
+            # reset any plotting variables
             self.clear_LEEM_IV()
         self.LEEM_ax.clear()
         self.LEEM_IV_ax.clear()
@@ -1201,20 +1204,20 @@ class Viewer(QtGui.QWidget):
 
         # Assuming that data loading was successful - self.leemdat.dat_3d is now a 3d numpy array
         # Generate energy list to correspond to the third array axis
-        print('Data Loaded successfully: {}'.format(self.leeddat.dat_3d.shape))
+        print('Data Loaded successfully: {}'.format(self.leemdat.dat_3d.shape))
         self.set_energy_parameters(dat='LEEM')
         self.format_slider()
         self.hasdisplayed = True
 
         if not self.has_loaded_data:
-            self.update_image_slider(100)
+            self.update_image_slider(self.leemdat.dat_3d.shape[2]-1)
             self.has_loaded_data = True
             return
         self.update_image_slider(0)
         return
 
     def format_slider(self):
-        self.image_slider.setRange(0, self.leeddat.dat_3d.shape[2]-1)
+        self.image_slider.setRange(0, self.leemdat.dat_3d.shape[2]-1)
 
     def update_image_slider(self, value):
         """
@@ -1224,7 +1227,10 @@ class Viewer(QtGui.QWidget):
         :return none:
         """
 
-        self.image_slider_value_label.setText(str(LF.filenumber_to_energy(self.leemdat.elist, value)) + " eV")
+        self.image_slider_value_label.setText(str(
+                                    LF.filenumber_to_energy(
+                                                            self.leemdat.elist,
+                                                            value)) + " eV")
         self.show_LEEM_Data(self.leemdat.dat_3d, value)
 
     def clear_LEEM_IV(self):

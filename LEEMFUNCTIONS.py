@@ -69,6 +69,7 @@ def process_LEEM_Data(dirname, ht=0, wd=0):
 
     dat_arr = np.dstack(arr_list)  # create 3D stack of all image files
     del arr_list[:]  # clear data from list as it ahs now been stored in numpy array
+    # print('Returning New Array Shape: {}'.format(dat_arr.shape))
     return dat_arr
 
 
