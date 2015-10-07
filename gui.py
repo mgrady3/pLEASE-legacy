@@ -86,9 +86,10 @@ class Viewer(QtGui.QWidget):
         self.leeddat = data.LeedData()
         self.leemdat = data.LeemData()
         self.has_loaded_data = False
-        self.hasplotted = False
+        self.hasplotted_leem = False
+        self.hasplotted_leed = False
         self.hasdisplayed = False
-        self.border_color = (58/255., 83/255., 155/255.)
+        self.border_color = (58/255., 83/255., 155/255.)  # unused
 
         self.rect_count = 0
         self.max_leed_click = 10
@@ -102,7 +103,7 @@ class Viewer(QtGui.QWidget):
         self.cor_data = None  # placeholder for corrected data to be output as text
         self.ex_back = None  # placeholder for extracted background to output as text
         self.raw_selections = None  # placeholder for raw data to output as text
-        self.avg_back = None  # placeholer for average background curve to output as text
+        self.avg_back = None  # placeholder for average background curve to output as text
 
         self.colors = sns.color_palette("Set2", 10)
         self.smooth_colors = sns.color_palette("Set2", 10)
@@ -389,6 +390,12 @@ class Viewer(QtGui.QWidget):
         loadLEEMAction.triggered.connect(self.load_LEEM)
         LEEMMenu.addAction(loadLEEMAction)
 
+        clearLEEMAction = QtGui.QAction('Clear Current I(V)', self)
+        clearLEEMAction.setShortcut('Ctrl+Alt+C')
+        clearLEEMAction.setStatusTip('Clear Current Selected I(V)')
+        clearLEEMAction.triggered.connect(self.clear_LEEM_IV)
+        LEEMMenu.addAction(clearLEEMAction)
+
 
 
         # Settings Menu
@@ -641,6 +648,7 @@ class Viewer(QtGui.QWidget):
         self.shifted_rects = []
         self.shifted_rect_coords = []
         # self.init_Plots()
+        self.hasplotted_leed = False
         self.LEED_IV_canvas.draw()
 
     def clear_leed_plots_only(self):
@@ -659,6 +667,7 @@ class Viewer(QtGui.QWidget):
         Plot I(V) then draw to canvas
         :return none:
         """
+        self.hasplotted_leed = True
 
         if (self.rect_count == 0) or (not self.rects) or (not self.rect_coords):
             # no data selected; do nothing
@@ -801,6 +810,9 @@ class Viewer(QtGui.QWidget):
         plotted against Energy.
         :return none:
         """
+        if not self.hasplotted_leed:
+            return
+
         self.background_curves = []
         print('Starting Background Subtraction Procedure ...')
         for idx, tup in enumerate(self.rect_coords):
@@ -1163,7 +1175,7 @@ class Viewer(QtGui.QWidget):
 
         :return none:
         """
-        if self.hasplotted:
+        if self.hasplotted_leem:
             # if curves already displayed, just clear the IV plots
             # reset any plotting variables
             self.clear_LEEM_IV()
@@ -1237,7 +1249,30 @@ class Viewer(QtGui.QWidget):
         self.show_LEEM_Data(self.leemdat.dat_3d, value)
 
     def clear_LEEM_IV(self):
-        pass
+        """
+
+        :return none:
+        """
+        if not self.hasplotted_leem:
+            return
+        if not self.circs:
+            self.circs = []  # is this redundant?
+        else:
+            while self.circs:
+                self.circs.pop().remove()
+        self.LEEM_IV_ax.clear()
+        self.init_Plot_Axes()
+        self.click_count = 0
+        self.leem_IV_list = []
+        self.leem_IV_mask = []
+        if not self._Style:
+            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist,
+                                                                                   self.leemdat.curimg)), fontsize=16)
+        else:
+            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist,
+                                                                                   self.leemdat.curimg)), fontsize=16, color='white')
+        self.LEEM_canvas.draw()
+
 
     def show_LEEM_Data(self, data, imgnum):
         """
@@ -1262,7 +1297,7 @@ class Viewer(QtGui.QWidget):
         """
 
         :param event:
-        :return:
+        :return none:
         """
         if not self.hasdisplayed:
             return
@@ -1295,9 +1330,9 @@ class Viewer(QtGui.QWidget):
         """
 
         :param event:
-        :return:
+        :return none:
         """
-        self.hasplotted = True
+        self.hasplotted_leem = True
         self.leemdat.curX = int(event.xdata)
         self.leemdat.curY = int(event.ydata)
         self.leemdat.ilist=[]
@@ -1315,7 +1350,7 @@ class Viewer(QtGui.QWidget):
                                   self.leemdat.curX, self.leemdat.curY,
                                   self.click_count)) # color stored by click count index
         self.leem_IV_mask.append(0)
-
+        self.init_Plot_Axes()
         self.LEEM_canvas.draw()
 
 
