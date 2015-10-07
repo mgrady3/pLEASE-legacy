@@ -120,6 +120,8 @@ class Viewer(QtGui.QWidget):
         self.circs = []
         self.leem_IV_list = []
         self.leem_IV_mask = []
+        self.click_count = 0
+        self.max_leem_click = 7
 
 
     def init_Plot_Axes(self):
@@ -303,6 +305,7 @@ class Viewer(QtGui.QWidget):
         LEEM_Tab_Main_VBox.addWidget(self.LEEM_toolbar)
 
         self.LEEM_Tab.setLayout(LEEM_Tab_Main_VBox)
+        self.LEEM_fig.canvas.mpl_connect('button_release_event', self.leem_click)
 
     def init_Config_Tab(self):
         """
@@ -1254,3 +1257,67 @@ class Viewer(QtGui.QWidget):
         self.LEEM_ax.imshow(img, cmap=cm.Greys_r)
         self.LEEM_canvas.draw()
         return
+
+    def leem_click(self, event):
+        """
+
+        :param event:
+        :return:
+        """
+        if not self.hasdisplayed:
+            return
+
+        if event.inaxes == self.LEEM_ax:
+            # print('We did it, Reddit!')
+            # pass
+            self.click_count += 1
+            if self.click_count <= self.max_leem_click:
+                self.circs.append(plt.Circle((event.xdata, event.ydata),
+                                             radius=3,
+                                             fc=self.colors[self.click_count-1]))
+                self.LEEM_ax.add_patch(self.circs[-1])
+                self.LEEM_canvas.draw()
+            else:
+                self.click_count = 1
+                self.LEEM_IV_ax.clear()
+                self.leem_IV_list = []
+                while self.circs:
+                    self.circs.pop().remove()
+                self.circs.append(plt.Circle((event.xdata, event.ydata),
+                                             radius=3,
+                                             fc=self.colors[self.click_count-1]))
+                self.LEEM_ax.add_patch(self.circs[-1])
+                self.LEEM_canvas.draw()
+            self.plot_leem_IV(event)
+        return
+
+    def plot_leem_IV(self, event):
+        """
+
+        :param event:
+        :return:
+        """
+        self.hasplotted = True
+        self.leemdat.curX = int(event.xdata)
+        self.leemdat.curY = int(event.ydata)
+        self.leemdat.ilist=[]
+
+        for i in self.leemdat.dat_3d[self.leemdat.curX,
+                                    self.leemdat.curY, :]:
+            self.leemdat.ilist.append(i)
+
+        if len(self.leemdat.elist) != len(self.leemdat.ilist):
+            print('Error in Energy List Size')
+            return
+
+        self.LEEM_IV_ax.plot(self.leemdat.elist, self.leemdat.ilist, color=self.colors[self.click_count-1])
+        self.leem_IV_list.append((self.leemdat.elist, self.leemdat.ilist,
+                                  self.leemdat.curX, self.leemdat.curY,
+                                  self.click_count)) # color stored by click count index
+        self.leem_IV_mask.append(0)
+
+        self.LEEM_canvas.draw()
+
+
+
+

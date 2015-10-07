@@ -78,6 +78,9 @@ class LeemData(object):
         self.hdln = 0  # image header length to be set by User
         self.dat_3d = np.zeros((10, 10, 10))  # placeholder for main data
         self.elist = []  # list of energy values
+        self.ilist = []
         self.data_dir = ''
         self.img_mask_count_dir = ''
         self.curimg = 0
+        self.curX = 0
+        self.curY = 0
