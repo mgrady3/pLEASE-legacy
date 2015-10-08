@@ -396,6 +396,11 @@ class Viewer(QtGui.QWidget):
         clearLEEMAction.triggered.connect(self.clear_LEEM_IV)
         LEEMMenu.addAction(clearLEEMAction)
 
+        popLEEMAction = QtGui.QAction('Popout I()V', self)
+        popLEEMAction.setShortcut('Ctrl+Alt+P')
+        popLEEMAction.triggered.connect(self.popout_LEEM_IV)
+        LEEMMenu.addAction(popLEEMAction)
+
 
 
         # Settings Menu
@@ -1194,14 +1199,34 @@ class Viewer(QtGui.QWidget):
             os.mkdir(self.leemdat.img_mask_count_dir)
         print('Setting LEEM Data directory to {}'.format(self.leemdat.data_dir))
 
-        entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Height", "Enter Positive Int >= 2", value=544, min=2, max=2000)
+        # Use manual dialog creation to set size and text properly
+        id = QtGui.QInputDialog(self)
+        id.setInputMode(QtGui.QInputDialog.IntInput)
+        id.setLabelText("Enter Positive Integer >= 2")
+        id.setWindowTitle("Enter Image Height in Pixels")
+        id.setIntMinimum(2)
+        id.setIntMaximum(10000)
+        id.resize(500, 400)
+        ok = id.exec_()
+        entry = id.intValue()
+
         if not ok:
             print("Loading Raw Data Canceled ...")
             return
         else:
             self.leemdat.ht = entry
 
-        entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Width", "Enter Positive Int >= 2", value=576, min=2, max=2000)
+        # Use manual dialog creation to set size and text properly
+        id = QtGui.QInputDialog(self)
+        id.setInputMode(QtGui.QInputDialog.IntInput)
+        id.setLabelText("Enter Positive Integer >= 2")
+        id.setWindowTitle("Enter Image Width in Pixels")
+        id.setIntMinimum(2)
+        id.setIntMaximum(10000)
+        id.resize(500, 400)
+        ok = id.exec_()
+        entry = id.intValue()
+
         if not ok:
             print("Loading Raw Data Canceled ...")
             return
@@ -1348,10 +1373,62 @@ class Viewer(QtGui.QWidget):
         self.LEEM_IV_ax.plot(self.leemdat.elist, self.leemdat.ilist, color=self.colors[self.click_count-1])
         self.leem_IV_list.append((self.leemdat.elist, self.leemdat.ilist,
                                   self.leemdat.curX, self.leemdat.curY,
-                                  self.click_count)) # color stored by click count index
+                                  self.click_count-1)) # color stored by click count index
         self.leem_IV_mask.append(0)
         self.init_Plot_Axes()
         self.LEEM_canvas.draw()
+
+    def popout_LEEM_IV(self):
+        """
+
+        :return:
+        """
+        if not self.hasplotted_leem or len(self.leem_IV_list) == 0:
+            return
+
+        self.pop_window_lm = QtGui.QWidget()
+        self.pop_window_lm.setMinimumHeight(0.35*self.max_height)
+        self.pop_window_lm.setMinimumWidth(0.45*self.max_width)
+        self.nfig_lm, self.nplot_ax_lm = plt.subplots(1,1, figsize=(8,6), dpi=100)
+        self.ncanvas_lm = FigureCanvas(self.nfig_lm)
+        self.ncanvas_lm.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Expanding)
+        self.popsmoothbut = QtGui.QPushButton("Smooth I(V)")
+        self.popsmoothbut.clicked.connect(lambda: self.smooth_current_IV)
+        self.nmpl_toolbar_lm = NavigationToolbar(self.ncanvas_lm, self.pop_window_lm)
+
+        nvbox = QtGui.QVBoxLayout()
+        nvbox.addWidget(self.ncanvas_lm)
+        nhbox = QtGui.QHBoxLayout()
+        nhbox.addWidget(self.nmpl_toolbar_lm)
+        nhbox.addStretch(1)
+        nhbox.addWidget(self.popsmoothbut)
+        nvbox.addLayout(nhbox)
+        self.pop_window_lm.setLayout(nvbox)
+
+        for tup in self.leem_IV_list:
+            self.nplot_ax_lm.plot(tup[0], tup[1], color=self.colors[tup[4]], linewidth=2.0)
+        rect = self.nfig_lm.patch
+        if self._Style:
+            rect.set_facecolor((68/255., 67/255., 67/255.))
+            self.nplot_ax_lm.set_title("LEEM I(V)", fontsize=12, color='w')
+            self.nplot_ax_lm.set_ylabel("Intensity (arb. units)", fontsize=12, color='w')
+            self.nplot_ax_lm.set_xlabel("Energy (eV)", fontsize=12, color='w')
+            self.nplot_ax_lm.xaxis.label.set_color('w')
+            self.nplot_ax_lm.yaxis.label.set_color('w')
+            self.nplot_ax_lm.tick_params(labelcolor='w', top='off', right='off')
+
+        else:
+            rect.set_facecolor((189/255., 195/255., 199/255.))
+            self.nplot_ax_lm.set_title("LEEM I(V)", fontsize=12)
+            self.nplot_ax_lm.set_ylabel("Intensity (arb. units)", fontsize=12)
+            self.nplot_ax_lm.set_xlabel("Energy (eV)", fontsize=12)
+        self.ncanvas_lm.draw()
+        self.pop_window_lm.show()
+
+    def smooth_current_IV(self):
+        pass
+
 
 
 
