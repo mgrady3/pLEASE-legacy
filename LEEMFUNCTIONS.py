@@ -187,7 +187,7 @@ def smooth(inpt, window_len, window_type):
         return
 
     # window_type = 'hanning'
-    if not window_type in ['hanning', 'hamming', 'bartlett', 'blackman']:
+    if not window_type in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         print('Error - Invalid window_type')
         return
 
@@ -197,11 +197,11 @@ def smooth(inpt, window_len, window_type):
     # w is the window matrix based on pre-defined window functions or unit matrix for flat window
 
     s = np.r_[inpt[window_len-1:0:-1], inpt, inpt[-1:-window_len:-1]]
-    w = eval('np.'+window_type+'(window_len)')
-    # if window_type == 'flat':  # moving average
-    #    w = np.ones(window_len, 'd')
-    # else:
-    #    w = eval('np.'+window_type+'(window_len)')
+    # w = eval('np.'+window_type+'(window_len)')
+    if window_type == 'flat':  # moving average
+        w = np.ones(window_len, 'd')
+    else:
+        w = eval('np.'+window_type+'(window_len)')
 
     # create smoothed data via numpy.convolve using the normalized input window matrix
     otpt = np.convolve(w/w.sum(), s, mode='valid')

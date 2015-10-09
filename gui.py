@@ -391,7 +391,7 @@ class Viewer(QtGui.QWidget):
         LEEMMenu.addAction(loadLEEMAction)
 
         clearLEEMAction = QtGui.QAction('Clear Current I(V)', self)
-        clearLEEMAction.setShortcut('Ctrl+Alt+C')
+        clearLEEMAction.setShortcut('Alt+C')
         clearLEEMAction.setStatusTip('Clear Current Selected I(V)')
         clearLEEMAction.triggered.connect(self.clear_LEEM_IV)
         LEEMMenu.addAction(clearLEEMAction)
@@ -1206,7 +1206,7 @@ class Viewer(QtGui.QWidget):
         id.setWindowTitle("Enter Image Height in Pixels")
         id.setIntMinimum(2)
         id.setIntMaximum(10000)
-        id.resize(500, 400)
+        id.resize(400, 300)
         ok = id.exec_()
         entry = id.intValue()
 
@@ -1223,7 +1223,7 @@ class Viewer(QtGui.QWidget):
         id.setWindowTitle("Enter Image Width in Pixels")
         id.setIntMinimum(2)
         id.setIntMaximum(10000)
-        id.resize(500, 400)
+        id.resize(400, 300)
         ok = id.exec_()
         entry = id.intValue()
 
@@ -1394,7 +1394,7 @@ class Viewer(QtGui.QWidget):
         self.ncanvas_lm.setSizePolicy(QtGui.QSizePolicy.Expanding,
                                        QtGui.QSizePolicy.Expanding)
         self.popsmoothbut = QtGui.QPushButton("Smooth I(V)")
-        self.popsmoothbut.clicked.connect(lambda: self.smooth_current_IV)
+        self.popsmoothbut.clicked.connect(lambda: self.smooth_current_IV(self.nplot_ax_lm, self.ncanvas_lm))
         self.nmpl_toolbar_lm = NavigationToolbar(self.ncanvas_lm, self.pop_window_lm)
 
         nvbox = QtGui.QVBoxLayout()
@@ -1407,7 +1407,7 @@ class Viewer(QtGui.QWidget):
         self.pop_window_lm.setLayout(nvbox)
 
         for tup in self.leem_IV_list:
-            self.nplot_ax_lm.plot(tup[0], tup[1], color=self.colors[tup[4]], linewidth=2.0)
+            self.nplot_ax_lm.plot(tup[0], tup[1], color=self.colors[tup[4]])
         rect = self.nfig_lm.patch
         if self._Style:
             rect.set_facecolor((68/255., 67/255., 67/255.))
@@ -1426,9 +1426,63 @@ class Viewer(QtGui.QWidget):
         self.ncanvas_lm.draw()
         self.pop_window_lm.show()
 
-    def smooth_current_IV(self):
-        pass
+    def smooth_current_IV(self, ax, can):
+        """
+        Apply data smoothing algorithm to currently plotted I(V) curves
+        :param ax: mpl axis element which ill be plotting data
+        :param can: canvas containing ax which needs to call draw() to update the image
+        :return none:
+        """
+        if not self.hasplotted_leem or len(self.leem_IV_list) == 0:
+            return
+        ax.clear()
 
+        # Query user for window type
+        msg = '''Please enter the window type to use for data smoothing:\n
+        Acceptable entries are flat, hanning, hamming, bartlett, or blackman
+              '''
+        entry, ok = QtGui.QInputDialog.getText(self, "Choose Window Type", msg)
+        if not ok:
+            return
+        else:
+            if entry not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+                #print '''Invalid Entry - try again: acceptable entries are\n
+                #      flat, hanning, hamming, bartlett, or blackman '''
+                reply = QtGui.QMessageBox.question(self, 'Invalid Entry:', 'Invalid Entry for Smoothing Window:\nTry again?',
+                                                   QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
+                                                   QtGui.QMessageBox.No)
+                if reply == QtGui.QMessageBox.Yes:
+                    self.smooth_curIV(ax, can)
+                    return
+
+                else: return
+            else:
+                self.smooth_window_type = str(entry)
+
+        # Query user for window length
+        entry, ok = QtGui.QInputDialog.getInt(self, "Choose Window Length", "Enter Positive Even Int >= 4", value=14, min=4, max=40)
+        if not ok:
+            return
+        else:
+            if not (entry % 2 == 0) and (entry >= 4):
+                print 'Window_Length entry, %i, was odd - Using next even integer %i' % (entry, entry + 1)
+                entry += 1
+                self.smooth_window_len = int(entry)
+
+            else:
+                self.smooth_window_len = int(entry)
+
+        for idx, tup in enumerate(self.leem_IV_list):
+            ax.plot(tup[0], LF.smooth(tup[1], self.smooth_window_len, self.smooth_window_type), color=self.colors[tup[4]])
+        if self._Style:
+            ax.set_title("LEEM I(V)-Smoothed", fontsize=16, color='w')
+            ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='w')
+            ax.set_xlabel("Energy (eV)", fontsize=16, color='w')
+        else:
+            ax.set_title("LEEM I(V)-Smoothed", fontsize=16)
+            ax.set_ylabel("Intensity (arb. units)", fontsize=16)
+            ax.set_xlabel("Energy (eV)", fontsize=16)
+        can.draw()
 
 
 
