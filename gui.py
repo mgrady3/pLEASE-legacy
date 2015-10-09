@@ -313,7 +313,37 @@ class Viewer(QtGui.QWidget):
 
         :return none:
         """
-        pass
+        config_Tab_groupbox = QtGui.QGroupBox()
+        config_Tab_bottom_button_Hbox = QtGui.QHBoxLayout()
+        config_Tab_group_button_box = QtGui.QHBoxLayout()
+        config_Tab_Vbox = QtGui.QVBoxLayout()
+
+        self.quitbut = QtGui.QPushButton('Quit', self)
+        self.quitbut.clicked.connect(self.Quit)
+
+        self.set_energy__leem_but = QtGui.QPushButton('Set Energy LEEM', self)
+        self.set_energy__leem_but.clicked.connect(lambda: self.set_energy_parameters('leem'))
+
+        self.set_energy__leed_but = QtGui.QPushButton('Set Energy LEED', self)
+        self.set_energy__leed_but.clicked.connect(lambda: self.set_energy_parameters('leed'))
+
+        buts = [self.set_energy__leem_but, self.set_energy__leed_but]
+
+        for b in buts:
+            config_Tab_group_button_box.addWidget(b)
+        config_Tab_groupbox.setStyleSheet(self.styles['group'])
+        config_Tab_groupbox.setLayout(config_Tab_group_button_box)
+
+        config_Tab_Vbox.addWidget(config_Tab_groupbox)
+        config_Tab_Vbox.addStretch(1)
+        config_Tab_bottom_button_Hbox.addStretch(1)
+        config_Tab_bottom_button_Hbox.addWidget(self.quitbut)
+        config_Tab_Vbox.addLayout(config_Tab_bottom_button_Hbox)
+        self.Config_Tab.setLayout(config_Tab_Vbox)
+
+
+
+
 
     def init_menu(self):
         """
