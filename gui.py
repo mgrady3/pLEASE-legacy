@@ -14,6 +14,7 @@ import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 import styles as pls
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -52,8 +53,8 @@ class Viewer(QtGui.QWidget):
         self.already_catching_output = False  # flag for re-routing sys.stdout
 
         # begin GUI setup
-        self.init_UI()
         self.init_Data()
+        self.init_UI()
         self.init_Plot_Axes()
         self.init_Img_Axes()
 
@@ -329,8 +330,10 @@ class Viewer(QtGui.QWidget):
 
         buts = [self.set_energy__leem_but, self.set_energy__leed_but]
 
+        config_Tab_group_button_box.addStretch(1)
         for b in buts:
             config_Tab_group_button_box.addWidget(b)
+            config_Tab_group_button_box.addStretch(1)
         config_Tab_groupbox.setStyleSheet(self.styles['group'])
         config_Tab_groupbox.setLayout(config_Tab_group_button_box)
 
@@ -340,10 +343,6 @@ class Viewer(QtGui.QWidget):
         config_Tab_bottom_button_Hbox.addWidget(self.quitbut)
         config_Tab_Vbox.addLayout(config_Tab_bottom_button_Hbox)
         self.Config_Tab.setLayout(config_Tab_Vbox)
-
-
-
-
 
     def init_menu(self):
         """
@@ -359,10 +358,10 @@ class Viewer(QtGui.QWidget):
         # File Menu
         fileMenu = self.menubar.addMenu('File')
 
-        outputAction = QtGui.QAction('Output to Text', self)
-        outputAction.setShortcut('Ctrl+O')
-        outputAction.triggered.connect(self.output_data)
-        fileMenu.addAction(outputAction)
+        outputLEEMAction = QtGui.QAction('Output LEEM to Text', self)
+        outputLEEMAction.setShortcut('Ctrl+O')
+        outputLEEMAction.triggered.connect(lambda: self.output_to_text(data='LEEM', smth=self.smooth_file_output))
+        fileMenu.addAction(outputLEEMAction)
 
         exitAction = QtGui.QAction('Quit', self)
         exitAction.setShortcut('Ctrl+Q')
@@ -416,20 +415,25 @@ class Viewer(QtGui.QWidget):
         # LEEM Menu
         LEEMMenu = self.menubar.addMenu('LEEM Actions')
         loadLEEMAction = QtGui.QAction('Load LEEM Data', self)
-        loadLEEMAction.setShortcut('Ctrl+M')
+        loadLEEMAction.setShortcut('Meta+M')
         loadLEEMAction.triggered.connect(self.load_LEEM)
         LEEMMenu.addAction(loadLEEMAction)
 
         clearLEEMAction = QtGui.QAction('Clear Current I(V)', self)
-        clearLEEMAction.setShortcut('Alt+C')
+        clearLEEMAction.setShortcut('Meta+C')
         clearLEEMAction.setStatusTip('Clear Current Selected I(V)')
         clearLEEMAction.triggered.connect(self.clear_LEEM_IV)
         LEEMMenu.addAction(clearLEEMAction)
 
         popLEEMAction = QtGui.QAction('Popout I()V', self)
-        popLEEMAction.setShortcut('Ctrl+Alt+P')
+        popLEEMAction.setShortcut('Meta+P')
         popLEEMAction.triggered.connect(self.popout_LEEM_IV)
         LEEMMenu.addAction(popLEEMAction)
+
+        smoothLEEMAction = QtGui.QAction('Smooth Current I(V)', self)
+        smoothLEEMAction.setShortcut('Meta+S')
+        smoothLEEMAction.triggered.connect(lambda: self.smooth_current_IV(ax=self.LEEM_IV_ax, can=self.LEEM_canvas))
+        LEEMMenu.addAction(smoothLEEMAction)
 
 
 
@@ -1053,14 +1057,6 @@ class Viewer(QtGui.QWidget):
         for w in windows:
             w.show()
 
-    def output_data(self):
-        """
-        Helper function to call output_to_text with proper data set selected
-        :return none:
-        """
-        # TODO: implement query for selection of LEED or LEEM data to output
-        pass
-
     def output_to_text(self, data=None, smth=False):
         """
         Write out data to text files in columar format
@@ -1075,6 +1071,22 @@ class Viewer(QtGui.QWidget):
         multi_output = False  # boolean flag for whether or not outputting multiple files is needed
         subtype = None  # type check for possible sub-containers in main data container
 
+        if data == 'LEEM':
+            # handle LEEM output
+            if not self.hasplotted_leem:
+                return
+            if not os.path.exists(os.path.join(self.leemdat.data_dir, 'ivout')):
+                os.path.mkdir(os.path.join(self.leemdat.data_dir, 'ivout'))
+            leem_out_dir = os.path.join(self.leemdat.data_dir, 'ivout')
+            for tup in self.leem_IV_list:
+                outfile = os.path.join(leem_out_dir, str(tup[2])+'-'+str(tup[3])+'.txt')
+                dicout = {'I': tup[1], 'E': tup[0]}
+                outdf = pd.DataFrame(dicout)
+                print('Writing Output File: {} ...'.format(outfile))
+                outdf.to_csv(outfile, sep='\t', index=False)
+            return
+
+        # else - handle LEED output
         if type(data) is list:
             # check for sub-containers
             if type(data[0]) is list:
