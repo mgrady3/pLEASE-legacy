@@ -8,6 +8,7 @@ Maxwell Grady 2015
 import data
 import os
 import terminal
+import time
 import sys
 import LEEMFUNCTIONS as LF
 import matplotlib.cm as cm
@@ -15,11 +16,14 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import progressbar as pb
 import seaborn as sns
 import styles as pls
+from matplotlib import colors as clrs
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt4 import QtGui, QtCore
+from scipy.stats import linregress as lreg
 
 
 class Viewer(QtGui.QWidget):
@@ -89,7 +93,8 @@ class Viewer(QtGui.QWidget):
         self.has_loaded_data = False
         self.hasplotted_leem = False
         self.hasplotted_leed = False
-        self.hasdisplayed = False
+        self.hasdisplayed_leed = False
+        self.hasdisplayed_leem = False
         self.border_color = (58/255., 83/255., 155/255.)  # unused
 
         self.rect_count = 0
@@ -124,6 +129,10 @@ class Viewer(QtGui.QWidget):
         self.leem_IV_mask = []
         self.click_count = 0
         self.max_leem_click = 7
+        self.count_energy_range = '' # string of energy range used in plot labels
+
+        self.num_one_min = 0
+        self.hascountedminima = False
 
 
     def init_Plot_Axes(self):
@@ -435,6 +444,11 @@ class Viewer(QtGui.QWidget):
         smoothLEEMAction.triggered.connect(lambda: self.smooth_current_IV(ax=self.LEEM_IV_ax, can=self.LEEM_canvas))
         LEEMMenu.addAction(smoothLEEMAction)
 
+        countAction = QtGui.QAction('Count Layers', self)
+        countAction.setShortcut('Meta+L')
+        countAction.triggered.connect(self.count_layers)
+        LEEMMenu.addAction(countAction)
+
 
 
         # Settings Menu
@@ -622,6 +636,7 @@ class Viewer(QtGui.QWidget):
             print('New Energy settings canceled ...')
             return
         step_e = float(entry)
+        self.leemdat.e_step = step_e
         energy_list = [start_e]
         while energy_list[-1] != final_e:
             energy_list.append(round(energy_list[-1]+step_e, 2))
@@ -1289,7 +1304,7 @@ class Viewer(QtGui.QWidget):
         print('Data Loaded successfully: {}'.format(self.leemdat.dat_3d.shape))
         self.set_energy_parameters(dat='LEEM')
         self.format_slider()
-        self.hasdisplayed = True
+        self.hasdisplayed_leem = True
 
         if not self.has_loaded_data:
             self.update_image_slider(self.leemdat.dat_3d.shape[2]-1)
@@ -1366,7 +1381,7 @@ class Viewer(QtGui.QWidget):
         :param event:
         :return none:
         """
-        if not self.hasdisplayed:
+        if not self.hasdisplayed_leem:
             return
 
         if event.inaxes == self.LEEM_ax:
@@ -1526,6 +1541,160 @@ class Viewer(QtGui.QWidget):
             ax.set_xlabel("Energy (eV)", fontsize=16)
         can.draw()
 
+    def count_layers(self):
+        """
+        Attempt to count the number of minima for each I(V) curve by iterating over all
+        pixels in the topmost image in the most efficient way using np.nditer()
+
+        This method iterates over the 3d numpy array in stored memory order
+
+        Each I(V) curve is first smoothed with a boxcar window convolution in order
+        to remove noise in the data.
+
+        The main data array is sub-set for each curve extraction to only pull the data
+        in the relevant energy range so as to save computational time when calculating
+        numeric derivatives
+
+        :return none:
+        """
+        if not self.hasdisplayed_leem or len(self.leemdat.elist) <= 2:
+            return
+
+        reply = QtGui.QMessageBox.question(self, "Continue?", "Mapping the number of layers may take 2-10 mins. \n" +
+                                                          "Are you sure you want to continue?", QtGui.QMessageBox.Yes|
+                                                           QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+        if reply == QtGui.QMessageBox.No:
+            return
+
+        # SKIP Loading PRE-Computed Image Mask for now
+
+        # default values for energy window
+        def_min_e = 0
+        def_max_e = 5.1
+
+        # query user to set minimum energy
+        min_e, ok = QtGui.QInputDialog.getDouble(self,"Set Minimum Energy", "Input a float value for Min Energy greater or equal to 0.",
+                                             0, 0, 10, 1)
+        if not ok:
+            min_e = def_min_e  # use default if input was canceled
+
+        # query and set max energy
+        max_e, ok = QtGui.QInputDialog.getDouble(self,"Set Maximum Energy", "Input a float value for Max Energy less than or equal to 15.",
+                                             0, 0, 10, 1)
+        if not ok:
+            max_e = def_max_e  # use default if input was canceled
+
+        min_index = self.leemdat.elist.index(min_e)
+        max_index = self.leemdat.elist.index(max_e)
+
+        # string of energy range used in plot labels
+        self.count_energy_range = '[' + str(min_e)+', '+str(max_e - self.leemdat.e_step) +']'
+        self.img_mask_count = np.zeros((self.leemdat.ht, self.leemdat.wd))
+        top_image = self.leemdat.dat_3d[0:, 0:, 0]  # topmost image in I(V) set
+        data_cut = self.leemdat.dat_3d[0:, 0:, min_index:max_index]
+        ecut = self.leemdat.elist[min_index:max_index]
+
+        num_flat = 0  # used for testing purposes
+        num_non_flat = 0  # used for testing purposes
+        flat_coords = []  # used for testing purposes
+        self.num_one_min = 0  # reset count of single minima curves
+        self.hascountedminima = True
+
+        # BEGIN CALCULATION
+        # prog = pb.ProgressBar(fd=sys.stdout, maxval=self.leemdat.ht*self.leemdat.wd).start()
+        # pixnum = 0
+        print('Starting I(V) analysis ...')
+        t_start = time.time()
+        it = np.nditer(top_image, flags=['multi_index'])  # numpy iterator
+        while not it.finished:
+            print('\n')
+            r = it.multi_index[0]  # row index
+            c = it.multi_index[1]  # column index
+            IV = list(data_cut[r, c, 0:])  # I(V) data set for the current pixel
+            # Smooth the dataset using the convolution method
+            # apply a flat window of 10*e_step length in energy units
+            SIV = LF.smooth(IV, 10, 'flat')
+
+            # check if curve is approximately flat
+            check = self.check_flat(ecut, SIV)
+            if check[0]:
+                # curve is flat
+                num_flat += 1
+                # manually set count value to 0
+                self.img_mask_count[r,c] = 0
+                if num_flat%1000 == 0:
+                    flat_coords.append((r,c))
+            else:
+                # curve is not flat
+                self.img_mask_count[r,c] = check[1]
+                num_non_flat += 1
+            # pixnum += 1
+            # prog.update(value=pixnum)
+            it.iternext()
+        t_end = time.time()
+        print('Done counting minima - total time elapsed = {}  minutes'.format(round(round((t_end - t_start), 2)/60.0, 1)))
+
+        self.discrete_imshow(self.img_mask_count, cmap=cm.Spectral)
+
+    def check_flat(self, xd, yd):
+        """
+        NOTE: Consider moving this function to data.py in the LeemData class
+        :param xd: array-like set of x values
+        :param yd: array-like set of y values
+        :return: tuple of two elements: (boolean for curve is flat?, integer # of minima found)
+        """
+        mins = LF.count_minima_locations(xd, yd)
+        if mins[0] >= 2:
+            # two or more local minima found - begin linear regression analysis
+            lr = lreg(xd[mins[1][0]:mins[1][-1]], yd[mins[1][0]:mins[1][-1]])
+        else:
+            # not enough minima found to compute linear regression
+            lr = (0,0,0,0,0)
+            self.num_one_min += 1
+
+        slope = lr[0]  # currently un-used parameter
+        cod = lr[2]**2  # coefficient of determination for linear fit
+        isflat = False
+        if cod >= self.leemdat.cod_thresh:
+            isflat = True
+        return (isflat, mins[0])
+
+    def discrete_imshow(self, data, cmap, title=None):
+        """
+        Create a color bar with discrete integer values with a scale set
+        according to the max/min in your dta set
+
+        courtesy of user2559070 @ stackoverflow.com
+        :return none:
+        """
+        if title is None:
+            # do this later
+            pass
+        self.count_window = QtGui.QWidget()
+        self.cfig, self.cplot_ax = plt.subplots(1,1, figsize=(8,8), dpi=100)
+        self.ccanvas = FigureCanvas(self.cfig)
+        self.ccanvas.setParent(self.count_window)
+        self.ccanvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Expanding)
+        self.cmpl_toolbar = NavigationToolbar(self.ccanvas, self.count_window)
+
+        cvbox = QtGui.QVBoxLayout()
+        cvbox.addWidget(self.ccanvas)
+        cvbox.addWidget(self.cmpl_toolbar)
+        self.count_window.setLayout(cvbox)
+        # Make Plot
+        colors = cmap(np.linspace(0, 1, np.max(data) - np.min(data) + 1))
+        cmap = clrs.ListedColormap(colors)
+
+        img = self.cplot_ax.imshow(data, interpolation='none', cmap=cmap)
+        plt.grid(False)
+        ticks = np.arange(np.min(data), np.max(data) + 1)
+        tickpos = np.linspace(ticks[0]+0.5, ticks[-1]-0.5, len(ticks))
+        ax = plt.colorbar(img, ticks=tickpos)
+        ax.set_ticklabels(ticks)
+        plt.axis('off')
+        self.cplot_ax.set_title('LEEM-I(V) Color Coded to # of minima Counted')
+        self.count_window.show()
 
 
 

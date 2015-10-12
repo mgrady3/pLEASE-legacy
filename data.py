@@ -96,6 +96,7 @@ class LeemData(object):
         self.dat_3d = np.zeros((10, 10, 10))  # placeholder for main data
         self.elist = []  # list of energy values
         self.ilist = []
+        self.e_step = 0
         # Directories and Image index
         self.data_dir = ''
         self.img_mask_count_dir = ''
@@ -103,3 +104,5 @@ class LeemData(object):
         # Coordinates for I(V) data
         self.curX = 0
         self.curY = 0
+        # Count Minima Parameters
+        self.cod_thresh = 0.45

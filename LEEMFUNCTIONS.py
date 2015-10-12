@@ -44,12 +44,12 @@ def process_LEEM_Data(dirname, ht=0, wd=0):
     :return dat_arr: 3d numpy array
     """
     print('Processing Data ...')
-    progress = pb.ProgressBar(fd=sys.stdout)
+    # progress = pb.ProgressBar(fd=sys.stdout)
     arr_list = []
     files = [name for name in os.listdir(dirname) if name.endswith('.dat')]
     print('First file is {}.'.format(files[0]))
     flag = True
-    for fl in progress(files):
+    for fl in files:
         with open(os.path.join(dirname, fl), 'rb') as f:
             # dynamically calculate file header length
             if ht == 0 and wd == 0:
