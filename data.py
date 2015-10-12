@@ -16,7 +16,8 @@ import LEEMFUNCTIONS as LF
 
 class LeedData(object):
     """
-
+    Generic object to hold LEED Data and relevant variables
+    Data loading methods
     """
 
     def __init__(self, br=20):
@@ -29,6 +30,15 @@ class LeedData(object):
         self.box_rad = br  # default value is 20 yielding a 40x40 rectangular integration window
 
     def load_LEED_PNG(self, dirname):
+        """
+        Load LEED-I(V) image files into numpy array
+        This function uses PIL to parse the png files
+        This is slower than loading raw binary data due to the overhead in parsing
+        image files, however, it is faster than loading TIFF files
+
+        :param dirname: path to directory containing png files
+        :return: 3d numpy array
+        """
         # maybe not needed
         prev_dir = self.data_dir
 
@@ -39,7 +49,8 @@ class LeedData(object):
         Load RAW binary files into 3d numpy array
         This is the fastest method for loading data
         This should only be called from load_LEED_Data()
-        :return none:
+
+        :return: 3d numpy array
         """
         # maybe not needed
         prev_dir = self.data_dir
@@ -60,7 +71,9 @@ class LeedData(object):
         This is the slowest data loading method
         There is much overhead in processing tiff image files
         This function should only be called from load_LEED_Data()
-        :return data: 3d numpy array where 3rd axis corresponds to Energy via self.elist
+
+        :param dirname: path to directory containing tiff files
+        :return: 3d numpy array where 3rd axis corresponds to Energy via self.elist
         """
         # maybe not needed
         prev_dir = self.data_dir
@@ -70,7 +83,9 @@ class LeedData(object):
 
 class LeemData(object):
     """
-
+    Generic object to hold LEEM data and relevant variables
+    LEEM loading functions are already contained in LEEMFUNCTIONs.py
+    A this point I will not be porting them into the LeemData class
     """
     def __init__(self):
         # Image Parameters
