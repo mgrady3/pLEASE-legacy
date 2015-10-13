@@ -1419,7 +1419,7 @@ class Viewer(QtGui.QWidget):
         self.leemdat.curY = int(event.ydata)
         self.leemdat.ilist=[]
 
-
+        # swap X and Y for R, C format
         for i in self.leemdat.dat_3d[self.leemdat.curY,
                                     self.leemdat.curX, :]:
             self.leemdat.ilist.append(i)
