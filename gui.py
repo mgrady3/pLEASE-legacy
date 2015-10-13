@@ -1419,8 +1419,9 @@ class Viewer(QtGui.QWidget):
         self.leemdat.curY = int(event.ydata)
         self.leemdat.ilist=[]
 
-        for i in self.leemdat.dat_3d[self.leemdat.curX,
-                                    self.leemdat.curY, :]:
+
+        for i in self.leemdat.dat_3d[self.leemdat.curY,
+                                    self.leemdat.curX, :]:
             self.leemdat.ilist.append(i)
 
         if len(self.leemdat.elist) != len(self.leemdat.ilist):
