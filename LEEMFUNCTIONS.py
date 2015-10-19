@@ -167,7 +167,7 @@ def count_minima_locations(e_cut, smth_iv):
     return (count, min_locations)
 
 
-def smooth(inpt, window_len, window_type):
+def smooth(inpt, window_len=10, window_type='flat'):
     """
     Smoothing function based on Scipy Cookbook recipe for data smoothing
     Uses predefined window function (selectable) to smooth a 1D data set

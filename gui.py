@@ -14,11 +14,13 @@ import LEEMFUNCTIONS as LF
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+import multiprocessing as mp
 import numpy as np
 import pandas as pd
 import progressbar as pb
 import seaborn as sns
 import styles as pls
+from matplotlib import colorbar
 from matplotlib import colors as clrs
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -133,7 +135,6 @@ class Viewer(QtGui.QWidget):
 
         self.num_one_min = 0
         self.hascountedminima = False
-
 
     def init_Plot_Axes(self):
         """
@@ -446,7 +447,7 @@ class Viewer(QtGui.QWidget):
 
         countAction = QtGui.QAction('Count Layers', self)
         countAction.setShortcut('Meta+L')
-        countAction.triggered.connect(self.count_layers)
+        countAction.triggered.connect(self.count_helper)
         LEEMMenu.addAction(countAction)
 
 
@@ -1542,7 +1543,7 @@ class Viewer(QtGui.QWidget):
             ax.set_xlabel("Energy (eV)", fontsize=16)
         can.draw()
 
-    def count_layers(self):
+    def count_layers_old(self):
         """
         Attempt to count the number of minima for each I(V) curve by iterating over all
         pixels in the topmost image in the most efficient way using np.nditer()
@@ -1637,7 +1638,7 @@ class Viewer(QtGui.QWidget):
 
         self.discrete_imshow(self.img_mask_count, cmap=cm.Spectral)
 
-    def check_flat(self, xd, yd):
+    def check_flat_old(self, xd, yd):
         """
         NOTE: Consider moving this function to data.py in the LeemData class
         :param xd: array-like set of x values
@@ -1660,7 +1661,133 @@ class Viewer(QtGui.QWidget):
             isflat = True
         return (isflat, mins[0])
 
-    def discrete_imshow(self, data, cmap, title=None):
+    @staticmethod
+    def count_mins(data):
+        num = 0
+        locs = []
+        sgn = np.sign(data[0])
+        for point in data:
+            if np.sign(point) != sgn and np.sign(point) == 1:
+                num += 1
+                locs.append(list(data).index(point))
+            sgn = np.sign(point)
+        if num >= 2:
+            return (num, locs[0], locs[-1])
+        else:
+            # num min = 0 or 1
+            # dummy indicies for location of minima
+            return (num,  -1,  -1)
+
+    def check_flat(self, data, thresh=5):
+        '''
+
+        :param data: 1d numpy array containing smoothed dI/dE data
+        :param thresh: threshold value for
+        :return:
+        '''
+
+        mins = self.count_mins(data)
+        if mins[0] >= 2:
+            data_subset = data[mins[1]:mins[2]]
+            data_var = np.var(data_subset)
+            if data_var <= thresh:
+                return 0
+            else:
+                return mins[0]
+        else:
+            return mins[0]
+
+    def count_helper(self):
+        def_min_e = 0
+        def_max_e = 5.1
+
+        # query user to set minimum energy
+        min_e, ok = QtGui.QInputDialog.getDouble(self,"Set Minimum Energy", "Input a float value for Min Energy greater or equal to 0.",
+                                             0, 0, 10, 1)
+        if not ok:
+            min_e = def_min_e  # use default if input was canceled
+
+        # query and set max energy
+        max_e, ok = QtGui.QInputDialog.getDouble(self,"Set Maximum Energy", "Input a float value for Max Energy less than or equal to 15.",
+                                             0, 0, 10, 1)
+        if not ok:
+            max_e = def_max_e  # use default if input was canceled
+
+        min_index = self.leemdat.elist.index(min_e)
+        max_index = self.leemdat.elist.index(max_e)
+
+
+        self.count_layers_new(data=self.leemdat.dat_3d[:, :, min_index:max_index],
+                              ecut=self.leemdat.elist[min_index:max_index])
+
+
+    def count_layers_new(self, data, ecut):
+        '''
+
+        :param data: 3d numpy array of smooth data cut to specific data range
+        :param ecut: 1d list of energy values cut to specific data range
+        :return none:
+        '''
+
+        # calculate the derivative of input data
+        diff_data = np.diff(data, axis=2) / np.diff(ecut)
+
+        # smooth the derivative data
+        smooth_diff_data = np.apply_along_axis(LF.smooth, 2, diff_data)
+
+        # process pool
+        pool = mp.Pool(2*mp.cpu_count())
+
+        # create list of 1-d arrays as input to count_mins()
+        ins = [smooth_diff_data[r,c, :] for r in range(data.shape[0])
+                                        for c in range(data.shape[1])]
+        # list of outputs from check_flat using pool.map()
+        outs = pool.map(self.check_flat, ins)
+
+        # convert back to np array and reshape
+        outs = np.array(outs).reshape((data.shape[0], data.shape[1]))
+        self.discrete_imshow(outs)
+
+    def discrete_imshow(self, data, clrmp=cm.Spectral):
+        '''
+
+        :param data: 2d numpy array to be plotted
+        :param clrmp: mpl color map
+        :return none:
+        '''
+
+        max_val = np.max(data)
+        min_val = np.min(data)
+        cmap_list = [clrmp(i) for i in range(clrmp.N)]
+        cmap_list[0] = (0,0,0, 1.0)  # custom 0 value color
+        cmap = clrmp.from_list('Custom Colors', cmap_list, clrmp.N)
+
+        bounds = np.linspace(min_val, max_val, (max_val - min_val)+1)
+        norm = clrs.BoundaryNorm(bounds, cmap.N)
+
+        self.count_window = QtGui.QWidget()
+        self.cfig, self.cplot_ax = plt.subplots(1,1, figsize=(8,8), dpi=100)
+        self.ccanvas = FigureCanvas(self.cfig)
+        self.ccanvas.setParent(self.count_window)
+        self.ccanvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Expanding)
+        self.cmpl_toolbar = NavigationToolbar(self.ccanvas, self.count_window)
+
+        cvbox = QtGui.QVBoxLayout()
+        cvbox.addWidget(self.ccanvas)
+        cvbox.addWidget(self.cmpl_toolbar)
+        self.count_window.setLayout(cvbox)
+
+        self.cplot_ax.imshow(data, interpolation='none', cmap=cmap)
+        ax2 = self.cfig.add_axes([0.95, 0.1, 0.03, 0.8])
+        cb = colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,
+        spacing='proportional', ticks=bounds, boundaries=bounds, format='%1i')
+
+        self.count_window.show()
+
+
+
+    def old_discrete_imshow(self, data, cmap, title=None):
         """
         Create a color bar with discrete integer values with a scale set
         according to the max/min in your dta set

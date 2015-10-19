@@ -33,6 +33,10 @@ class CustomStream(QtCore.QObject):
         # should not have a problem with this type-casting
         self.message.emit(str(message))  # manually cast in-case of incorrect input
 
+    def flush(self):
+        # fix to allow usage with multiprocessing
+        pass
+
 
 class ErrorConsole(QtGui.QWidget):
     """
