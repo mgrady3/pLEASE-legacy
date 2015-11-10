@@ -46,7 +46,7 @@ On OS X the easiest way is to creat a text file that contains only the line 'pyt
 
 Save this file as pLease.command 
 Give the file executbale previleges using chmod +x
-Now this file should be an executable script which will run the puthon code and can be placed anywhere in your computer's directory structure.
+Now this file should be an executable script which will run the python code and can be placed anywhere in your computer's directory structure. The file can be renamed anything and generally the extension can be omitted. So for example you could place the file on your Desktop and rename it to 'pLEASE-Start' Then this file can be double clicked to launch the code at any time.
 
 
 
