@@ -42,8 +42,7 @@ Once all the required packages and frameworks are installed either manually or b
 From the command line this is accomplished by executing the command 'python /path/to/main.py'  It my be necessary to instead use the 'pythonw' command: 'pythonw /path/to/main.py'
 
 Its possible to create an executable file to launch the program in a number of ways.
-On OS X the easiest way is to creat a text file that begins with '#! /usr/bin/'
-Then put the line 'python /path/to/file/main.py'
+On OS X the easiest way is to creat a text file that contains only the line 'python /path/to/file/main.py'
 
 Save this file as pLease.command 
 Give the file executbale previleges using chmod +x
