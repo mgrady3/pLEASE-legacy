@@ -43,6 +43,8 @@ I have tested speeding this process up using multiprocessing (forking the python
 
 In the future I will most likely move this data analysis routine into a separate python script which will execute on the currently loaded data set, save results to a numpy array, and output the array to file. The the main GUI can run this script as a subprocess in the background, wait for the execution to finish and then load the numpy array into a visulatizion from matplotlib.
 
+An alternate avenue towards a solution may be to explore the use of using the buil-in QtThreads to push the computation into a separate thread until complete. I will examine if this solves the GUI blocking inssue. It amy be the most streamlined approach.
+
 # Usage:
 Once all the required packages and frameworks are installed either manually or by starting with the Anaconda Python Distribution, the program can be started by executing the file main.py. 
 
