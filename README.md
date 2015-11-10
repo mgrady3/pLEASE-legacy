@@ -37,7 +37,7 @@ In future versions of this software further GUI enhancements may be made using a
 * QDarkStyle (a QSS package which sets the overall look and feel of the GUI) 
 
 # Notes:
-The functionality to count extrema within a given region of an I(V) curve is the most computationally intensive part of the analysis routines. Originally using a standard numpy iterator the process to count extrema in all I(V) curves for a data set and remap the image of the surface using this data would take anywhere from 3-10 mintues.
+The functionality to count extrema within a given region of an I(V) curve is the most computationally intensive part of the analysis routines. Originally using a standard numpy iterator the process to count extrema in all I(V) curves for a data set and remap the image of the surface using this data would take anywhere from 3-10 mintues. Mathematically the problem is trivially parallel, however, as the main python Thread is running the GUI, speeding this part of the code up using parallel execution is non-trivial.
 
 I have tested speeding this process up using multiprocessing (forking the python interpreter for a pool of worker processes) however this may still result in the GUI being locked during execution. Pathos.multiprocessing makes the computation more stable but does not fix the issue of locking the GUI.
 
