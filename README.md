@@ -36,6 +36,13 @@ In future versions of this software further GUI enhancements may be made using a
 * seaborn
 * QDarkStyle (a QSS package which sets the overall look and feel of the GUI) 
 
+# Notes:
+The functionality to count extrema within a given region of an I(V) curve is the most computationally intensive part of the analysis routines. Originally using a standard numpy iterator the process to count extrema in all I(V) curves for a data set and remap the image of the surface using this data would take anywhere from 3-10 mintues.
+
+I have tested speeding this process up using multiprocessing (forking the python interpreter for a pool of worker processes) however this may still result in the GUI being locked during execution. Pathos.multiprocessing makes the computation more stable but does not fix the issue of locking the GUI.
+
+In the future I will most likely move this data analysis routine into a separate python script which will execute on the currently loaded data set, save results to a numpy array, and output the array to file. The the main GUI can run this script as a subprocess in the background, wait for the execution to finish and then load the numpy array into a visulatizion from matplotlib.
+
 # Usage:
 Once all the required packages and frameworks are installed either manually or by starting with the Anaconda Python Distribution, the program can be started by executing the file main.py. 
 
