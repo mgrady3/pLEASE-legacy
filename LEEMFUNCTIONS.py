@@ -47,6 +47,7 @@ def process_LEEM_Data(dirname, ht=0, wd=0):
     # progress = pb.ProgressBar(fd=sys.stdout)
     arr_list = []
     files = [name for name in os.listdir(dirname) if name.endswith('.dat')]
+    files.sort()
     print('First file is {}.'.format(files[0]))
     flag = True
     for fl in files:
@@ -218,7 +219,7 @@ def crop_images(data, indices):
     :return: 3d numpy slice of original array based on given inputs
     """
     return data[indices[0][0]:indices[1][0]+1,
-               indices[0][1]:indices[1][1]+1]
+                indices[0][1]:indices[1][1]+1]
 
 
 def get_img_array(path, ext=None):
@@ -234,6 +235,7 @@ def get_img_array(path, ext=None):
     else:
         # Handle Tiff and Png with '.tif' and '.png'
         files = [name for name in os.listdir(path) if name.endswith(ext)]
+        files.sort()
         print('Number of Files found: {}'.format(len(files)))
         arr_list = []
         for fl in files:

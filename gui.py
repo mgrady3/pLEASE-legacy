@@ -5,16 +5,19 @@ analysis suite
 
 Maxwell Grady 2015
 """
+# local project imports
 import data
 import os
 import terminal
+import LEEMFUNCTIONS as LF
+
 import time
 import sys
-import LEEMFUNCTIONS as LF
+
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-import multiprocessing as mp
+import multiprocessing as mp  # this may be removed as a dependency
 import numpy as np
 import pandas as pd
 import progressbar as pb
