@@ -900,7 +900,7 @@ class Viewer(QtGui.QWidget):
 
                 if self._DEBUG:
                     print("Adjusted Sum: {}".format(img[img >= 0].sum()))
-                    print img
+                    print(img)
 
                 # calculate new total intensity of the integration window counting only positive values
                 # there should be no negatives but we discard them just incase
@@ -1538,7 +1538,7 @@ class Viewer(QtGui.QWidget):
             return
         else:
             if not (entry % 2 == 0) and (entry >= 4):
-                print 'Window_Length entry, %i, was odd - Using next even integer %i' % (entry, entry + 1)
+                print('Window_Length entry,{}, was odd - Using next even integer {}'.format((entry, entry + 1)))
                 entry += 1
                 self.smooth_window_len = int(entry)
 
