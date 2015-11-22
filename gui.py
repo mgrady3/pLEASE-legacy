@@ -1381,7 +1381,7 @@ class Viewer(QtGui.QWidget):
 
     def leem_click(self, event):
         """
-
+        # TODO: FILL IN DOCSTRINGS
         :param event:
         :return none:
         """
@@ -1389,8 +1389,7 @@ class Viewer(QtGui.QWidget):
             return
 
         if event.inaxes == self.LEEM_ax:
-            # print('We did it, Reddit!')
-            # pass
+
             self.click_count += 1
             if self.click_count <= self.max_leem_click:
                 self.circs.append(plt.Circle((event.xdata, event.ydata),
@@ -1424,9 +1423,18 @@ class Viewer(QtGui.QWidget):
         self.leemdat.ilist=[]
 
         # swap X and Y for R, C format
-        for i in self.leemdat.dat_3d[self.leemdat.curY,
-                                    self.leemdat.curX, :]:
-            self.leemdat.ilist.append(i)
+        # test easier method for generating list
+
+        # OLD:
+        # for i in self.leemdat.dat_3d[self.leemdat.curY,
+        #                            self.leemdat.curX, :]:
+        #   self.leemdat.ilist.append(i)
+
+        self.leemdat.ilist = list(self.leemdat.dat_3d[
+                                  self.leemdat.curY,
+                                  self.leemdat.curX, :
+                                  ])
+
 
         if len(self.leemdat.elist) != len(self.leemdat.ilist):
             print('Error in Energy List Size')
