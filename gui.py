@@ -1381,8 +1381,8 @@ class Viewer(QtGui.QWidget):
 
     def leem_click(self, event):
         """
-        # TODO: FILL IN DOCSTRINGS
-        :param event:
+        Handle mouse click events that originate from/in the LEEM image axis
+        :param event: mpl mouse_click_event
         :return none:
         """
         if not self.hasdisplayed_leem:
@@ -1413,11 +1413,14 @@ class Viewer(QtGui.QWidget):
 
     def plot_leem_IV(self, event):
         """
-
-        :param event:
+        Load intensity data from the nearest pixel to the mouseclick into the leemdat construct
+        Update current (X,Y) parameters
+        Plot intensity against energy
+        :param event: mpl mouse_click_event
         :return none:
         """
         self.hasplotted_leem = True
+        # Grab the nearest pixel value from matplotlib floats
         self.leemdat.curX = int(event.xdata)
         self.leemdat.curY = int(event.ydata)
         self.leemdat.ilist=[]
