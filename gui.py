@@ -593,21 +593,30 @@ class Viewer(QtGui.QWidget):
                         self.leeddat.wd = entry
 
                     self.leeddat.dat_3d = self.leeddat.load_LEED_RAW(new_dir)
-                    print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
-                    if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
-                        print('! Warning: New Data does not match current energy parameters !')
-                        print('Updating Energy parameters ...')
-                        self.set_energy_parameters(dat='LEED')
-                    # TEST THREADS
-                    self.test_thread = WorkerThread(task=None, data=self.leeddat.dat_3d, ht=600, wd=592)
-                    self.test_thread.start()
 
+                    self.thread = WorkerThread(task='LOAD_LEED', path=new_dir, imht=self.leeddat.ht, imwd=self.leeddat.wd)
 
-            self.LEED_IV_ax.set_aspect('auto')
-            self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
-            self.LEED_IV_canvas.draw()
-            self.has_loaded_data = True
+                    self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_leed_data)
+                    self.connect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
+                    self.thread.start()
+
             return
+
+    def retrieve_leed_data(self, dat):
+        self.leeddat.dat_3d = dat
+        return
+
+    def update_LEED_img(self):
+        print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
+        if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
+            print('! Warning: New Data does not match current energy parameters !')
+            print('Updating Energy parameters ...')
+            self.set_energy_parameters(dat='LEED')
+        self.LEED_IV_ax.set_aspect('auto')
+        self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
+        self.LEED_IV_canvas.draw()
+        self.has_loaded_data = True
+        return
 
     def set_energy_parameters(self, dat=None):
         """
