@@ -7,12 +7,13 @@ Maxwell Grady 2015
 """
 # local project imports
 import data
-import os
 import terminal
 import LEEMFUNCTIONS as LF
+from qthreads import WorkerThread
 
-import time
+import os
 import sys
+import time
 
 import matplotlib.cm as cm
 import matplotlib.patches as patches
@@ -597,6 +598,10 @@ class Viewer(QtGui.QWidget):
                         print('! Warning: New Data does not match current energy parameters !')
                         print('Updating Energy parameters ...')
                         self.set_energy_parameters(dat='LEED')
+                    # TEST THREADS
+                    self.test_thread = WorkerThread(task=None, data=self.leeddat.dat_3d, ht=600, wd=592)
+                    self.test_thread.start()
+
 
             self.LEED_IV_ax.set_aspect('auto')
             self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)

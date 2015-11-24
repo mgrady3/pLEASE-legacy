@@ -24,10 +24,12 @@ class WorkerThread(QtCore.QThread):
     Worker Thread to execute specific tasks which
     may otherwise block the main UI
     """
-    def __init__(self, task=None, path=None):
+    def __init__(self, task=None, **kwargs):
         super(WorkerThread, self).__init__()
         self.task = task
-        self.path = path
+        self.params = kwargs
+        print('Thread created: inside init')
+        print('TESTING: # params = {}'.format(len(self.params)))
 
     def run(self):
         """
