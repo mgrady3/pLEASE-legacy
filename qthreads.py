@@ -58,39 +58,74 @@ class WorkerThread(QtCore.QThread):
             print('Terminating - No task to execute ...')
             self.quit()
             self.exit()
+
         elif self.task == 'LOAD_LEED':
-            # requires params: path, imht, imwd
-            if ( 'path' not in self.params.keys() or
-                 'imht' not in self.params.keys() or
-                 'imwd' not in self.params.keys()):
-
-                print('Terminating - ERROR: incorrect parameters for LOAD task')
-                print('Required Parameters: path, imht, imwd')
-                self.quit()
-                self.exit()
-
-            dat_3d = LF.process_LEEM_Data(dirname=self.params['path'],
-                                          ht=self.params['imht'],
-                                          wd=self.params['imwd'])
-
-            # emit output signal with np array as generic pyobject type
-            self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)
+            self.load_LEED()
             self.quit()
             self.exit()  # restrict action to one task
 
         elif self.task == 'LOAD_LEEM':
-            # requires params: path, imht, imwd
-            pass
+            self.load_LEEM()
+            self.quit()
+            self.exit()
 
         elif self.task == 'OUTPUT_TO_TEXT':
-            # requires params: path, ilist, elist
-            pass
+            self.output_to_Text()
+            self.quit()
+            self.exit()
 
         elif self.task == 'COUNT_MINIMA':
-            # requires params: data, elist
-            pass
+            self.count_Minima()
+            self.quit()
+            self.exit()
 
         else:
             print('Terminating: Unknown task ...')
             self.quit()
             self.exit()
+
+    def load_LEED(self):
+        """
+
+        :return:
+        """
+        # requires params: path, imht, imwd
+        if ( 'path' not in self.params.keys() or
+             'imht' not in self.params.keys() or
+             'imwd' not in self.params.keys()):
+
+            print('Terminating - ERROR: incorrect parameters for LOAD task')
+            print('Required Parameters: path, imht, imwd')
+            self.quit()
+            self.exit()
+
+        dat_3d = LF.process_LEEM_Data(dirname=self.params['path'],
+                                      ht=self.params['imht'],
+                                      wd=self.params['imwd'])
+
+        # emit output signal with np array as generic pyobject type
+        self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)
+
+    def load_LEEM(self):
+        """
+
+        :return:
+        """
+        # requires params: path, imht, imwd
+        pass
+
+    def output_to_Text(self):
+        """
+
+        :return:
+        """
+        # requires params: path, ilist, elist
+        pass
+
+    def count_Minima(self):
+        """
+
+        :return:
+        """
+        # requires params: data, elist
+        pass
