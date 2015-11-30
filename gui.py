@@ -1115,12 +1115,21 @@ class Viewer(QtGui.QWidget):
             if not os.path.exists(os.path.join(self.leemdat.data_dir, 'ivout')):
                 os.path.mkdir(os.path.join(self.leemdat.data_dir, 'ivout'))
             leem_out_dir = os.path.join(self.leemdat.data_dir, 'ivout')
+            n = len(self.leem_IV_list)  # number of threads to run
+            count = 1  # thread number
             for tup in self.leem_IV_list:
                 outfile = os.path.join(leem_out_dir, str(tup[2])+'-'+str(tup[3])+'.txt')
-                dicout = {'I': tup[1], 'E': tup[0]}
-                outdf = pd.DataFrame(dicout)
-                print('Writing Output File: {} ...'.format(outfile))
-                outdf.to_csv(outfile, sep='\t', index=False)
+                print('Starting thread {} of {}'.format(count, n))
+                self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
+                                           elist=tup[0], ilist=tup[1],
+                                           name=outfile)
+                self.connect(self.thread, QtCore.SIGNAL('finished()'), self.output_complete)
+                self.thread.start()
+                count += 1
+                # dicout = {'I': tup[1], 'E': tup[0]}
+                # outdf = pd.DataFrame(dicout)
+                # print('Writing Output File: {} ...'.format(outfile))
+                # outdf.to_csv(outfile, sep='\t', index=False)
             return
 
         # else - handle LEED output
@@ -1214,6 +1223,10 @@ class Viewer(QtGui.QWidget):
                     for tup in IV_combo:
                         f.write(str(tup[0]) + '\t' + str(tup[1]) + '\n')
         print('Done Writing Files ...')
+
+    def output_complete(self):
+        print('File output successfully')
+        return
 
     def shift_user_selection(self):
         self.shifted_rects = []

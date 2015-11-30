@@ -41,7 +41,7 @@ class WorkerThread(QtCore.QThread):
         # Get parameters and validate
         self.params = kwargs
         self.valid_keys = ['path', 'data', 'ilist', 'elist',
-                           'imht', 'imwd']
+                           'imht', 'imwd', 'name']
         for key in self.params.keys():
             if key not in self.valid_keys:
                 print('Terminating - ERROR Invalid Task Parameter: {}'.format(key))
@@ -67,17 +67,17 @@ class WorkerThread(QtCore.QThread):
         elif self.task == 'LOAD_LEEM':
             self.load_LEEM()
             self.quit()
-            self.exit()
+            self.exit()  # restrict action to one task
 
         elif self.task == 'OUTPUT_TO_TEXT':
             self.output_to_Text()
             self.quit()
-            self.exit()
+            self.exit()  # restrict action to one task
 
         elif self.task == 'COUNT_MINIMA':
             self.count_Minima()
             self.quit()
-            self.exit()
+            self.exit()  # restrict action to one task
 
         else:
             print('Terminating: Unknown task ...')
@@ -86,7 +86,8 @@ class WorkerThread(QtCore.QThread):
 
     def load_LEED(self):
         """
-
+        Load raw binary LEED-IV data to a 3d numpy array
+        emit the numpy array as a custom SIGNAL to be retrieved in gui.py
         :return:
         """
         # requires params: path, imht, imwd
@@ -109,7 +110,8 @@ class WorkerThread(QtCore.QThread):
 
     def load_LEEM(self):
         """
-
+        Load raw binary LEEM-IV data to a 3d numpy array
+        emit the numpy array as a custom SIGNAL to be retrieved in gui.py
         :return:
         """
         # requires params: path, imht, imwd
@@ -135,8 +137,17 @@ class WorkerThread(QtCore.QThread):
 
         :return:
         """
-        # requires params: path, ilist, elist
-        pass
+        # requires params: path, ilist, elist, name
+        filename = self.params['name']
+        elist = self.params['elist']
+        ilist = self.params['ilist']
+        print('Writing to file {} ...'.format(filename))
+        with open(filename, 'w') as f:
+            f.write('E' + '\t' + 'I' + '\n')
+            for index, item in enumerate(elist):
+                f.write(str(item) + '\t' + str(ilist[index]) + '\n')
+
+
 
     def count_Minima(self):
         """
