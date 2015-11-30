@@ -596,13 +596,17 @@ class Viewer(QtGui.QWidget):
 
                     self.thread = WorkerThread(task='LOAD_LEED', path=new_dir, imht=self.leeddat.ht, imwd=self.leeddat.wd)
 
-                    self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_leed_data)
+                    # disconnect any previously connected Signals/Slots
+                    self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                    self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
+                    # connect appropriate signals for loading LEED data
+                    self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
                     self.connect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
                     self.thread.start()
 
             return
 
-    def retrieve_leed_data(self, dat):
+    def retrieve_LEED_data(self, dat):
         self.leeddat.dat_3d = dat
         return
 
@@ -1309,14 +1313,31 @@ class Viewer(QtGui.QWidget):
             self.leemdat.wd = entry
 
         try:
-            self.leemdat.dat_3d = LF.process_LEEM_Data(self.leemdat.data_dir,
-                                                       self.leemdat.ht,
-                                                       self.leemdat.wd)
+            self.thread = WorkerThread(task='LOAD_LEEM',
+                                       path=self.leemdat.data_dir,
+                                       imht=self.leemdat.ht,
+                                       imwd=self.leemdat.wd)
+            # disconnect any previously connected Signals/Slots
+            self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEEM_data)
+            self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
+            # connect appropriate signals for loading LEED data
+            self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEEM_data)
+            self.connect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
+            self.thread.start()
+
+            #self.leemdat.dat_3d = LF.process_LEEM_Data(self.leemdat.data_dir,
+            #                                           self.leemdat.ht,
+            #                                           self.leemdat.wd)
         except ValueError:
             print('Error Loading LEEM Data: Please Recheck Image Settings')
             print('Resetting data directory to previous setting, {}'.format(prev_ddir))
             return
 
+    def retrieve_LEEM_data(self, dat):
+        self.leemdat.dat_3d = dat
+        return
+
+    def update_LEEM_img(self):
         # Assuming that data loading was successful - self.leemdat.dat_3d is now a 3d numpy array
         # Generate energy list to correspond to the third array axis
         print('Data Loaded successfully: {}'.format(self.leemdat.dat_3d.shape))

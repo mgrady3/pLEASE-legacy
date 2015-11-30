@@ -99,6 +99,7 @@ class WorkerThread(QtCore.QThread):
             self.quit()
             self.exit()
 
+        # load raw data
         dat_3d = LF.process_LEEM_Data(dirname=self.params['path'],
                                       ht=self.params['imht'],
                                       wd=self.params['imwd'])
@@ -112,7 +113,22 @@ class WorkerThread(QtCore.QThread):
         :return:
         """
         # requires params: path, imht, imwd
-        pass
+        if ( 'path' not in self.params.keys() or
+             'imht' not in self.params.keys() or
+             'imwd' not in self.params.keys()):
+
+            print('Terminating - ERROR: incorrect parameters for LOAD task')
+            print('Required Parameters: path, imht, imwd')
+            self.quit()
+            self.exit()
+
+        # load raw data
+        dat_3d = LF.process_LEEM_Data(dirname=self.params['path'],
+                                      ht=self.params['imht'],
+                                      wd=self.params['imwd'])
+
+        # emit output signal with np array as generic pyobject type
+        self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)
 
     def output_to_Text(self):
         """
