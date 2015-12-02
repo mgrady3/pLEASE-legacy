@@ -377,6 +377,11 @@ class Viewer(QtGui.QWidget):
         outputLEEMAction.triggered.connect(lambda: self.output_to_text(data='LEEM', smth=self.smooth_file_output))
         fileMenu.addAction(outputLEEMAction)
 
+        outputLEEDAction = QtGui.QAction('Output LEED to Text', self)
+        outputLEEDAction.setShortcut('Ctrl+Shift+O')
+        outputLEEDAction.triggered.connect(self.output_LEED_to_Text)
+        fileMenu.addAction(outputLEEDAction)
+
         exitAction = QtGui.QAction('Quit', self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Quit PyLEEM')
@@ -1223,6 +1228,57 @@ class Viewer(QtGui.QWidget):
                     for tup in IV_combo:
                         f.write(str(tup[0]) + '\t' + str(tup[1]) + '\n')
         print('Done Writing Files ...')
+
+    def output_LEED_to_Text(self):
+        """
+
+        :return:
+        """
+        # Begin File Output Logic
+        # Query User for directory to output to
+        out_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory for File Output",
+                                                             options=QtGui.QFileDialog.ShowDirsOnly))
+        out_dir = LF.parse_dir(out_dir)  # get rid of trailing '/untitled/' if it exists
+        if out_dir == '':
+            print('File Output Canceled...')
+            return
+        instrc = """ Enter name for textfile. No Spaces, No Extension.
+    If multiple files are to be output - the same base name will be used for each.
+    A consecutive number will be appended to the end of the file name.
+                """
+        # Query User for filename
+        entry, ok = QtGui.QInputDialog.getText(self, "Enter Filename without Extension", instrc)
+        if not ok:
+            print("File Output Canceled ...")
+            return
+        entry = str(entry)  # convert from QString to String
+
+        # for each element in rect_coords - spin up a qthread to output the data to file
+        for idx, tup in enumerate(self.rect_coords):
+
+            # generate raw data to pass to new thread to be output
+            int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
+                                          tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+                                          :]
+            ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
+            elist = self.leeddat.elist
+
+            # check if smoothing is enabled
+            if self.smooth_file_output:
+                ilist = LF.smooth(ilist)
+            # full file name
+            full_path = out_dir + '/' + entry + '_' + str(idx+1) + '_' + '.txt'
+            print('Starting thread {} of {} ...'.format(idx, len(self.rect_coords)))
+
+            self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
+                                       ilist=ilist, elist=elist,
+                                       name=full_path)
+
+            self.connect(self.thread, QtCore.SIGNAL('finished()'), self.output_complete)
+            self.thread.start()
+        print('Done Writing Files ...')
+        return
+
 
     def output_complete(self):
         print('File output successfully')

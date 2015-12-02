@@ -144,6 +144,8 @@ class WorkerThread(QtCore.QThread):
         print('Writing to file {} ...'.format(filename))
         with open(filename, 'w') as f:
             f.write('E' + '\t' + 'I' + '\n')
+
+            # TODO: see if its better to do smthn like  for e, i in zip(elist, ilist)): ...
             for index, item in enumerate(elist):
                 f.write(str(item) + '\t' + str(ilist[index]) + '\n')
 
