@@ -28,7 +28,7 @@ In future versions of this software further GUI enhancements may be made using a
 * Numpy
 * Scipy
 * Matplotlib
-* Pandas
+* Pandas {NOTE: as of 12/2/2015 this dependency has been removed}
 * *Qt & PyQt4 
 * Note: All the above are contained in the Anaconda Python Distribution which I HIGHLY recommend be used for running this code
 * Note: The following packages need to be manually installed but are available via Pip
@@ -56,6 +56,10 @@ On OS X the easiest way is to creat a text file that contains only the line 'pyt
 Save this file as pLease.command 
 Give the file executbale previleges using chmod +x
 Now this file should be an executable script which will run the python code and can be placed anywhere in your computer's directory structure. The file can be renamed anything and generally the extension can be omitted. So for example you could place the file on your Desktop and rename it to 'pLEASE-Start' Then this file can be double clicked to launch the code at any time.
+
+I have tested building of executables using the python package "pyinstaller" on a number of operating systems including: Ubuntu Linux (v. 14), OS X.9, OS X.10, and Windows XP sp3.
+
+In the future I will include instructions for the build process. The code can in principle be built as an executable for nearly all common Operating Systems so long as the Anaconda Python Distribution can be properly installed. If Anaconda is unsupported on the Target OS, its still possible to build, however the correct python distibution as well as all library dependencies must be then installed manually which could prove troublesome if one or more dependencies has trouble building.
 
 
 
