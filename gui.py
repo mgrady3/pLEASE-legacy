@@ -20,8 +20,6 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import multiprocessing as mp  # this may be removed as a dependency
 import numpy as np
-import pandas as pd
-import progressbar as pb
 import seaborn as sns
 import styles as pls
 from matplotlib import colorbar
@@ -1110,8 +1108,9 @@ class Viewer(QtGui.QWidget):
             # no data passed as input; do nothing
             print('No Data!!! ...')
             return
-        multi_output = False  # boolean flag for whether or not outputting multiple files is needed
-        subtype = None  # type check for possible sub-containers in main data container
+
+        # TODO: Now that LEED/LEEM have separate output functions
+        #       the data flag is no longer needed
 
         if data == 'LEEM':
             # handle LEEM output
@@ -1125,18 +1124,24 @@ class Viewer(QtGui.QWidget):
             for tup in self.leem_IV_list:
                 outfile = os.path.join(leem_out_dir, str(tup[2])+'-'+str(tup[3])+'.txt')
                 print('Starting thread {} of {}'.format(count, n))
+
+                # gather data to output and handle smoothing
+                elist = tup[0]
+                ilist = tup[1]
+                if self.smooth_file_output:
+                    ilist = LF.smooth(ilist)
+
                 self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
-                                           elist=tup[0], ilist=tup[1],
+                                           elist=elist, ilist=ilist,
                                            name=outfile)
                 self.connect(self.thread, QtCore.SIGNAL('finished()'), self.output_complete)
                 self.thread.start()
                 count += 1
-                # dicout = {'I': tup[1], 'E': tup[0]}
-                # outdf = pd.DataFrame(dicout)
-                # print('Writing Output File: {} ...'.format(outfile))
-                # outdf.to_csv(outfile, sep='\t', index=False)
             return
 
+        # The Following Code has been Deprecated #
+
+    """
         # else - handle LEED output
         if type(data) is list:
             # check for sub-containers
@@ -1172,10 +1177,10 @@ class Viewer(QtGui.QWidget):
         if out_dir == '':
             print('File Output Canceled...')
             return
-        instrc = """ Enter name for textfile. No Spaces, No Extension.
+        instrc =  'Enter name for textfile. No Spaces, No Extension.
     If multiple files are to be output - the same base name will be used for each.
-    A consecutive number will be appended to the end of the file name.
-                """
+    A consecutive number will be appended to the end of the file name.'
+
         # Query User for filename
         entry, ok = QtGui.QInputDialog.getText(self, "Enter Filename without Extension", instrc)
         if not ok:
@@ -1228,6 +1233,7 @@ class Viewer(QtGui.QWidget):
                     for tup in IV_combo:
                         f.write(str(tup[0]) + '\t' + str(tup[1]) + '\n')
         print('Done Writing Files ...')
+    """
 
     def output_LEED_to_Text(self):
         """
@@ -1279,8 +1285,8 @@ class Viewer(QtGui.QWidget):
         print('Done Writing Files ...')
         return
 
-
     def output_complete(self):
+        # signals QThread has emitted a 'finished()' SIGNAL
         print('File output successfully')
         return
 

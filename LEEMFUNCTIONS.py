@@ -1,11 +1,8 @@
-import functools
 import os
 import sys
 import numpy as np
 import cv2
-# import pathos.multiprocessing as mp
 import multiprocessing as mp
-import progressbar as pb
 from PIL import Image
 
 DEF_IMHEIGHT = 600
