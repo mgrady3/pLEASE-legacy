@@ -464,7 +464,7 @@ class Viewer(QtGui.QWidget):
         smoothAction = QtGui.QAction('Toggle Data Smoothing', self)
         smoothAction.setShortcut('Ctrl+Shift+S')
         smoothAction.setStatusTip('Turn on/off Data Smoothing')
-        smoothAction.triggered.connect(self.toggle_LEED_Smoothing)
+        smoothAction.triggered.connect(self.toggle_smoothing)
         settingsMenu.addAction(smoothAction)
 
         setEnergyAction = QtGui.QAction('Set Energy Parameters', self)
@@ -813,7 +813,7 @@ class Viewer(QtGui.QWidget):
         self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
         self.LEED_IV_canvas.draw()
 
-    def toggle_LEED_Smoothing(self):
+    def toggle_smoothing(self):
         """
 
         :return none:
@@ -843,7 +843,7 @@ class Viewer(QtGui.QWidget):
                                                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
                                                    QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
-                    self.toggle_LEED_Smoothing()
+                    self.toggle_smoothing()
                     return
                 else: return
             else:
@@ -1129,7 +1129,8 @@ class Viewer(QtGui.QWidget):
                 elist = tup[0]
                 ilist = tup[1]
                 if self.smooth_file_output:
-                    ilist = LF.smooth(ilist)
+                    ilist = LF.smooth(ilist, window_len=self.smooth_window_len,
+                                      window_type=self.smooth_window_type)
 
                 self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
                                            elist=elist, ilist=ilist,
