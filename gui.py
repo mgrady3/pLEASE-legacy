@@ -519,12 +519,12 @@ class Viewer(QtGui.QWidget):
         vbox1.addWidget(self.tabs)
         self.setLayout(vbox1)
 
-    def closeEvent(self, event):
+    def closeEvent(self, *args):
         """
         Override closeEvent() to call quit()
         If main window is closed - app will Quit instead of leaving the console open
         with the main window closed
-        :param event: close event from main QWidget
+        :param args: will receive a close event from main QWidget
         :return none:
         """
         self.Quit()
