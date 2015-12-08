@@ -1148,7 +1148,7 @@ class Viewer(QtGui.QWidget):
             count = 1  # thread number
             for tup in self.leem_IV_list:
                 outfile = os.path.join(leem_out_dir, str(tup[2])+'-'+str(tup[3])+'.txt')
-                print('Starting thread {} of {}'.format(count, n))
+                print('Starting thread {0} of {1}'.format(count, n))
 
                 # gather data to output and handle smoothing
                 elist = tup[0]
@@ -1300,7 +1300,7 @@ class Viewer(QtGui.QWidget):
                 ilist = LF.smooth(ilist)
             # full file name
             full_path = out_dir + '/' + entry + '_' + str(idx+1) + '_' + '.txt'
-            print('Starting thread {} of {} ...'.format(idx, len(self.rect_coords)))
+            print('Starting thread {0} of {1} ...'.format(idx, len(self.rect_coords)))
 
             self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
                                        ilist=ilist, elist=elist,
