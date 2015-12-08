@@ -1122,11 +1122,10 @@ class Viewer(QtGui.QWidget):
         for w in windows:
             w.show()
 
-    def output_to_text(self, data=None, smth=False):
+    def output_to_text(self, data=None):
         """
         Write out data to text files in columar format
         :param data: container for data to be output; may be single list or list of lists
-        :param smth: bool to decide if smooth() should be applied to data before output; default to False
         :return none:
         """
         if data is None:
