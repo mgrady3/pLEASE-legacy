@@ -18,7 +18,7 @@ def main():
         view.showMaximized()
     view.raise_()
 
-    if view._Style:
+    if view.Style:
         app.setStyleSheet(qdarkstyle.load_stylesheet(pyside=False))
     sys.exit(app.exec_())
 
