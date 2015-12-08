@@ -40,9 +40,9 @@ class Viewer(QtGui.QWidget):
 
     def __init__(self, parent=None):
         """
-
-        :param leed:
-        :param parent:
+        Initialize new GUI instance. Setup windows, menus, and UI elements.
+        Setup Error Console and all plotting axes.
+        :param parent: This is a Top-Level Widget
         :return none:
         """
         super(Viewer, self).__init__(parent)
@@ -66,12 +66,37 @@ class Viewer(QtGui.QWidget):
         self.init_Plot_Axes()
         self.init_Img_Axes()
 
-        if self._ERROR:
+        if self.Error:
             # re-route sys.stdout to console window
             self.init_Console()
 
         # final action
         self.show()
+
+    # Setup Class Property Accessor/Setter Methods:
+    @property
+    def Style(self):
+        return self._Style
+
+    @Style.setter
+    def Style(self, value):
+        self._Style = value
+
+    @property
+    def Debug(self):
+        return self._DEBUG
+
+    @Debug.setter
+    def Debug(self, value):
+        self._DEBUG = value
+
+    @property
+    def Error(self):
+        return self._ERROR
+
+    @Error.setter
+    def Error(self, value):
+        self.Error = value
 
     # Top-Level Initialization Functions
     # These functions simply place calls to second-level init functions in an orderly manner
@@ -147,18 +172,18 @@ class Viewer(QtGui.QWidget):
         self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
         self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
         self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
-        if self._Style:
+        if self.Style:
             self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
             self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         rect = self.LEED_IV_fig.patch
-        if not self._Style:
+        if not self.Style:
             rect.set_facecolor((189/255., 195/255., 199/255.))
         else: rect.set_facecolor((68/255., 67/255., 67/255.))
 
         # Format LEEM IV Axis
-        if not self._Style:
+        if not self.Style:
             self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20)
             self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
             self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
@@ -192,12 +217,12 @@ class Viewer(QtGui.QWidget):
                                  left='off', right='off')
         self.LEED_img_ax.get_xaxis().set_visible(False)
         self.LEED_img_ax.get_yaxis().set_visible(False)
-        if not self._Style:
+        if not self.Style:
             self.LEED_img_ax.set_title('LEED Image', fontsize=20)
         else: self.LEED_img_ax.set_title('LEED Image', fontsize=20, color='white')
 
         # Format LEEM Image Axis
-        if not self._Style:
+        if not self.Style:
             self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=20)
         else: self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=20, color='white')
 
@@ -684,7 +709,7 @@ class Viewer(QtGui.QWidget):
             return
         if not self.has_loaded_data:
             return
-        if self._DEBUG:
+        if self.Debug:
             print('LEED Click registered ...')
 
         if self.rect_count <= self.max_leed_click - 1:
@@ -913,13 +938,13 @@ class Viewer(QtGui.QWidget):
                 ps /= num_pixels
                 bkgnd.append(ps)  # store average perimeter pixel value
 
-                if self._DEBUG:
+                if self.Debug:
                     print("Average Background calculated as {}".format(ps))
                     print("Raw Sum: {}".format(img.sum()))
 
                 img -= int(ps)  # subtract background from each pixel
 
-                if self._DEBUG:
+                if self.Debug:
                     print("Adjusted Sum: {}".format(img[img >= 0].sum()))
                     print(img)
 
@@ -1025,7 +1050,7 @@ class Viewer(QtGui.QWidget):
 
         num_curves = len(self.current_selections)
         last_raw_curve_idx = num_curves/2 -1
-        if self._DEBUG:
+        if self.Debug:
             print("Number of total curves to plot = {}".format(num_curves))
             print("Index of last raw curve = {}".format(last_raw_curve_idx))
 
@@ -1066,7 +1091,7 @@ class Viewer(QtGui.QWidget):
         rect3 = self.nfig3.patch
         rect4 = self.nfig4.patch
 
-        if not self._Style:
+        if not self.Style:
             rect1.set_facecolor((189/255., 195/255., 199/255.))
             rect2.set_facecolor((189/255., 195/255., 199/255.))
             rect3.set_facecolor((189/255., 195/255., 199/255.))
@@ -1462,7 +1487,7 @@ class Viewer(QtGui.QWidget):
         self.click_count = 0
         self.leem_IV_list = []
         self.leem_IV_mask = []
-        if not self._Style:
+        if not self.Style:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist,
                                                                                    self.leemdat.curimg)), fontsize=16)
         else:
@@ -1481,7 +1506,7 @@ class Viewer(QtGui.QWidget):
         self.leemdat.curimg = imgnum
         img = data[0:, 0:, self.leemdat.curimg]
 
-        if self._Style:
+        if self.Style:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16, color='white')
         else:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16)
@@ -1593,7 +1618,7 @@ class Viewer(QtGui.QWidget):
         for tup in self.leem_IV_list:
             self.nplot_ax_lm.plot(tup[0], tup[1], color=self.colors[tup[4]])
         rect = self.nfig_lm.patch
-        if self._Style:
+        if self.Style:
             rect.set_facecolor((68/255., 67/255., 67/255.))
             self.nplot_ax_lm.set_title("LEEM I(V)", fontsize=12, color='w')
             self.nplot_ax_lm.set_ylabel("Intensity (arb. units)", fontsize=12, color='w')
@@ -1658,7 +1683,7 @@ class Viewer(QtGui.QWidget):
 
         for idx, tup in enumerate(self.leem_IV_list):
             ax.plot(tup[0], LF.smooth(tup[1], self.smooth_window_len, self.smooth_window_type), color=self.colors[tup[4]])
-        if self._Style:
+        if self.Style:
             ax.set_title("LEEM I(V)-Smoothed", fontsize=16, color='w')
             ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='w')
             ax.set_xlabel("Energy (eV)", fontsize=16, color='w')
