@@ -1311,12 +1311,30 @@ class Viewer(QtGui.QWidget):
         print('Done Writing Files ...')
         return
 
-    def output_complete(self):
+    @staticmethod
+    def output_complete():
+        """
+        This function executes when receiving a finished() SIGNAL from a QThread object
+        :return: none
+        """
         # signals QThread has emitted a 'finished()' SIGNAL
         print('File output successfully')
         return
 
     def shift_user_selection(self):
+        """
+        Using opencv, find the relative beam maximum nearest to the user selection.
+        Shift the user selected integration window to be centered on the
+        located maxima.
+
+        This takes out some ambiguity when comparing I(V) curves from the same
+        LEED beams at extracted at different times.
+
+        In the future, a CONFIG setting will be toggle-able such that this function can be
+        always enabled or always disabled.
+
+        :return: none
+        """
         self.shifted_rects = []
         self.shifted_rect_coords = []
         for tup in self.rect_coords:
