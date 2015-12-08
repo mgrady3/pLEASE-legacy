@@ -1130,7 +1130,7 @@ class Viewer(QtGui.QWidget):
         """
         if data is None:
             # no data passed as input; do nothing
-            print('No Data!!! ...')
+            print('No Data to Output ...')
             return
 
         # TODO: Now that LEED/LEEM have separate output functions
