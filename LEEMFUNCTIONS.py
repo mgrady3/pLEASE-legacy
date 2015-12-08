@@ -152,16 +152,15 @@ def count_minima_locations(e_cut, smth_iv):
     min_locations = []
 
     for point in diff_iv:
-        if np.sign(point) != sgn:
+        if np.sign(point) != sgn and np.sign(point) == 1:
             # the derivative has changed signs - ie. crossed the x axis
             # thus by the intermediate value theorem it must have a zero point in between
             # the zero point in the dI/dV spectra corresponds to a local extrema in the I(V) spectrum
 
-            if np.sign(point) == 1:
-                # the current point in the derivative is positive which means the last point was negative
-                # a derivative changing from - to + indicates a local minima
-                min_locations.append(diff_iv.index(point))
-                count += 1
+            # the current point in the derivative is positive which means the last point was negative
+            # a derivative changing from - to + indicates a local minima
+            min_locations.append(diff_iv.index(point))
+            count += 1
         sgn = np.sign(point)  # update sgn and continue loop with next point in the derivative
 
     return (count, min_locations)
