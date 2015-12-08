@@ -880,14 +880,14 @@ class Viewer(QtGui.QWidget):
             return
         else:
             if not (entry % 2 == 0) and (entry >= 4):
-                print('Window_Length entry, {}, was odd - Using next even integer {}.'.format(entry, entry + 1))
+                print('Window_Length entry, {0}, was odd - Using next even integer {1}.'.format(entry, entry + 1))
                 entry += 1
                 self.smooth_window_len = int(entry)
             else:
                 self.smooth_window_len = int(entry)
         self.smooth_leed_plot = True
         self.smooth_file_output = True
-        print('Smoothing Enabled: Window = {}; Window Length = {}'.format(self.smooth_window_type, self.smooth_window_len))
+        print('Smoothing Enabled: Window = {0}; Window Length = {1}'.format(self.smooth_window_type, self.smooth_window_len))
         return
 
     def set_integration_window(self):
@@ -900,7 +900,7 @@ class Viewer(QtGui.QWidget):
         if not ok:
             return
         self.leeddat.box_rad = entry
-        print('New Integration Window set to {} x {}.'.format(2*self.leeddat.box_rad, 2*self.leeddat.box_rad))
+        print('New Integration Window set to {0} x {1}.'.format(2*self.leeddat.box_rad, 2*self.leeddat.box_rad))
 
     def subtract_background(self):
         """
@@ -1674,7 +1674,7 @@ class Viewer(QtGui.QWidget):
             return
         else:
             if not (entry % 2 == 0) and (entry >= 4):
-                print('Window_Length entry,{}, was odd - Using next even integer {}'.format((entry, entry + 1)))
+                print('Window_Length entry,{0}, was odd - Using next even integer {1}'.format((entry, entry + 1)))
                 entry += 1
                 self.smooth_window_len = int(entry)
 
