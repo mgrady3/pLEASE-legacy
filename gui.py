@@ -573,7 +573,7 @@ class Viewer(QtGui.QWidget):
                 self.load_LEED_Data()
                 return
             else:
-                if entry == 'TIFF' or entry == 'tiff' or entry == 'TIF' or entry == 'tif':
+                if entry in ['TIFF', 'tiff', 'TIF', 'tif']:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing TIFF files"))
                     if new_dir == '':
                         print('Loading Canceled ...')
@@ -586,7 +586,7 @@ class Viewer(QtGui.QWidget):
                         print('Updating Energy parameters ...')
                         self.set_energy_parameters(dat='LEED')
 
-                elif entry == 'PNG' or entry == 'png':
+                elif entry in ['PNG', 'png']:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing PNG files"))
                     if new_dir == '':
                         print('Loading Canceled ...')
