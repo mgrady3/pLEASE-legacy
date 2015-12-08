@@ -257,7 +257,7 @@ class Viewer(QtGui.QWidget):
         setup dictionary variable containing QSS style strings
         :return none:
         """
-        pstyles = pls.pyLEEM_Styles()
+        pstyles = pls.PyLeemStyles()
         self.styles = pstyles.get_styles()  # get_styles() returns a dictionary of key, qss string pairs
 
     def init_tabs(self):
