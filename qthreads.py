@@ -13,10 +13,10 @@ Common tasks for the worker thread will be:
 
 """
 
-import os
 import LEEMFUNCTIONS as LF
 import numpy as np
 from PyQt4 import QtGui, QtCore
+
 
 # TODO: Consider splitting to multiple classes for separate tasks
 class WorkerThread(QtCore.QThread):
