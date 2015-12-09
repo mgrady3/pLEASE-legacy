@@ -365,7 +365,10 @@ class Viewer(QtGui.QWidget):
         self.set_energy__leed_but = QtGui.QPushButton('Set Energy LEED', self)
         self.set_energy__leed_but.clicked.connect(lambda: self.set_energy_parameters('leed'))
 
-        buts = [self.set_energy__leem_but, self.set_energy__leed_but]
+        self.toggle_debug = QtGui.QPushButton('Toggle Debug', self)
+        self.toggle_debug.clicked.connect(self.toggle_debug_setting)
+
+        buts = [self.set_energy__leem_but, self.set_energy__leed_but, self.toggle_debug]
 
         config_Tab_group_button_box.addStretch(1)
         for b in buts:
@@ -838,9 +841,24 @@ class Viewer(QtGui.QWidget):
         self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
         self.LEED_IV_canvas.draw()
 
+    def toggle_debug_setting(self):
+        """
+        Swap settings for Debug property
+        :return: none
+        """
+        if self.Debug:
+            print('Disabling Debug ...')
+            self.Debug = False
+        else:
+            print('Enabling Debug ...')
+            self.Debug = True
+        return
+
     def toggle_smoothing(self):
         """
-
+        Toggle settings for data smoothing
+        Set file output flags appropriately when smoothing is enabled
+        If smoothing is being enabled - query user for new settings
         :return none:
         """
 
@@ -892,7 +910,8 @@ class Viewer(QtGui.QWidget):
 
     def set_integration_window(self):
         """
-
+        Set new box radius for integration window
+        Integration is a square of side length 2*(box radius)
         :return none:
         """
         entry, ok = QtGui.QInputDialog.getInt(self, "Set Integration Window Half Length",
