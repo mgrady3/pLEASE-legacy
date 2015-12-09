@@ -5,3 +5,9 @@
 *.pyc
 
 /old/
+
+pLEASE-START
+
+*.spec
+
+*.zip
