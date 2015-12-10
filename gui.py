@@ -32,8 +32,9 @@ from scipy.stats import linregress as lreg
 
 class Viewer(QtGui.QWidget):
     """
-
+    Main GUI construct
     """
+    # Config Flags - controlled via class properties
     _Style = True
     _DEBUG = False
     _ERROR = True
@@ -42,7 +43,7 @@ class Viewer(QtGui.QWidget):
         """
         Initialize new GUI instance. Setup windows, menus, and UI elements.
         Setup Error Console and all plotting axes.
-        :param parent: This is a Top-Level Widget
+        :param parent: This is a Top-Level Widget ie. parent=None
         :return none:
         """
         super(Viewer, self).__init__(parent)
@@ -368,7 +369,14 @@ class Viewer(QtGui.QWidget):
         self.toggle_debug = QtGui.QPushButton('Toggle Debug', self)
         self.toggle_debug.clicked.connect(self.toggle_debug_setting)
 
-        buts = [self.set_energy__leem_but, self.set_energy__leed_but, self.toggle_debug]
+        self.swap_byte_order_LEED = QtGui.QPushButton('Swap LEED Bytes', self)
+        self.swap_byte_order_LEED.clicked.connect(lambda: self.swap_byte_order(dat='LEED'))
+
+        self.swap_byte_order_LEEM = QtGui.QPushButton('Swap LEEM Bytes', self)
+        self.swap_byte_order_LEEM.clicked.connect(lambda: self.swap_byte_order(dat='LEEM'))
+
+        buts = [self.set_energy__leem_but, self.set_energy__leed_but, self.toggle_debug,
+                self.swap_byte_order_LEED, self.swap_byte_order_LEEM]
 
         config_Tab_group_button_box.addStretch(1)
         for b in buts:
@@ -444,6 +452,11 @@ class Viewer(QtGui.QWidget):
         shiftAction.setStatusTip('Shift User Selections based on Beam Maximum')
         shiftAction.triggered.connect(self.shift_user_selection)
         LEEDMenu.addAction(shiftAction)
+
+        changeAction = QtGui.QAction('Change LEED Image', self)
+        changeAction.setShortcut('Ctrl+G')
+        changeAction.triggered.connect(self.show_LEED_image_by_index)
+        LEEDMenu.addAction(changeAction)
 
         clearAction = QtGui.QAction('Clear Current I(V)', self)
         clearAction.setShortcut('Ctrl+C')
@@ -588,6 +601,7 @@ class Viewer(QtGui.QWidget):
                         print('! Warning: New Data does not match current energy parameters !')
                         print('Updating Energy parameters ...')
                         self.set_energy_parameters(dat='LEED')
+                    self.update_LEED_img(index=self.leeddat.dat_3d.shape[2]-1)
 
                 elif entry in ['PNG', 'png']:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing PNG files"))
@@ -601,6 +615,7 @@ class Viewer(QtGui.QWidget):
                         print('! Warning: New Data does not match current energy parameters !')
                         print('Updating Energy parameters ...')
                         self.set_energy_parameters(dat='LEED')
+                    self.update_LEED_img(index=self.leeddat.dat_3d.shape[2]-1)
 
                 else:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing DAT files"))
@@ -609,14 +624,14 @@ class Viewer(QtGui.QWidget):
                         return
                     print('New Data Directory set to {}'.format(new_dir))
 
-                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Height", "Enter Positive Int >= 2", value=544, min=2, max=2000)
+                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Height", "Enter Positive Int >= 2", value=544, min=2, max=8000)
                     if not ok:
                         print("Loading Raw Data Canceled ...")
                         return
                     else:
                         self.leeddat.ht = entry
 
-                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Width", "Enter Positive Int >= 2", value=576, min=2, max=2000)
+                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Width", "Enter Positive Int >= 2", value=576, min=2, max=8000)
                     if not ok:
                         print("Loading Raw Data Canceled ...")
                         return
@@ -632,7 +647,7 @@ class Viewer(QtGui.QWidget):
                     self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
                     # connect appropriate signals for loading LEED data
                     self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
-                    self.connect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
+                    self.connect(self.thread, QtCore.SIGNAL('finished()'), lambda: self.update_LEED_img(index=self.leeddat.dat_3d.shape[2]-1))
                     self.thread.start()
 
             return
@@ -641,17 +656,35 @@ class Viewer(QtGui.QWidget):
         self.leeddat.dat_3d = dat
         return
 
-    def update_LEED_img(self):
-        print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
+    def update_LEED_img(self, index=0):
+        # print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
         if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
             print('! Warning: New Data does not match current energy parameters !')
             print('Updating Energy parameters ...')
             self.set_energy_parameters(dat='LEED')
         self.LEED_IV_ax.set_aspect('auto')
-        self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
+        if index <= self.leeddat.dat_3d.shape[2]:
+            self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, index], cmap=cm.Greys_r)
+        else:
+            print('Image index out of bounds - displaying last image in stack ...')
+            self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
+
         self.LEED_IV_canvas.draw()
         self.has_loaded_data = True
+        self.hasdisplayed_leed = True
         return
+
+    def show_LEED_image_by_index(self):
+
+        entry, ok = QtGui.QInputDialog.getInt(self, "Enter Image Number",
+                                              "Enter an integer between 0 and {}".format(self.leeddat.dat_3d.shape[2]-1),
+                                              value=self.leeddat.dat_3d.shape[2]-1,
+                                              min=0,
+                                              max=self.leeddat.dat_3d.shape[2]-1)
+        if ok:
+            self.update_LEED_img(index=entry)
+        return
+
 
     def set_energy_parameters(self, dat=None):
         """
@@ -700,6 +733,25 @@ class Viewer(QtGui.QWidget):
         else:
             print('Error in set_energy_parameters: Invalid data type passed as parameter')
             return
+
+    def swap_byte_order(self, dat=None):
+        """
+
+        :return:
+        """
+        if dat is None:
+            return
+
+        elif dat == 'LEED' and self.hasdisplayed_leed:
+            self.leeddat.dat_3d = self.leeddat.dat_3d.newbyteorder()
+
+        elif dat == 'LEEM' and self.hasdisplayed_leem:
+            self.leemdat.dat_3d = self.leemdat.dat_3d.newbyteorder()
+        else:
+            print('Unknown Data type for Swap Byte Order ...')
+        return
+
+
 
     def leed_click(self, event):
         """
