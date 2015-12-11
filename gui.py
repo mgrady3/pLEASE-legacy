@@ -127,6 +127,7 @@ class Viewer(QtGui.QWidget):
         self.hasdisplayed_leem = False
         self.border_color = (58/255., 83/255., 155/255.)  # unused
 
+        self.current_leed_index = 0  # index of third axis for self.leeddat.dat3d
         self.rect_count = 0
         self.max_leed_click = 10
         self.rects = []
@@ -601,7 +602,8 @@ class Viewer(QtGui.QWidget):
                         print('! Warning: New Data does not match current energy parameters !')
                         print('Updating Energy parameters ...')
                         self.set_energy_parameters(dat='LEED')
-                    self.update_LEED_img(index=self.leeddat.dat_3d.shape[2]-1)
+                    self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
+                    self.update_LEED_img(index=self.current_leed_index)
 
                 elif entry in ['PNG', 'png']:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing PNG files"))
@@ -615,7 +617,8 @@ class Viewer(QtGui.QWidget):
                         print('! Warning: New Data does not match current energy parameters !')
                         print('Updating Energy parameters ...')
                         self.set_energy_parameters(dat='LEED')
-                    self.update_LEED_img(index=self.leeddat.dat_3d.shape[2]-1)
+                    self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
+                    self.update_LEED_img(index=self.current_leed_index)
 
                 else:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing DAT files"))
@@ -638,7 +641,8 @@ class Viewer(QtGui.QWidget):
                     else:
                         self.leeddat.wd = entry
 
-                    self.leeddat.dat_3d = self.leeddat.load_LEED_RAW(new_dir)
+                    # redundant code is redundant
+                    # self.leeddat.dat_3d = self.leeddat.load_LEED_RAW(new_dir)
 
                     self.thread = WorkerThread(task='LOAD_LEED', path=new_dir, imht=self.leeddat.ht, imwd=self.leeddat.wd)
 
@@ -647,16 +651,27 @@ class Viewer(QtGui.QWidget):
                     self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
                     # connect appropriate signals for loading LEED data
                     self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
-                    self.connect(self.thread, QtCore.SIGNAL('finished()'), lambda: self.update_LEED_img(index=self.leeddat.dat_3d.shape[2]-1))
+                    self.connect(self.thread, QtCore.SIGNAL('finished()'), lambda: self.update_LEED_img(index=self.current_leed_index))
                     self.thread.start()
 
             return
 
     def retrieve_LEED_data(self, dat):
+        """
+
+        :param dat:
+        :return:
+        """
         self.leeddat.dat_3d = dat
+        self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
         return
 
     def update_LEED_img(self, index=0):
+        """
+
+        :param index:
+        :return:
+        """
         # print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
         if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
             print('! Warning: New Data does not match current energy parameters !')
@@ -672,6 +687,7 @@ class Viewer(QtGui.QWidget):
         self.LEED_IV_canvas.draw()
         self.has_loaded_data = True
         self.hasdisplayed_leed = True
+        self.current_leed_index = index
         return
 
     def show_LEED_image_by_index(self):
@@ -744,9 +760,12 @@ class Viewer(QtGui.QWidget):
 
         elif dat == 'LEED' and self.hasdisplayed_leed:
             self.leeddat.dat_3d = self.leeddat.dat_3d.newbyteorder()
+            print('Byte order of current LEED data set has been swapped.')
+            self.update_LEED_img(index=self.current_leed_index)
 
         elif dat == 'LEEM' and self.hasdisplayed_leem:
             self.leemdat.dat_3d = self.leemdat.dat_3d.newbyteorder()
+            print('Byte order of current LEEM data set has been swapped.')
         else:
             print('Unknown Data type for Swap Byte Order ...')
         return
@@ -903,7 +922,10 @@ class Viewer(QtGui.QWidget):
         self.use_avg = False
         self.LEED_IV_ax.clear()
         self.LEED_IV_ax.plot(self.leeddat.elist, average_int, color=self.colors[-1])
-        self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
+        if self.Style:
+            self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves', color='w')
+        else:
+            self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
         self.LEED_IV_canvas.draw()
 
     def toggle_debug_setting(self):
