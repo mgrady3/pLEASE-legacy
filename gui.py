@@ -808,7 +808,20 @@ class Viewer(QtGui.QWidget):
         self.shifted_rect_coords = []
         # self.init_Plots()
         self.hasplotted_leed = False
+
+        if self.Style:
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
+        else:
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
+
         self.LEED_IV_canvas.draw()
+        return
 
     def clear_leed_plots_only(self):
         """
