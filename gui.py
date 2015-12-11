@@ -849,6 +849,16 @@ class Viewer(QtGui.QWidget):
         """
         print('Clearing Plots ...')
         self.LEED_IV_ax.clear()
+        if self.Style:
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
+        else:
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         self.LEED_IV_canvas.draw()
 
     def plot_leed_IV(self):
