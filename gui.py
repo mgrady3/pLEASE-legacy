@@ -11,10 +11,12 @@ import terminal
 import LEEMFUNCTIONS as LF
 from qthreads import WorkerThread
 
+# stdlib imports
 import os
 import sys
 import time
 
+# 3rd-party/scientific stack module imports
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -1280,101 +1282,6 @@ class Viewer(QtGui.QWidget):
                 count += 1
             return
 
-        # The Following Code has been Deprecated #
-
-    """
-        # else - handle LEED output
-        if type(data) is list:
-            # check for sub-containers
-            if type(data[0]) is list:
-                # main data is a container of containers
-                # there may be multiple curves to output into separate files
-                multi_output = True
-                subtype = 'list'
-            elif type(data[0]) is tuple:
-                # main data is a container of containers
-                # there may be multiple curves to output into separate files
-                multi_output = True
-                subtype = 'tuple'
-            elif type(data[0]) is int or type(data[0]) is float:
-                # main data container is simply a list of numbers
-                # only one output file is needed
-                multi_output = False
-                subtype = None
-            else:
-                print("Invalid Call to output_to_text()")
-                print("data param should be list, list of lists, or list of tuples")
-                return
-        else:
-            print("Invalid Call to output_to_text()")
-            print("data param should be list, list of lists, or list of tuples")
-            return
-
-        # Begin File Output Logic
-        # Query User for directory to output to
-        out_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory for File Output",
-                                                             options=QtGui.QFileDialog.ShowDirsOnly))
-        out_dir = LF.parse_dir(out_dir)  # get rid of trailing '/untitled/' if it exists
-        if out_dir == '':
-            print('File Output Canceled...')
-            return
-        instrc =  'Enter name for textfile. No Spaces, No Extension.
-    If multiple files are to be output - the same base name will be used for each.
-    A consecutive number will be appended to the end of the file name.'
-
-        # Query User for filename
-        entry, ok = QtGui.QInputDialog.getText(self, "Enter Filename without Extension", instrc)
-        if not ok:
-            print("File Output Canceled ...")
-            return
-        entry = str(entry)  # convert from QString to String
-        if not multi_output:
-            # handle single file output
-            name = entry + '.txt'
-            if smth:
-                # generate smoothed (V, I) pairs
-                smth_dat = LF.smooth(data, self.smooth_window_len, self.smooth_window_type)
-                IV_combo = [(self.leeddat.elist[index], smth_dat[index]) for index, _ in enumerate(self.leeddat.elist)]
-            else:
-                # generate raw (V, I) pairs
-                IV_combo = [(self.leeddat.elist[index], data[index]) for index, _ in enumerate(self.leeddat.elist)]
-            print('Writing Text Output: {}'.format(os.path.join(out_dir, name)))
-            with open(os.path.join(out_dir, name), 'w') as f:
-                for tup in IV_combo:
-                    f.write(str(tup[0]) + '\t' + str(tup[1]) + '\n')
-
-        else:
-            # handle multiple file output
-            # loop over each subcontainer in the main data construct
-            for idx, cnt in enumerate(data):
-                name = entry + '_' + str(idx + 1) + '.txt'
-                if smth:
-                    # generate smoothed (V, I) pairs
-                    if subtype == 'list':
-                        smth_dat = LF.smooth(data[idx], self.smooth_window_len, self.smooth_window_type)
-                    elif subtype == 'tuple':
-                        smth_dat = LF.smooth(data[idx][0], self.smooth_window_len, self.smooth_window_type)
-                    else:
-                        print('Error in data type passed to output_to_text()')
-                        print('File output canceled ...')
-                        return
-                    IV_combo = [(self.leeddat.elist[index], smth_dat[index]) for index, _ in enumerate(self.leeddat.elist)]
-                else:
-                    # generate raw (V, I) pairs
-                    if subtype == 'list':
-                        IV_combo = [(self.leeddat.elist[index], data[idx][index]) for index, _ in enumerate(self.leeddat.elist)]
-                    elif subtype == 'tuple':
-                        IV_combo = [(self.leeddat.elist[index], data[idx][0][index]) for index, _ in enumerate(self.leeddat.elist)]
-                    else:
-                        print('Error in data type passed to output_to_text()')
-                        print('File output canceled ...')
-                        return
-                print('Writing Text Output: {}'.format(os.path.join(out_dir, name)))
-                with open(os.path.join(out_dir, name), 'w') as f:
-                    for tup in IV_combo:
-                        f.write(str(tup[0]) + '\t' + str(tup[1]) + '\n')
-        print('Done Writing Files ...')
-    """
 
     def output_LEED_to_Text(self):
         """
@@ -1414,7 +1321,12 @@ class Viewer(QtGui.QWidget):
             if self.smooth_file_output:
                 ilist = LF.smooth(ilist)
             # full file name
-            full_path = out_dir + '/' + entry + '_' + str(idx+1) + '_' + '.txt'
+
+            # check for single file output
+            if len(self.rect_coords) == 1:
+                full_path = out_dir + '/' + entry + '.txt'
+            else:
+                full_path = out_dir + '/' + entry + '_' + str(idx+1)  + '.txt'
             print('Starting thread {0} of {1} ...'.format(idx, len(self.rect_coords)))
 
             self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
