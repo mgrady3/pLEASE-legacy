@@ -7,6 +7,9 @@ pLEASE is the successor to all of my previous LEED/LEEM Data analysis scripts an
 
 pLEASE provides a full GUI for analysis for LEED and LEEM data sets specifically geared towards viewing and analyzing LEED/LEEM-I(V) data.
 
+pLEASE has been tested on the following systems: OS X (X.9, X.10, X.11); Linux Ubuntu 14; Windowx XP sp3
+In principle all windows OS > XP sp3 should work but I do not have access to a machine to test them on.
+
 ## Functionality:
 * Full GUI written with the Qt Framework via the python bindings PyQt4
 * View LEED and LEEM data sets from a variety of data formats (jpg, png, tiff, and raw bary data)
@@ -57,7 +60,7 @@ Save this file as pLease.command
 Give the file executbale previleges using chmod +x
 Now this file should be an executable script which will run the python code and can be placed anywhere in your computer's directory structure. The file can be renamed anything and generally the extension can be omitted. So for example you could place the file on your Desktop and rename it to 'pLEASE-Start' Then this file can be double clicked to launch the code at any time.
 
-I have tested building of executables using the python package "pyinstaller" on a number of operating systems including: Ubuntu Linux (v. 14), OS X.9, OS X.10, and Windows XP sp3.
+I have tested building of executables using the python package "pyinstaller" on a number of operating systems including: Ubuntu Linux (v. 14), OS X.9 'Mavericks', OS X.10 'Yosemite', OS X.11 'El Capitan', and Windows XP sp3.
 
 In the future I will include instructions for the build process. The code can in principle be built as an executable for nearly all common Operating Systems so long as the Anaconda Python Distribution can be properly installed. If Anaconda is unsupported on the Target OS, its still possible to build, however the correct python distibution as well as all library dependencies must be then installed manually which could prove troublesome if one or more dependencies has trouble building.
 
