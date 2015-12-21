@@ -38,7 +38,7 @@ class WorkerThread(QtCore.QThread):
     def __init__(self, task=None, **kwargs):
         super(WorkerThread, self).__init__()
         self.task = task
-        # Get parameters and validate
+        # Get parameters as dictionary and validate against keys
         self.params = kwargs
         self.valid_keys = ['path', 'data', 'ilist', 'elist',
                            'imht', 'imwd', 'name']

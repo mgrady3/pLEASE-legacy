@@ -17,16 +17,13 @@ def main():
     source_path = os.path.dirname(gui.__file__)
     # print(source_path)
     graphics_path = os.path.join(source_path, 'icons')
-    print(graphics_path)
+    # print(graphics_path)
     splash_picture = QtGui.QPixmap(os.path.join(graphics_path, 'pLEASE.png'))
-    print(os.path.join(graphics_path, 'pLEASE.png'))
+    # print(os.path.join(graphics_path, 'pLEASE.png'))
     splash = QtGui.QSplashScreen(splash_picture, QtCore.Qt.WindowStaysOnTopHint)
     splash.setMask(splash_picture.mask())
     splash.show()
     time.sleep(3.5)
-
-
-
 
     # Start UI
     view = gui.Viewer()
@@ -34,6 +31,7 @@ def main():
     max_ht = view.max_height
     max_wd = view.max_width
 
+    # Small screens
     if max_ht <= 800 and max_wd <= 1280:
         view.showMaximized()
     view.raise_()

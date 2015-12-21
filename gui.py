@@ -458,7 +458,7 @@ class Viewer(QtGui.QWidget):
 
         changeAction = QtGui.QAction('Change LEED Image', self)
         changeAction.setShortcut('Ctrl+G')
-        changeAction.triggered.connect(self.show_LEED_image_by_index)
+        changeAction.triggered.connect(self.show_LEED_image_by_energy)
         LEEDMenu.addAction(changeAction)
 
         clearAction = QtGui.QAction('Clear Current I(V)', self)
@@ -674,6 +674,9 @@ class Viewer(QtGui.QWidget):
         :param index:
         :return:
         """
+        # TODO: Make this callable from the menu invoking LF.filenumber_to_energy()
+        #       Convert the function to accept energy in eV as the index param
+        #       Then call LF.energy_to_filenumber() to swap  to index
         # print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
         if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
             print('! Warning: New Data does not match current energy parameters !')
@@ -693,7 +696,10 @@ class Viewer(QtGui.QWidget):
         return
 
     def show_LEED_image_by_index(self):
+        """
 
+        :return:
+        """
         entry, ok = QtGui.QInputDialog.getInt(self, "Enter Image Number",
                                               "Enter an integer between 0 and {}".format(self.leeddat.dat_3d.shape[2]-1),
                                               value=self.leeddat.dat_3d.shape[2]-1,
@@ -702,6 +708,21 @@ class Viewer(QtGui.QWidget):
         if ok:
             self.update_LEED_img(index=entry)
         return
+
+    def show_LEED_image_by_energy(self):
+        """
+
+        :return:
+        """
+        entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Image Number",
+                                              "Enter an integer between {0} and {1}".format(self.leeddat.elist[0], self.leeddat.elist[-1]),
+                                              value=len(self.leeddat.elist)/2,
+                                              min=0,
+                                              max=self.leeddat.elist[-1])
+        if ok:
+            self.update_LEED_img(index=LF.energy_to_filenumber(self.leeddat.elist, entry))
+        return
+
 
 
     def set_energy_parameters(self, dat=None):
@@ -1368,6 +1389,10 @@ class Viewer(QtGui.QWidget):
             int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
                                           tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
                                           :]
+
+            # TODO: Clean up this algorithm. Remind what the variables actually do
+            # TODO: Is there any reason the find_local_max() takes the last image
+            #           in the stack as the image to compute gaussian blur?
 
             maxLoc = LF.find_local_maximum(int_win[:, :, -1])  # (x,y)
             # print('Old Beam Center: (r,c) =  {}'.format(tup))
