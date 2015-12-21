@@ -10,3 +10,8 @@ pLEASE-START
 *.spec
 
 *.zip
+
+*.lib.so
+
+*.dylib
+
