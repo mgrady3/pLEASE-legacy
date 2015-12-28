@@ -117,6 +117,8 @@ class Viewer(QtGui.QWidget):
 
     def init_Data(self):
         """
+        Setup main data constructs
+        Setup plotting flags
 
         :return none:
         """
@@ -161,15 +163,15 @@ class Viewer(QtGui.QWidget):
         self.leem_IV_list = []
         self.leem_IV_mask = []
         self.click_count = 0
-        self.max_leem_click = 7
-        self.count_energy_range = '' # string of energy range used in plot labels
+        self.max_leem_click = 7  # Should be kept less than or equal to number of colors minus 1
+        self.count_energy_range = ''  # string of energy range used in plot labels
 
         self.num_one_min = 0
         self.hascountedminima = False
 
     def init_Plot_Axes(self):
         """
-
+        Setup embedded matplotlib plotting axes
         :return none:
         """
         # Format LEED IV Axis
@@ -209,7 +211,7 @@ class Viewer(QtGui.QWidget):
 
     def init_Img_Axes(self):
         """
-
+        Setup embedded matplotlib axes for displaying images
         :return none:
         """
         # Format LEED Image Axis
@@ -236,7 +238,7 @@ class Viewer(QtGui.QWidget):
 
     def init_Console(self):
         """
-
+        Setup floating window with text box to capture Stdout and Stderr
         :return none:
         """
         if self.already_catching_output:
@@ -290,7 +292,7 @@ class Viewer(QtGui.QWidget):
 
     def init_LEED_Tab(self):
         """
-
+        Setup GUI items for LEED analysis
         :return none:
         """
         self.LEED_IV_fig, (self.LEED_img_ax, self.LEED_IV_ax) = plt.subplots(1, 2, figsize=(6,6), dpi=100)
@@ -310,7 +312,7 @@ class Viewer(QtGui.QWidget):
 
     def init_LEEM_Tab(self):
         """
-
+        Setup GUI items for LEEM analysis
         :return none:
         """
         self.LEEM_fig, (self.LEEM_ax, self.LEEM_IV_ax) = plt.subplots(1, 2, figsize=(6,6))
@@ -352,7 +354,7 @@ class Viewer(QtGui.QWidget):
 
     def init_Config_Tab(self):
         """
-
+        Setup GUI items for CONFIG and SETTINGS
         :return none:
         """
         config_Tab_groupbox = QtGui.QGroupBox()
@@ -501,8 +503,6 @@ class Viewer(QtGui.QWidget):
         countAction.triggered.connect(self.count_helper)
         LEEMMenu.addAction(countAction)
 
-
-
         # Settings Menu
         settingsMenu = self.menubar.addMenu('Settings')
         smoothAction = QtGui.QAction('Toggle Data Smoothing', self)
@@ -551,6 +551,7 @@ class Viewer(QtGui.QWidget):
     @staticmethod
     def welcome():
         """
+        Called once on app open
         :return none:
         """
         print("Welcome to python Low-energy Electron Analyis SuitE: pLEASE")
@@ -560,6 +561,7 @@ class Viewer(QtGui.QWidget):
     @staticmethod
     def Quit():
         """
+        Exit program via Qt protocols instead of sys.exit()
         :return none:
         """
         print('Exiting ...')
@@ -660,8 +662,8 @@ class Viewer(QtGui.QWidget):
 
     def retrieve_LEED_data(self, dat):
         """
-
-        :param dat:
+        Custom Slot to recieve data from a QThread object upon thread exit
+        :param dat: numpy array output by WorkerThread
         :return:
         """
         self.leeddat.dat_3d = dat
@@ -670,7 +672,7 @@ class Viewer(QtGui.QWidget):
 
     def update_LEED_img(self, index=0):
         """
-
+        Display LEED image by filenumber index
         :param index:
         :return:
         """
