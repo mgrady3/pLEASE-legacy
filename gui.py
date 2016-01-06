@@ -458,7 +458,7 @@ class Viewer(QtGui.QWidget):
         shiftAction.triggered.connect(self.shift_user_selection)
         LEEDMenu.addAction(shiftAction)
 
-        changeAction = QtGui.QAction('Change LEED Image', self)
+        changeAction = QtGui.QAction('Change LEED Image by Energy', self)
         changeAction.setShortcut('Ctrl+G')
         changeAction.triggered.connect(self.show_LEED_image_by_energy)
         LEEDMenu.addAction(changeAction)
@@ -676,10 +676,7 @@ class Viewer(QtGui.QWidget):
         :param index:
         :return:
         """
-        # TODO: Make this callable from the menu invoking LF.filenumber_to_energy()
-        #       Convert the function to accept energy in eV as the index param
-        #       Then call LF.energy_to_filenumber() to swap  to index
-        # print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
+
         if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
             print('! Warning: New Data does not match current energy parameters !')
             print('Updating Energy parameters ...')
@@ -903,7 +900,6 @@ class Viewer(QtGui.QWidget):
         if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
             print("! Warning Data does not match current Energy Parameters !")
             print("Can not plot data due to mismatch ...")
-            # TODO add update energy function
             return
 
         for idx, tup in enumerate(self.rect_coords):
