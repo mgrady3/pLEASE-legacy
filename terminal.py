@@ -81,7 +81,7 @@ class ErrorConsole(QtGui.QWidget):
         """
         Override closeEvent to ensure sys.stdout and sys.stderr
         are properly reset when 'terminal' widget is closed
-        :param event:
+        :param event: receive a 'window close event'
         :return none:
         """
         sys.stdout = sys.__stdout__

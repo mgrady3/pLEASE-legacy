@@ -1,4 +1,4 @@
-class pyLEEM_Styles(object):
+class PyLeemStyles(object):
     """
     """
     def __init__(self):

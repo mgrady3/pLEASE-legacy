@@ -1,9 +1,8 @@
-
 import os
 import sys
 import numpy as np
 import cv2
-import progressbar as pb
+import multiprocessing as mp
 from PIL import Image
 
 DEF_IMHEIGHT = 600
@@ -153,16 +152,15 @@ def count_minima_locations(e_cut, smth_iv):
     min_locations = []
 
     for point in diff_iv:
-        if np.sign(point) != sgn:
+        if np.sign(point) != sgn and np.sign(point) == 1:
             # the derivative has changed signs - ie. crossed the x axis
             # thus by the intermediate value theorem it must have a zero point in between
             # the zero point in the dI/dV spectra corresponds to a local extrema in the I(V) spectrum
 
-            if np.sign(point) == 1:
-                # the current point in the derivative is positive which means the last point was negative
-                # a derivative changing from - to + indicates a local minima
-                min_locations.append(diff_iv.index(point))
-                count += 1
+            # the current point in the derivative is positive which means the last point was negative
+            # a derivative changing from - to + indicates a local minima
+            min_locations.append(diff_iv.index(point))
+            count += 1
         sgn = np.sign(point)  # update sgn and continue loop with next point in the derivative
 
     return (count, min_locations)
@@ -311,3 +309,71 @@ def find_local_maximum(window):
     blur = cv2.GaussianBlur(window, (radius, radius), 0)
     (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blur)
     return maxLoc
+
+
+def count_layers_new(data, ecut):
+        '''
+
+        :param data: 3d numpy array of smooth data cut to specific data range
+        :param ecut: 1d list of energy values cut to specific data range
+        :return none:
+        '''
+
+        # calculate the derivative of input data
+        diff_data = np.diff(data, axis=2) / np.diff(ecut)
+
+        # smooth the derivative data
+        smooth_diff_data = np.apply_along_axis(smooth, 2, diff_data)
+        # print('Creating process pool ...')
+        # process pool
+        pool = mp.Pool(4)
+
+        # create list of 1-d arrays as input to count_mins()
+        ins = [smooth_diff_data[r,c, :] for r in range(data.shape[0])
+                                        for c in range(data.shape[1])]
+        # list of outputs from check_flat using pool.map()
+        # print('Starting parallel computation')
+        outs = pool.map(check_flat_and_count, ins)
+        pool.close()
+        pool.join()
+        # print('Closing pool and joining ...')
+        # convert back to np array and reshape
+        outs = np.array(outs).reshape((data.shape[0], data.shape[1]))
+        return outs
+
+
+def check_flat_and_count(data, thresh=5):
+        '''
+
+        :param data: 1d numpy array containing smoothed dI/dE data
+        :param thresh: threshold value for
+        :return:
+        '''
+
+        mins = count_mins(data)
+        if mins[0] >= 2:
+            data_subset = data[mins[1]:mins[2]]
+            data_var = np.var(data_subset)
+            if data_var <= thresh:
+                return 0
+            else:
+                return mins[0]
+        else:
+            return mins[0]
+
+
+def count_mins(data):
+        num = 0
+        locs = []
+        sgn = np.sign(data[0])
+        for point in data:
+            if np.sign(point) != sgn and np.sign(point) == 1:
+                num += 1
+                locs.append(list(data).index(point))
+            sgn = np.sign(point)
+        if num >= 2:
+            return (num, locs[0], locs[-1])
+        else:
+            # num min = 0 or 1
+            # dummy indicies for location of minima
+            return (num,  -1,  -1)

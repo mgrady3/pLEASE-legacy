@@ -1,7 +1,17 @@
-*.png
 
 .idea/
 
 *.pyc
 
 /old/
+
+pLEASE-START
+
+*.spec
+
+*.zip
+
+*.lib.so
+
+*.dylib
+

@@ -7,20 +7,21 @@ Maxwell Grady 2015
 """
 # local project imports
 import data
-import os
 import terminal
 import LEEMFUNCTIONS as LF
+from qthreads import WorkerThread
 
-import time
+# stdlib imports
+import os
 import sys
+import time
 
+# 3rd-party/scientific stack module imports
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import multiprocessing as mp  # this may be removed as a dependency
 import numpy as np
-import pandas as pd
-import progressbar as pb
 import seaborn as sns
 import styles as pls
 from matplotlib import colorbar
@@ -33,17 +34,18 @@ from scipy.stats import linregress as lreg
 
 class Viewer(QtGui.QWidget):
     """
-
+    Main GUI construct
     """
+    # Config Flags - controlled via class properties
     _Style = True
     _DEBUG = False
     _ERROR = True
 
     def __init__(self, parent=None):
         """
-
-        :param leed:
-        :param parent:
+        Initialize new GUI instance. Setup windows, menus, and UI elements.
+        Setup Error Console and all plotting axes.
+        :param parent: This is a Top-Level Widget ie. parent=None
         :return none:
         """
         super(Viewer, self).__init__(parent)
@@ -67,12 +69,37 @@ class Viewer(QtGui.QWidget):
         self.init_Plot_Axes()
         self.init_Img_Axes()
 
-        if self._ERROR:
+        if self.Error:
             # re-route sys.stdout to console window
             self.init_Console()
 
         # final action
         self.show()
+
+    # Setup Class Property Accessor/Setter Methods:
+    @property
+    def Style(self):
+        return self._Style
+
+    @Style.setter
+    def Style(self, value):
+        self._Style = value
+
+    @property
+    def Debug(self):
+        return self._DEBUG
+
+    @Debug.setter
+    def Debug(self, value):
+        self._DEBUG = value
+
+    @property
+    def Error(self):
+        return self._ERROR
+
+    @Error.setter
+    def Error(self, value):
+        self.Error = value
 
     # Top-Level Initialization Functions
     # These functions simply place calls to second-level init functions in an orderly manner
@@ -90,6 +117,8 @@ class Viewer(QtGui.QWidget):
 
     def init_Data(self):
         """
+        Setup main data constructs
+        Setup plotting flags
 
         :return none:
         """
@@ -102,6 +131,7 @@ class Viewer(QtGui.QWidget):
         self.hasdisplayed_leem = False
         self.border_color = (58/255., 83/255., 155/255.)  # unused
 
+        self.current_leed_index = 0  # index of third axis for self.leeddat.dat3d
         self.rect_count = 0
         self.max_leed_click = 10
         self.rects = []
@@ -133,33 +163,33 @@ class Viewer(QtGui.QWidget):
         self.leem_IV_list = []
         self.leem_IV_mask = []
         self.click_count = 0
-        self.max_leem_click = 7
-        self.count_energy_range = '' # string of energy range used in plot labels
+        self.max_leem_click = 7  # Should be kept less than or equal to number of colors minus 1
+        self.count_energy_range = ''  # string of energy range used in plot labels
 
         self.num_one_min = 0
         self.hascountedminima = False
 
     def init_Plot_Axes(self):
         """
-
+        Setup embedded matplotlib plotting axes
         :return none:
         """
         # Format LEED IV Axis
         self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
         self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
         self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
-        if self._Style:
+        if self.Style:
             self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
             self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         rect = self.LEED_IV_fig.patch
-        if not self._Style:
+        if not self.Style:
             rect.set_facecolor((189/255., 195/255., 199/255.))
         else: rect.set_facecolor((68/255., 67/255., 67/255.))
 
         # Format LEEM IV Axis
-        if not self._Style:
+        if not self.Style:
             self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20)
             self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
             self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
@@ -181,7 +211,7 @@ class Viewer(QtGui.QWidget):
 
     def init_Img_Axes(self):
         """
-
+        Setup embedded matplotlib axes for displaying images
         :return none:
         """
         # Format LEED Image Axis
@@ -193,12 +223,12 @@ class Viewer(QtGui.QWidget):
                                  left='off', right='off')
         self.LEED_img_ax.get_xaxis().set_visible(False)
         self.LEED_img_ax.get_yaxis().set_visible(False)
-        if not self._Style:
+        if not self.Style:
             self.LEED_img_ax.set_title('LEED Image', fontsize=20)
         else: self.LEED_img_ax.set_title('LEED Image', fontsize=20, color='white')
 
         # Format LEEM Image Axis
-        if not self._Style:
+        if not self.Style:
             self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=20)
         else: self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=20, color='white')
 
@@ -208,7 +238,7 @@ class Viewer(QtGui.QWidget):
 
     def init_Console(self):
         """
-
+        Setup floating window with text box to capture Stdout and Stderr
         :return none:
         """
         if self.already_catching_output:
@@ -233,7 +263,7 @@ class Viewer(QtGui.QWidget):
         setup dictionary variable containing QSS style strings
         :return none:
         """
-        pstyles = pls.pyLEEM_Styles()
+        pstyles = pls.PyLeemStyles()
         self.styles = pstyles.get_styles()  # get_styles() returns a dictionary of key, qss string pairs
 
     def init_tabs(self):
@@ -262,7 +292,7 @@ class Viewer(QtGui.QWidget):
 
     def init_LEED_Tab(self):
         """
-
+        Setup GUI items for LEED analysis
         :return none:
         """
         self.LEED_IV_fig, (self.LEED_img_ax, self.LEED_IV_ax) = plt.subplots(1, 2, figsize=(6,6), dpi=100)
@@ -282,7 +312,7 @@ class Viewer(QtGui.QWidget):
 
     def init_LEEM_Tab(self):
         """
-
+        Setup GUI items for LEEM analysis
         :return none:
         """
         self.LEEM_fig, (self.LEEM_ax, self.LEEM_IV_ax) = plt.subplots(1, 2, figsize=(6,6))
@@ -324,7 +354,7 @@ class Viewer(QtGui.QWidget):
 
     def init_Config_Tab(self):
         """
-
+        Setup GUI items for CONFIG and SETTINGS
         :return none:
         """
         config_Tab_groupbox = QtGui.QGroupBox()
@@ -341,7 +371,17 @@ class Viewer(QtGui.QWidget):
         self.set_energy__leed_but = QtGui.QPushButton('Set Energy LEED', self)
         self.set_energy__leed_but.clicked.connect(lambda: self.set_energy_parameters('leed'))
 
-        buts = [self.set_energy__leem_but, self.set_energy__leed_but]
+        self.toggle_debug = QtGui.QPushButton('Toggle Debug', self)
+        self.toggle_debug.clicked.connect(self.toggle_debug_setting)
+
+        self.swap_byte_order_LEED = QtGui.QPushButton('Swap LEED Bytes', self)
+        self.swap_byte_order_LEED.clicked.connect(lambda: self.swap_byte_order(dat='LEED'))
+
+        self.swap_byte_order_LEEM = QtGui.QPushButton('Swap LEEM Bytes', self)
+        self.swap_byte_order_LEEM.clicked.connect(lambda: self.swap_byte_order(dat='LEEM'))
+
+        buts = [self.set_energy__leem_but, self.set_energy__leed_but, self.toggle_debug,
+                self.swap_byte_order_LEED, self.swap_byte_order_LEEM]
 
         config_Tab_group_button_box.addStretch(1)
         for b in buts:
@@ -375,6 +415,11 @@ class Viewer(QtGui.QWidget):
         outputLEEMAction.setShortcut('Ctrl+O')
         outputLEEMAction.triggered.connect(lambda: self.output_to_text(data='LEEM', smth=self.smooth_file_output))
         fileMenu.addAction(outputLEEMAction)
+
+        outputLEEDAction = QtGui.QAction('Output LEED to Text', self)
+        outputLEEDAction.setShortcut('Ctrl+Shift+O')
+        outputLEEDAction.triggered.connect(self.output_LEED_to_Text)
+        fileMenu.addAction(outputLEEDAction)
 
         exitAction = QtGui.QAction('Quit', self)
         exitAction.setShortcut('Ctrl+Q')
@@ -412,6 +457,11 @@ class Viewer(QtGui.QWidget):
         shiftAction.setStatusTip('Shift User Selections based on Beam Maximum')
         shiftAction.triggered.connect(self.shift_user_selection)
         LEEDMenu.addAction(shiftAction)
+
+        changeAction = QtGui.QAction('Change LEED Image by Energy', self)
+        changeAction.setShortcut('Ctrl+G')
+        changeAction.triggered.connect(self.show_LEED_image_by_energy)
+        LEEDMenu.addAction(changeAction)
 
         clearAction = QtGui.QAction('Clear Current I(V)', self)
         clearAction.setShortcut('Ctrl+C')
@@ -453,14 +503,12 @@ class Viewer(QtGui.QWidget):
         countAction.triggered.connect(self.count_helper)
         LEEMMenu.addAction(countAction)
 
-
-
         # Settings Menu
         settingsMenu = self.menubar.addMenu('Settings')
         smoothAction = QtGui.QAction('Toggle Data Smoothing', self)
         smoothAction.setShortcut('Ctrl+Shift+S')
         smoothAction.setStatusTip('Turn on/off Data Smoothing')
-        smoothAction.triggered.connect(self.toggle_LEED_Smoothing)
+        smoothAction.triggered.connect(self.toggle_smoothing)
         settingsMenu.addAction(smoothAction)
 
         setEnergyAction = QtGui.QAction('Set Energy Parameters', self)
@@ -490,12 +538,12 @@ class Viewer(QtGui.QWidget):
         vbox1.addWidget(self.tabs)
         self.setLayout(vbox1)
 
-    def closeEvent(self, event):
+    def closeEvent(self, *args):
         """
         Override closeEvent() to call quit()
         If main window is closed - app will Quit instead of leaving the console open
         with the main window closed
-        :param event: close event from main QWidget
+        :param args: will receive a close event from main QWidget
         :return none:
         """
         self.Quit()
@@ -503,6 +551,7 @@ class Viewer(QtGui.QWidget):
     @staticmethod
     def welcome():
         """
+        Called once on app open
         :return none:
         """
         print("Welcome to python Low-energy Electron Analyis SuitE: pLEASE")
@@ -512,6 +561,7 @@ class Viewer(QtGui.QWidget):
     @staticmethod
     def Quit():
         """
+        Exit program via Qt protocols instead of sys.exit()
         :return none:
         """
         print('Exiting ...')
@@ -544,7 +594,7 @@ class Viewer(QtGui.QWidget):
                 self.load_LEED_Data()
                 return
             else:
-                if entry == 'TIFF' or entry == 'tiff' or entry == 'TIF' or entry == 'tif':
+                if entry in ['TIFF', 'tiff', 'TIF', 'tif']:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing TIFF files"))
                     if new_dir == '':
                         print('Loading Canceled ...')
@@ -556,8 +606,10 @@ class Viewer(QtGui.QWidget):
                         print('! Warning: New Data does not match current energy parameters !')
                         print('Updating Energy parameters ...')
                         self.set_energy_parameters(dat='LEED')
+                    self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
+                    self.update_LEED_img(index=self.current_leed_index)
 
-                elif entry == 'PNG' or entry == 'png':
+                elif entry in ['PNG', 'png']:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing PNG files"))
                     if new_dir == '':
                         print('Loading Canceled ...')
@@ -569,6 +621,8 @@ class Viewer(QtGui.QWidget):
                         print('! Warning: New Data does not match current energy parameters !')
                         print('Updating Energy parameters ...')
                         self.set_energy_parameters(dat='LEED')
+                    self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
+                    self.update_LEED_img(index=self.current_leed_index)
 
                 else:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing DAT files"))
@@ -577,32 +631,98 @@ class Viewer(QtGui.QWidget):
                         return
                     print('New Data Directory set to {}'.format(new_dir))
 
-                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Height", "Enter Positive Int >= 2", value=544, min=2, max=2000)
+                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Height", "Enter Positive Int >= 2", value=544, min=2, max=8000)
                     if not ok:
                         print("Loading Raw Data Canceled ...")
                         return
                     else:
                         self.leeddat.ht = entry
 
-                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Width", "Enter Positive Int >= 2", value=576, min=2, max=2000)
+                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Width", "Enter Positive Int >= 2", value=576, min=2, max=8000)
                     if not ok:
                         print("Loading Raw Data Canceled ...")
                         return
                     else:
                         self.leeddat.wd = entry
 
-                    self.leeddat.dat_3d = self.leeddat.load_LEED_RAW(new_dir)
-                    print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
-                    if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
-                        print('! Warning: New Data does not match current energy parameters !')
-                        print('Updating Energy parameters ...')
-                        self.set_energy_parameters(dat='LEED')
+                    # redundant code is redundant
+                    # self.leeddat.dat_3d = self.leeddat.load_LEED_RAW(new_dir)
 
-            self.LEED_IV_ax.set_aspect('auto')
-            self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
-            self.LEED_IV_canvas.draw()
-            self.has_loaded_data = True
+                    self.thread = WorkerThread(task='LOAD_LEED', path=new_dir, imht=self.leeddat.ht, imwd=self.leeddat.wd)
+
+                    # disconnect any previously connected Signals/Slots
+                    self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                    self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
+                    # connect appropriate signals for loading LEED data
+                    self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                    self.connect(self.thread, QtCore.SIGNAL('finished()'), lambda: self.update_LEED_img(index=self.current_leed_index))
+                    self.thread.start()
+
             return
+
+    def retrieve_LEED_data(self, dat):
+        """
+        Custom Slot to recieve data from a QThread object upon thread exit
+        :param dat: numpy array output by WorkerThread
+        :return:
+        """
+        self.leeddat.dat_3d = dat
+        self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
+        return
+
+    def update_LEED_img(self, index=0):
+        """
+        Display LEED image by filenumber index
+        :param index:
+        :return:
+        """
+
+        if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
+            print('! Warning: New Data does not match current energy parameters !')
+            print('Updating Energy parameters ...')
+            self.set_energy_parameters(dat='LEED')
+        self.LEED_IV_ax.set_aspect('auto')
+        if index <= self.leeddat.dat_3d.shape[2]:
+            self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, index], cmap=cm.Greys_r)
+        else:
+            print('Image index out of bounds - displaying last image in stack ...')
+            self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
+
+        self.LEED_IV_canvas.draw()
+        self.has_loaded_data = True
+        self.hasdisplayed_leed = True
+        self.current_leed_index = index
+        return
+
+    def show_LEED_image_by_index(self):
+        """
+
+        :return:
+        """
+        entry, ok = QtGui.QInputDialog.getInt(self, "Enter Image Number",
+                                              "Enter an integer between 0 and {}".format(self.leeddat.dat_3d.shape[2]-1),
+                                              value=self.leeddat.dat_3d.shape[2]-1,
+                                              min=0,
+                                              max=self.leeddat.dat_3d.shape[2]-1)
+        if ok:
+            self.update_LEED_img(index=entry)
+        return
+
+    def show_LEED_image_by_energy(self):
+        """
+
+        :return:
+        """
+        entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Image Number",
+                                              "Enter an integer between {0} and {1}".format(self.leeddat.elist[0], self.leeddat.elist[-1]),
+                                              value=len(self.leeddat.elist)/2,
+                                              min=0,
+                                              max=self.leeddat.elist[-1])
+        if ok:
+            self.update_LEED_img(index=LF.energy_to_filenumber(self.leeddat.elist, entry))
+        return
+
+
 
     def set_energy_parameters(self, dat=None):
         """
@@ -652,6 +772,28 @@ class Viewer(QtGui.QWidget):
             print('Error in set_energy_parameters: Invalid data type passed as parameter')
             return
 
+    def swap_byte_order(self, dat=None):
+        """
+
+        :return:
+        """
+        if dat is None:
+            return
+
+        elif dat == 'LEED' and self.hasdisplayed_leed:
+            self.leeddat.dat_3d = self.leeddat.dat_3d.newbyteorder()
+            print('Byte order of current LEED data set has been swapped.')
+            self.update_LEED_img(index=self.current_leed_index)
+
+        elif dat == 'LEEM' and self.hasdisplayed_leem:
+            self.leemdat.dat_3d = self.leemdat.dat_3d.newbyteorder()
+            print('Byte order of current LEEM data set has been swapped.')
+        else:
+            print('Unknown Data type for Swap Byte Order ...')
+        return
+
+
+
     def leed_click(self, event):
         """
         Handle mouse-clicks in the main LEED Image Axis
@@ -663,7 +805,7 @@ class Viewer(QtGui.QWidget):
             return
         if not self.has_loaded_data:
             return
-        if self._DEBUG:
+        if self.Debug:
             print('LEED Click registered ...')
 
         if self.rect_count <= self.max_leed_click - 1:
@@ -707,7 +849,20 @@ class Viewer(QtGui.QWidget):
         self.shifted_rect_coords = []
         # self.init_Plots()
         self.hasplotted_leed = False
+
+        if self.Style:
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
+        else:
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
+
         self.LEED_IV_canvas.draw()
+        return
 
     def clear_leed_plots_only(self):
         """
@@ -716,6 +871,16 @@ class Viewer(QtGui.QWidget):
         """
         print('Clearing Plots ...')
         self.LEED_IV_ax.clear()
+        if self.Style:
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
+        else:
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         self.LEED_IV_canvas.draw()
 
     def plot_leed_IV(self):
@@ -735,7 +900,6 @@ class Viewer(QtGui.QWidget):
         if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
             print("! Warning Data does not match current Energy Parameters !")
             print("Can not plot data due to mismatch ...")
-            # TODO add update energy function
             return
 
         for idx, tup in enumerate(self.rect_coords):
@@ -789,12 +953,30 @@ class Viewer(QtGui.QWidget):
         self.use_avg = False
         self.LEED_IV_ax.clear()
         self.LEED_IV_ax.plot(self.leeddat.elist, average_int, color=self.colors[-1])
-        self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
+        if self.Style:
+            self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves', color='w')
+        else:
+            self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
         self.LEED_IV_canvas.draw()
 
-    def toggle_LEED_Smoothing(self):
+    def toggle_debug_setting(self):
         """
+        Swap settings for Debug property
+        :return: none
+        """
+        if self.Debug:
+            print('Disabling Debug ...')
+            self.Debug = False
+        else:
+            print('Enabling Debug ...')
+            self.Debug = True
+        return
 
+    def toggle_smoothing(self):
+        """
+        Toggle settings for data smoothing
+        Set file output flags appropriately when smoothing is enabled
+        If smoothing is being enabled - query user for new settings
         :return none:
         """
 
@@ -822,7 +1004,7 @@ class Viewer(QtGui.QWidget):
                                                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
                                                    QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
-                    self.toggle_LEED_Smoothing()
+                    self.toggle_smoothing()
                     return
                 else: return
             else:
@@ -834,19 +1016,20 @@ class Viewer(QtGui.QWidget):
             return
         else:
             if not (entry % 2 == 0) and (entry >= 4):
-                print('Window_Length entry, {}, was odd - Using next even integer {}.'.format(entry, entry + 1))
+                print('Window_Length entry, {0}, was odd - Using next even integer {1}.'.format(entry, entry + 1))
                 entry += 1
                 self.smooth_window_len = int(entry)
             else:
                 self.smooth_window_len = int(entry)
         self.smooth_leed_plot = True
         self.smooth_file_output = True
-        print('Smoothing Enabled: Window = {}; Window Length = {}'.format(self.smooth_window_type, self.smooth_window_len))
+        print('Smoothing Enabled: Window = {0}; Window Length = {1}'.format(self.smooth_window_type, self.smooth_window_len))
         return
 
     def set_integration_window(self):
         """
-
+        Set new box radius for integration window
+        Integration is a square of side length 2*(box radius)
         :return none:
         """
         entry, ok = QtGui.QInputDialog.getInt(self, "Set Integration Window Half Length",
@@ -854,7 +1037,7 @@ class Viewer(QtGui.QWidget):
         if not ok:
             return
         self.leeddat.box_rad = entry
-        print('New Integration Window set to {} x {}.'.format(2*self.leeddat.box_rad, 2*self.leeddat.box_rad))
+        print('New Integration Window set to {0} x {1}.'.format(2*self.leeddat.box_rad, 2*self.leeddat.box_rad))
 
     def subtract_background(self):
         """
@@ -892,13 +1075,13 @@ class Viewer(QtGui.QWidget):
                 ps /= num_pixels
                 bkgnd.append(ps)  # store average perimeter pixel value
 
-                if self._DEBUG:
+                if self.Debug:
                     print("Average Background calculated as {}".format(ps))
                     print("Raw Sum: {}".format(img.sum()))
 
                 img -= int(ps)  # subtract background from each pixel
 
-                if self._DEBUG:
+                if self.Debug:
                     print("Adjusted Sum: {}".format(img[img >= 0].sum()))
                     print(img)
 
@@ -1004,7 +1187,7 @@ class Viewer(QtGui.QWidget):
 
         num_curves = len(self.current_selections)
         last_raw_curve_idx = num_curves/2 -1
-        if self._DEBUG:
+        if self.Debug:
             print("Number of total curves to plot = {}".format(num_curves))
             print("Index of last raw curve = {}".format(last_raw_curve_idx))
 
@@ -1045,7 +1228,7 @@ class Viewer(QtGui.QWidget):
         rect3 = self.nfig3.patch
         rect4 = self.nfig4.patch
 
-        if not self._Style:
+        if not self.Style:
             rect1.set_facecolor((189/255., 195/255., 199/255.))
             rect2.set_facecolor((189/255., 195/255., 199/255.))
             rect3.set_facecolor((189/255., 195/255., 199/255.))
@@ -1076,19 +1259,19 @@ class Viewer(QtGui.QWidget):
         for w in windows:
             w.show()
 
-    def output_to_text(self, data=None, smth=False):
+    def output_to_text(self, data=None):
         """
         Write out data to text files in columar format
         :param data: container for data to be output; may be single list or list of lists
-        :param smth: bool to decide if smooth() should be applied to data before output; default to False
         :return none:
         """
         if data is None:
             # no data passed as input; do nothing
-            print('No Data!!! ...')
+            print('No Data to Output ...')
             return
-        multi_output = False  # boolean flag for whether or not outputting multiple files is needed
-        subtype = None  # type check for possible sub-containers in main data container
+
+        # TODO: Now that LEED/LEEM have separate output functions
+        #       the data flag is no longer needed
 
         if data == 'LEEM':
             # handle LEEM output
@@ -1097,41 +1280,33 @@ class Viewer(QtGui.QWidget):
             if not os.path.exists(os.path.join(self.leemdat.data_dir, 'ivout')):
                 os.path.mkdir(os.path.join(self.leemdat.data_dir, 'ivout'))
             leem_out_dir = os.path.join(self.leemdat.data_dir, 'ivout')
+            n = len(self.leem_IV_list)  # number of threads to run
+            count = 1  # thread number
             for tup in self.leem_IV_list:
                 outfile = os.path.join(leem_out_dir, str(tup[2])+'-'+str(tup[3])+'.txt')
-                dicout = {'I': tup[1], 'E': tup[0]}
-                outdf = pd.DataFrame(dicout)
-                print('Writing Output File: {} ...'.format(outfile))
-                outdf.to_csv(outfile, sep='\t', index=False)
+                print('Starting thread {0} of {1}'.format(count, n))
+
+                # gather data to output and handle smoothing
+                elist = tup[0]
+                ilist = tup[1]
+                if self.smooth_file_output:
+                    ilist = LF.smooth(ilist, window_len=self.smooth_window_len,
+                                      window_type=self.smooth_window_type)
+
+                self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
+                                           elist=elist, ilist=ilist,
+                                           name=outfile)
+                self.connect(self.thread, QtCore.SIGNAL('finished()'), self.output_complete)
+                self.thread.start()
+                count += 1
             return
 
-        # else - handle LEED output
-        if type(data) is list:
-            # check for sub-containers
-            if type(data[0]) is list:
-                # main data is a container of containers
-                # there may be multiple curves to output into separate files
-                multi_output = True
-                subtype = 'list'
-            elif type(data[0]) is tuple:
-                # main data is a container of containers
-                # there may be multiple curves to output into separate files
-                multi_output = True
-                subtype = 'tuple'
-            elif type(data[0]) is int or type(data[0]) is float:
-                # main data container is simply a list of numbers
-                # only one output file is needed
-                multi_output = False
-                subtype = None
-            else:
-                print("Invalid Call to output_to_text()")
-                print("data param should be list, list of lists, or list of tuples")
-                return
-        else:
-            print("Invalid Call to output_to_text()")
-            print("data param should be list, list of lists, or list of tuples")
-            return
 
+    def output_LEED_to_Text(self):
+        """
+
+        :return:
+        """
         # Begin File Output Logic
         # Query User for directory to output to
         out_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory for File Output",
@@ -1150,60 +1325,72 @@ class Viewer(QtGui.QWidget):
             print("File Output Canceled ...")
             return
         entry = str(entry)  # convert from QString to String
-        if not multi_output:
-            # handle single file output
-            name = entry + '.txt'
-            if smth:
-                # generate smoothed (V, I) pairs
-                smth_dat = LF.smooth(data, self.smooth_window_len, self.smooth_window_type)
-                IV_combo = [(self.leeddat.elist[index], smth_dat[index]) for index, _ in enumerate(self.leeddat.elist)]
-            else:
-                # generate raw (V, I) pairs
-                IV_combo = [(self.leeddat.elist[index], data[index]) for index, _ in enumerate(self.leeddat.elist)]
-            print('Writing Text Output: {}'.format(os.path.join(out_dir, name)))
-            with open(os.path.join(out_dir, name), 'w') as f:
-                for tup in IV_combo:
-                    f.write(str(tup[0]) + '\t' + str(tup[1]) + '\n')
 
-        else:
-            # handle multiple file output
-            # loop over each subcontainer in the main data construct
-            for idx, cnt in enumerate(data):
-                name = entry + '_' + str(idx + 1) + '.txt'
-                if smth:
-                    # generate smoothed (V, I) pairs
-                    if subtype == 'list':
-                        smth_dat = LF.smooth(data[idx], self.smooth_window_len, self.smooth_window_type)
-                    elif subtype == 'tuple':
-                        smth_dat = LF.smooth(data[idx][0], self.smooth_window_len, self.smooth_window_type)
-                    else:
-                        print('Error in data type passed to output_to_text()')
-                        print('File output canceled ...')
-                        return
-                    IV_combo = [(self.leeddat.elist[index], smth_dat[index]) for index, _ in enumerate(self.leeddat.elist)]
-                else:
-                    # generate raw (V, I) pairs
-                    if subtype == 'list':
-                        IV_combo = [(self.leeddat.elist[index], data[idx][index]) for index, _ in enumerate(self.leeddat.elist)]
-                    elif subtype == 'tuple':
-                        IV_combo = [(self.leeddat.elist[index], data[idx][0][index]) for index, _ in enumerate(self.leeddat.elist)]
-                    else:
-                        print('Error in data type passed to output_to_text()')
-                        print('File output canceled ...')
-                        return
-                print('Writing Text Output: {}'.format(os.path.join(out_dir, name)))
-                with open(os.path.join(out_dir, name), 'w') as f:
-                    for tup in IV_combo:
-                        f.write(str(tup[0]) + '\t' + str(tup[1]) + '\n')
+        # for each element in rect_coords - spin up a qthread to output the data to file
+        for idx, tup in enumerate(self.rect_coords):
+
+            # generate raw data to pass to new thread to be output
+            int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
+                                          tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+                                          :]
+            ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
+            elist = self.leeddat.elist
+
+            # check if smoothing is enabled
+            if self.smooth_file_output:
+                ilist = LF.smooth(ilist)
+            # full file name
+
+            # check for single file output
+            if len(self.rect_coords) == 1:
+                full_path = out_dir + '/' + entry + '.txt'
+            else:
+                full_path = out_dir + '/' + entry + '_' + str(idx+1)  + '.txt'
+            print('Starting thread {0} of {1} ...'.format(idx, len(self.rect_coords)))
+
+            self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
+                                       ilist=ilist, elist=elist,
+                                       name=full_path)
+
+            self.connect(self.thread, QtCore.SIGNAL('finished()'), self.output_complete)
+            self.thread.start()
         print('Done Writing Files ...')
+        return
+
+    @staticmethod
+    def output_complete():
+        """
+        This function executes when receiving a finished() SIGNAL from a QThread object
+        :return: none
+        """
+        # signals QThread has emitted a 'finished()' SIGNAL
+        print('File output successfully')
+        return
 
     def shift_user_selection(self):
+        """
+        Using opencv, find the relative beam maximum nearest to the user selection.
+        Shift the user selected integration window to be centered on the
+        located maxima.
+
+        This takes out some ambiguity when comparing I(V) curves from the same
+        LEED beams at extracted at different times.
+
+        In the future, a CONFIG setting will be toggle-able such that this function can be
+        always enabled or always disabled.
+
+        :return: none
+        """
         self.shifted_rects = []
         self.shifted_rect_coords = []
         for tup in self.rect_coords:
             int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
                                           tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
                                           :]
+
+            # TODO: Clean up this algorithm. Remind what the variables actually do
+            # TODO: Is there any reason the find_local_max() takes the last image
+            #           in the stack as the image to compute gaussian blur?
 
             maxLoc = LF.find_local_maximum(int_win[:, :, -1])  # (x,y)
             # print('Old Beam Center: (r,c) =  {}'.format(tup))
@@ -1295,14 +1482,31 @@ class Viewer(QtGui.QWidget):
             self.leemdat.wd = entry
 
         try:
-            self.leemdat.dat_3d = LF.process_LEEM_Data(self.leemdat.data_dir,
-                                                       self.leemdat.ht,
-                                                       self.leemdat.wd)
+            self.thread = WorkerThread(task='LOAD_LEEM',
+                                       path=self.leemdat.data_dir,
+                                       imht=self.leemdat.ht,
+                                       imwd=self.leemdat.wd)
+            # disconnect any previously connected Signals/Slots
+            self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEEM_data)
+            self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
+            # connect appropriate signals for loading LEED data
+            self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEEM_data)
+            self.connect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
+            self.thread.start()
+
+            #self.leemdat.dat_3d = LF.process_LEEM_Data(self.leemdat.data_dir,
+            #                                           self.leemdat.ht,
+            #                                           self.leemdat.wd)
         except ValueError:
             print('Error Loading LEEM Data: Please Recheck Image Settings')
             print('Resetting data directory to previous setting, {}'.format(prev_ddir))
             return
 
+    def retrieve_LEEM_data(self, dat):
+        self.leemdat.dat_3d = dat
+        return
+
+    def update_LEEM_img(self):
         # Assuming that data loading was successful - self.leemdat.dat_3d is now a 3d numpy array
         # Generate energy list to correspond to the third array axis
         print('Data Loaded successfully: {}'.format(self.leemdat.dat_3d.shape))
@@ -1351,7 +1555,7 @@ class Viewer(QtGui.QWidget):
         self.click_count = 0
         self.leem_IV_list = []
         self.leem_IV_mask = []
-        if not self._Style:
+        if not self.Style:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist,
                                                                                    self.leemdat.curimg)), fontsize=16)
         else:
@@ -1370,7 +1574,7 @@ class Viewer(QtGui.QWidget):
         self.leemdat.curimg = imgnum
         img = data[0:, 0:, self.leemdat.curimg]
 
-        if self._Style:
+        if self.Style:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16, color='white')
         else:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16)
@@ -1482,7 +1686,7 @@ class Viewer(QtGui.QWidget):
         for tup in self.leem_IV_list:
             self.nplot_ax_lm.plot(tup[0], tup[1], color=self.colors[tup[4]])
         rect = self.nfig_lm.patch
-        if self._Style:
+        if self.Style:
             rect.set_facecolor((68/255., 67/255., 67/255.))
             self.nplot_ax_lm.set_title("LEEM I(V)", fontsize=12, color='w')
             self.nplot_ax_lm.set_ylabel("Intensity (arb. units)", fontsize=12, color='w')
@@ -1538,7 +1742,7 @@ class Viewer(QtGui.QWidget):
             return
         else:
             if not (entry % 2 == 0) and (entry >= 4):
-                print('Window_Length entry,{}, was odd - Using next even integer {}'.format((entry, entry + 1)))
+                print('Window_Length entry,{0}, was odd - Using next even integer {1}'.format((entry, entry + 1)))
                 entry += 1
                 self.smooth_window_len = int(entry)
 
@@ -1547,7 +1751,7 @@ class Viewer(QtGui.QWidget):
 
         for idx, tup in enumerate(self.leem_IV_list):
             ax.plot(tup[0], LF.smooth(tup[1], self.smooth_window_len, self.smooth_window_type), color=self.colors[tup[4]])
-        if self._Style:
+        if self.Style:
             ax.set_title("LEEM I(V)-Smoothed", fontsize=16, color='w')
             ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='w')
             ax.set_xlabel("Energy (eV)", fontsize=16, color='w')
