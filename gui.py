@@ -1391,6 +1391,7 @@ class Viewer(QtGui.QWidget):
             # TODO: Clean up this algorithm. Remind what the variables actually do
             # TODO: Is there any reason the find_local_max() takes the last image
             #           in the stack as the image to compute gaussian blur?
+            # TODO: IN PROGRESS - implementing full beam centering algorithm for each image in stack
 
             maxLoc = LF.find_local_maximum(int_win[:, :, -1])  # (x,y)
             # print('Old Beam Center: (r,c) =  {}'.format(tup))
