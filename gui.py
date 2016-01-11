@@ -441,6 +441,12 @@ class Viewer(QtGui.QWidget):
         extractAction.triggered.connect(self.plot_leed_IV)
         LEEDMenu.addAction(extractAction)
 
+        new_extractAction = QtGui.QAction('New Extract I(V)', self)
+        new_extractAction.setShortcut('Ctrl+Shift+E')
+        new_extractAction.setStatusTip('New Extract I(V) from current selections')
+        new_extractAction.triggered.connect(self.new_leed_extract)
+        LEEDMenu.addAction(new_extractAction)
+
         subtractAction = QtGui.QAction('Subtract Background', self)
         subtractAction.setShortcut('Ctrl+B')
         subtractAction.triggered.connect(self.subtract_background)
@@ -901,14 +907,14 @@ class Viewer(QtGui.QWidget):
             print("! Warning Data does not match current Energy Parameters !")
             print("Can not plot data due to mismatch ...")
             return
-
+        tot_pix = (2*self.leeddat.box_rad)**2
         for idx, tup in enumerate(self.rect_coords):
             # generate 3d slice of main data array
             # this represents the integration window projected along the third array axis
             int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
                                           tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
                                           :]
-            ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
+            ilist = [img.sum()/tot_pix for img in np.rollaxis(int_win, 2)]
             if self.smooth_leed_plot:
                 print('Plotting and Storing Smoothed Data ...')
                 self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
@@ -1366,6 +1372,77 @@ class Viewer(QtGui.QWidget):
         # signals QThread has emitted a 'finished()' SIGNAL
         print('File output successfully')
         return
+
+    def get_beam_max_update_slice(self, int_win, win_coords, img):
+        """
+        Given a 2d integration window centered on a user selected point,
+        find the beam maximum in the integration window then return a
+        new slice from leeddat.dat3d centered on the beam max.
+
+        :param int_win: 2d data slice from leeddat.dat3d
+        :param win_coords: tuple containing the coordinates of the center of
+                           int_win relative to (0,0,:) in leeddat.dat3d
+        :param img: full 2d array of pixels. represents one slice from image stack
+        :return new_slice: 2d numpy array sliced from leeddat.dat3d
+        """
+        c_bm, r_bm = LF.find_local_maximum(int_win)  # find_local_max outputs (x,y) from opencv
+        r_u, c_u = win_coords
+        # coordinates of top left corner for new int window centered on beam max
+        new_top_left_coords = (r_u + r_bm - 2*self.leeddat.box_rad,
+                               c_u + c_bm - 2*self.leeddat.box_rad)
+        ntl_r = new_top_left_coords[0]
+        ntl_c = new_top_left_coords[1]
+
+        return img[ntl_r:ntl_r+2*self.leeddat.box_rad,
+                   ntl_c:ntl_c+2*self.leeddat.box_rad]
+
+    def new_leed_extract(self):
+        """
+
+        :return:
+        """
+        if (self.rect_count == 0) or (not self.rects) or (not self.rect_coords):
+            # no data selected; do nothing
+            print('No Data Selected to Plot')
+            return
+
+        if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
+            print("! Warning Data does not match current Energy Parameters !")
+            print("Can not plot data due to mismatch ...")
+            return
+
+        self.hasplotted_leed = True
+
+        # Loop for each user selection
+        for idx, tup in enumerate(self.rect_coords):
+
+            # Loop for each image in stack to generate ilist
+            ilist = []
+            for img in np.rollaxis(self.leeddat.dat_3d, 2):
+
+                # generate window based on user selection coordinates
+                r_u, c_u = tup
+                win = img[r_u - self.leeddat.box_rad:r_u + self.leeddat.box_rad,
+                          c_u - self.leeddat.box_rad:c_u + self.leeddat.box_rad]
+                new_win = self.get_beam_max_update_slice(int_win=win, win_coords=tup, img=img)
+                ilist.append(new_win.sum()/((2*self.leeddat.box_rad)**2))
+
+            if self.smooth_leed_plot:
+                print('Plotting and Storing Smoothed Data ...')
+                self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
+                self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type),
+                                     color=self.smooth_colors[idx])
+            else:
+                print('Plotting and Storing Raw Data ...')
+                self.current_selections.append((ilist, self.colors[idx]))
+                self.LEED_IV_ax.plot(self.leeddat.elist, ilist, color=self.colors[idx])
+
+        self.LEED_IV_canvas.draw()
+        return
+
+
+
+
 
     def shift_user_selection(self):
         """

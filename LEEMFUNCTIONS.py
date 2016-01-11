@@ -3,7 +3,11 @@ import sys
 import numpy as np
 import cv2
 import multiprocessing as mp
+from math import pi, log
 from PIL import Image
+from scipy import fft, ifft
+from scipy.optimize import curve_fit
+
 
 DEF_IMHEIGHT = 600
 DEF_IMWIDTH = 592
@@ -295,19 +299,23 @@ def parse_dir(dirname):
     return '/'.join(splt)
 
 
-def find_local_maximum(window):
+def find_local_maximum(window, radius=25):
     """
     *** NOTE: This function makes use of OpenCV which adds another potentially
     ***       hard to compile (on Windows) module dependence
     Find the center of the LEED beam selected by the user in (r,c) format
     :param window: 3d numpy array consisting of a subset of the main data set. This is an integration window
      selected by the user which contains a LEED beam
+    :param radius: user setting for radius of gaussian. Default to 25 if not explicitly set.
     :return maxLoc: tuple containing the location of the beam maximum
     """
-    radius = 25  # TODO: User Defined Setting
+    # Now radius is settable from the process calling find_local_maximum()
+    radius = radius
+    # radius = 25
     orig = window.copy()
     blur = cv2.GaussianBlur(window, (radius, radius), 0)
-    (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blur)
+
+    (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blur, mask=None)
     return maxLoc
 
 
@@ -363,6 +371,13 @@ def check_flat_and_count(data, thresh=5):
 
 
 def count_mins(data):
+    """
+    Use the intermediate value theorem to find minima in I(E) by counting the number
+    of times dI/dE changes sign from - to +
+
+    :param data: 1d smoothed dI/dE signal
+    :return tuple: (num minima, location of first minima, location of last minima)
+    """
         num = 0
         locs = []
         sgn = np.sign(data[0])
