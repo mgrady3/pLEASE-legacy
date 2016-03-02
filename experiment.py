@@ -18,6 +18,7 @@ class Experiment(object):
     """
 
     def __init__(self):
+        self._Test = False
         self.name = ''
         self.path = ''
         self.data_type = ''
@@ -28,17 +29,18 @@ class Experiment(object):
         self.maxe = ''
         self.stepe = ''
         self.num_files = ''
+        self.imw = ''
+        self.imh = ''
 
         self.loaded_settings = None
 
 
     def toFile(self):
-        output = {key:vars(self)[key] for key in vars(self).keys() if key != 'loaded_settings'}
+        output = {key:vars(self)[key] for key in vars(self).keys() if key != 'loaded_settings' if not key.startswith('_')}
         # pp.pprint(output)
         file_to_output = '/Users/Maxwell/Desktop/'+self.name+'_output.json'
         with open(file_to_output, 'w') as f:
             json.dump(output, f, indent=4)
-
 
     def fromFile(self, fl):
         """
@@ -59,19 +61,23 @@ class Experiment(object):
                 self.maxe = self.loaded_settings['maxe']
                 self.stepe = self.loaded_settings['stepe']
                 self.num_files = self.loaded_settings['numf']
+                self.imw = self.loaded_settings['imw']
+                self.imh = self.loaded_settings['imh']
         except KeyError:
             print("Error in Experiment JSON - Check for usage of Valid Keys Only")
             print("Valid Experiment Parameters are: name, path, type, ext, bits, byteo, mine, maxe, stepe, and numf")
             print("Please refer to experiment.py docstrings for explanation of valid JSON parameter files.")
 
+        self.loaded_settings = None
 
     def test_load(self):
         test_file = '/Users/Maxwell/Desktop/test_exp_1.json'
         with open(test_file, 'r') as f:
             self.loaded_settings = json.load(f)
+        self._Test = True
 
     def test_fill(self):
-        if self.loaded_settings is not None:
+        if self.loaded_settings is not None and self._Test:
             try:
                 self.name = self.loaded_settings['name']
                 self.path = self.loaded_settings['path']
@@ -83,10 +89,13 @@ class Experiment(object):
                 self.maxe = self.loaded_settings['maxe']
                 self.stepe = self.loaded_settings['stepe']
                 self.num_files = self.loaded_settings['numf']
+                self.imw = self.loaded_settings['imw']
+                self.imh = self.loaded_settings['imh']
 
             except KeyError:
                 print("Error in Experiment JSON - Check for usage of Valid Keys Only")
         self.loaded_settings = None
+        self._Test = False
 
 
 
