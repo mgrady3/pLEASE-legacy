@@ -378,17 +378,17 @@ def count_mins(data):
     :param data: 1d smoothed dI/dE signal
     :return tuple: (num minima, location of first minima, location of last minima)
     """
-        num = 0
-        locs = []
-        sgn = np.sign(data[0])
-        for point in data:
-            if np.sign(point) != sgn and np.sign(point) == 1:
-                num += 1
-                locs.append(list(data).index(point))
-            sgn = np.sign(point)
-        if num >= 2:
-            return (num, locs[0], locs[-1])
-        else:
-            # num min = 0 or 1
-            # dummy indicies for location of minima
-            return (num,  -1,  -1)
+    num = 0
+    locs = []
+    sgn = np.sign(data[0])
+    for point in data:
+        if np.sign(point) != sgn and np.sign(point) == 1:
+            num += 1
+            locs.append(list(data).index(point))
+        sgn = np.sign(point)
+    if num >= 2:
+        return (num, locs[0], locs[-1])
+    else:
+        # num min = 0 or 1
+        # dummy indicies for location of minima
+        return (num,  -1,  -1)
