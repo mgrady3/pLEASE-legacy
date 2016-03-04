@@ -68,13 +68,13 @@ class ErrorConsole(QtGui.QWidget):
             self.textEdit.setStyleSheet("QTextEdit {color: black}")
         
         # connect custom signal to pre-defined slot self.set_message
-        stream = CustomStream()
-        stream.message.connect(self.set_message)
+        self.stream = CustomStream()
+        self.stream.message.connect(self.set_message)
         
         # re-route sys.stdout and sys.stderr
         
-        sys.stdout = stream
-        sys.stderr = stream
+        sys.stdout = self.stream
+        sys.stderr = self.stream
         self.show()
         
     def closeEvent(self, event):

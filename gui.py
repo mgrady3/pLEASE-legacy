@@ -9,14 +9,17 @@ Maxwell Grady 2015
 import data
 import terminal
 import LEEMFUNCTIONS as LF
+from experiment import Experiment
 from qthreads import WorkerThread
 
 # stdlib imports
 import os
+import pprint
 import sys
 import time
 
 # 3rd-party/scientific stack module imports
+import yaml
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -30,6 +33,7 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt4 import QtGui, QtCore
 from scipy.stats import linregress as lreg
+
 
 
 class Viewer(QtGui.QWidget):
@@ -122,6 +126,7 @@ class Viewer(QtGui.QWidget):
 
         :return none:
         """
+        self.exp = None
         self.leeddat = data.LeedData()
         self.leemdat = data.LeemData()
         self.has_loaded_data = False
@@ -251,6 +256,7 @@ class Viewer(QtGui.QWidget):
         self.message_console.setFocus()
         self.message_console.raise_()
         self.already_catching_output = True
+        self.pp = pprint.PrettyPrinter(indent=4, stream=self.message_console.stream)
         self.welcome()
 
     # Second Level initialization functions
@@ -410,6 +416,12 @@ class Viewer(QtGui.QWidget):
 
         # File Menu
         fileMenu = self.menubar.addMenu('File')
+
+        loadExperimentAction = QtGui.QAction('Load Experiment', self)
+        loadExperimentAction.setShortcut('Ctrl+X')
+        loadExperimentAction.triggered.connect(self.load_experiment)
+        fileMenu.addAction(loadExperimentAction)
+
 
         outputLEEMAction = QtGui.QAction('Output LEEM to Text', self)
         outputLEEMAction.setShortcut('Ctrl+O')
@@ -574,6 +586,100 @@ class Viewer(QtGui.QWidget):
         QtCore.QCoreApplication.instance().quit()
         return
 
+    # New Methods for loading Generic Experiments
+    # All Necessary Parameters are loaded from YAML configuration file
+
+    def load_experiment(self):
+        """
+
+        :return:
+        """
+
+        new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment Config File"))
+        if new_dir == '':
+                        print('Loading Canceled ...')
+                        return
+        # get .yaml file from selected dir
+        files = [name for name in os.listdir(new_dir) if name.endswith('.yaml')]
+        if files:
+            config = files[0]
+        else:
+            print('No Config file found. Please Select a directory with a .yaml file')
+            print('Loading Canceled ...')
+            return
+
+        self.exp = Experiment()
+        self.exp.fromFile(new_dir+'/'+config)
+        print("New Data Path loaded from file: {}".format(self.exp.path))
+        print("Loaded the following settings:")
+        yaml.dump(self.exp.loaded_settings, stream=self.message_console.stream)
+        # self.pp.pprint(exp.loaded_settings)
+
+        if self.exp.exp_type == 'LEEM':
+            self.load_LEEM_experiment()
+
+        elif self.exp.exp_type == 'LEED':
+            self.load_LEED_experiment()
+        else:
+            print("Error: Unrecognized Experiment Type in YAML Config file")
+            print("Valid Experiment Types are LEEM or LEED")
+            print("Please refer to Experiment.yaml for documentation on valid YAML config files")
+            return
+
+    def load_LEEM_experiment(self):
+        """
+
+        :return:
+        """
+        if self.exp is None:
+            return
+        if self.hasplotted_leem:
+            # if curves already displayed, just clear the IV plots
+            # reset any plotting variables
+            self.clear_LEEM_IV()
+        self.LEEM_ax.clear()
+        self.LEEM_IV_ax.clear()
+        self.leemdat.data_dir = self.exp.path  # manually cast from QString to String
+        self.leemdat.img_mask_count_dir = os.path.join(self.exp.path, 'img_mask_count')
+        self.leemdat.ht = self.exp.imh
+        self.leemdat.wd = self.exp.imw
+
+        if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
+
+            try:
+                self.thread = WorkerThread(task='LOAD_LEEM',
+                                           path=self.leemdat.data_dir,
+                                           imht=self.leemdat.ht,
+                                           imwd=self.leemdat.wd)
+                # disconnect any previously connected Signals/Slots
+                self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEEM_data)
+                self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
+                # connect appropriate signals for loading LEED data
+                self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEEM_data)
+                self.connect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
+                self.thread.start()
+
+                #self.leemdat.dat_3d = LF.process_LEEM_Data(self.leemdat.data_dir,
+                #                                           self.leemdat.ht,
+                #                                           self.leemdat.wd)
+            except ValueError:
+                print('Error Loading LEEM Data: Please Recheck Image Settings')
+                # print('Resetting data directory to previous setting, {}'.format(prev_ddir))
+                return
+
+        elif self.exp.data_type == 'Image' or self.exp.data_type == 'image' or self.exp.data_type == 'IMAGE':
+            # TODO: LEEM tiff/jpg/png methods
+            pass
+
+
+    def load_LEED_experiment(self):
+        """
+
+        :return:
+        """
+        pass
+
+
     # Core Functionality:
     # LEED Functions and Processes #
 
@@ -735,6 +841,18 @@ class Viewer(QtGui.QWidget):
         """
         if dat is None:
             return
+        if self.exp is not None:
+            # get energy params from loaded config file
+
+            energy_list = [self.exp.mine]
+            while energy_list[-1] != self.exp.maxe:
+                energy_list.append(round(energy_list[-1]+self.exp.stepe, 2))
+            if dat == 'LEEM':
+                self.leemdat.elist = energy_list
+            if dat == 'LEED':
+                self.leeddat.elist = energy_list
+            return
+
 
         # Get Starting Energy in eV
         entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Starting Energy in eV",

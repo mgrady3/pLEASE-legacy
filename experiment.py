@@ -19,6 +19,7 @@ class Experiment(object):
 
     def __init__(self):
         self._Test = False
+        self.exp_type = ''
         self.name = ''
         self.path = ''
         self.data_type = ''
@@ -50,30 +51,33 @@ class Experiment(object):
         with open(fl, 'r') as f:
             self.loaded_settings = yaml.load(f)
         try:
-                # Parse Settings into sub groups
-                exp_settings = self.loaded_settings['Experiment']
-                eng_settings = exp_settings['Energy Parameters']
-                img_settings = exp_settings['Image Parameters']
+            # Parse Settings into sub groups
+            exp_settings = self.loaded_settings['Experiment']
+            eng_settings = exp_settings['Energy Parameters']
+            img_settings = exp_settings['Image Parameters']
 
-                # Fill Experiment object attributes from loaded settings
-                self.name = exp_settings['Name']
-                self.path = exp_settings['Data Path']
-                self.data_type = exp_settings['Data Type']
-                self.ext = exp_settings['File Format']
-                self.bit = exp_settings['Bit Size']
-                self.byte_order = exp_settings['Byte Order']
-                self.mine = eng_settings['Min']
-                self.maxe = eng_settings['Max']
-                self.stepe = eng_settings['Step']
-                self.imw = img_settings['Width']
-                self.imh = img_settings['Height']
+            # Fill Experiment object attributes from loaded settings
+            self.exp_type = exp_settings['Type']
+            self.name = exp_settings['Name']
+            self.path = exp_settings['Data Path']
+            self.data_type = exp_settings['Data Type']
+            self.ext = exp_settings['File Format']
+            self.bit = exp_settings['Bit Size']
+            self.byte_order = exp_settings['Byte Order']
+            self.mine = eng_settings['Min']
+            self.maxe = eng_settings['Max']
+            self.stepe = eng_settings['Step']
+            self.imw = img_settings['Width']
+            self.imh = img_settings['Height']
+
+            # self.loaded_settings = None
+            # pp.pprint(vars(self))
+
         except KeyError:
             # TODO: Rewrite this section; Add additional Error handling
             print("Error in Experiment YAML - Check for usage of Valid Keys Only")
             print("Valid Experiment Parameters are: name, path, type, ext, bits, byteo, mine, maxe, stepe, and numf")
             print("Please refer to experiment.py docstrings for explanation of valid YAML parameter files.")
-
-        self.loaded_settings = None
 
     def test_load(self):
         """
@@ -95,6 +99,7 @@ class Experiment(object):
                 exp_settings = self.loaded_settings['Experiment']
                 eng_settings = exp_settings['Energy Parameters']
                 img_settings = exp_settings['Image Parameters']
+                self.exp_type = exp_settings['Type']
                 self.name = exp_settings['Name']
                 self.path = exp_settings['Data Path']
                 self.data_type = exp_settings['Data Type']
