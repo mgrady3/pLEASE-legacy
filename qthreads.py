@@ -100,10 +100,15 @@ class WorkerThread(QtCore.QThread):
             self.quit()
             self.exit()
 
+        if 'bits' not in self.params.keys():
+            # if bit size is not specified, use default values in process_LEEM_Data()
+            self.params['bits'] = None
+
         # load raw data
         dat_3d = LF.process_LEEM_Data(dirname=self.params['path'],
                                       ht=self.params['imht'],
-                                      wd=self.params['imwd'])
+                                      wd=self.params['imwd'],
+                                      bits=self.params['bits'])
 
         # emit output signal with np array as generic pyobject type
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)

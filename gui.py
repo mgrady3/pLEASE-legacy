@@ -663,7 +663,7 @@ class Viewer(QtGui.QWidget):
                 #                                           self.leemdat.ht,
                 #                                           self.leemdat.wd)
             except ValueError:
-                print('Error Loading LEEM Data: Please Recheck Image Settings')
+                print('Error Loading LEEM Experiment: Please Recheck YAML Settings')
                 # print('Resetting data directory to previous setting, {}'.format(prev_ddir))
                 return
 
@@ -677,7 +677,43 @@ class Viewer(QtGui.QWidget):
 
         :return:
         """
-        pass
+        if self.exp is None:
+            return
+
+        if self.hasdisplayed_leed:
+            self.clear_leed_click()
+            self.clear_leed_plots_only()
+
+        self.LEED_IV_ax.clear()
+        self.LEED_img_ax.clear()
+        self.leeddat.data_dir = self.exp.path
+        self.leeddat.ht = self.exp.imh
+        self.leeddat.wd = self.exp.imw
+
+        if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
+            try:
+                self.thread = WorkerThread(task='LOAD_LEED',
+                                           path=self.leeddat.data_dir,
+                                           imht=self.leeddat.ht,
+                                           imwd=self.leeddat.wd,
+                                           bits=self.exp.bit)
+
+                # disconnect any previously connected Signals/Slots
+                self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
+                # connect appropriate signals for loading LEED data
+                self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                self.connect(self.thread, QtCore.SIGNAL('finished()'), lambda: self.update_LEED_img(index=self.current_leed_index))
+                self.thread.start()
+
+            except ValueError:
+                print('Error Loading LEED Experiment: Please Recheck YAML Settings')
+                return
+
+        elif self.exp.data_type == 'Image' or self.exp.data_type == 'image' or self.exp.data_type == 'IMAGE':
+            # TODO: LEEM tiff/jpg/png methods
+            pass
+
 
 
     # Core Functionality:

@@ -34,7 +34,7 @@ def energy_to_filenumber(el, val):
     return el.index(val)
 
 
-def process_LEEM_Data(dirname, ht=0, wd=0):
+def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
     """
     read in all .dat files in current data directory
     process each .dat file into a numpy array
@@ -67,8 +67,23 @@ def process_LEEM_Data(dirname, ht=0, wd=0):
                 # only print first file header length
                 flag = False
             f.seek(0)
+
+            # Generate format string given a bit size read from YAML config file
+            if bits == 8:
+                formatstring = '<u1'  # 1 byte (8bits) per pixel
+
+            elif bits == 16:
+                formatstring = '<u2'  # 2 bytes (16 btis) per pixel
+
+            elif bits is None:
+                formatstring = '<u2'  # default to 16 bit images
+
+            else:
+                print("Error in process_LEEM_Data() - unknown bit size when loading raw data")
+                print("Check for incorrect bitsize in YAML experiment file")
+
             arr_list.append(np.fromstring(f.read()[hdln:],
-                                          '<u2').reshape((ht, wd)))
+                                          formatstring).reshape((ht, wd)))
     print('Creating 3D Array ...')
 
     dat_arr = np.dstack(arr_list)  # create 3D stack of all image files
