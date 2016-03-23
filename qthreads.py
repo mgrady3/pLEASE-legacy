@@ -41,7 +41,7 @@ class WorkerThread(QtCore.QThread):
         # Get parameters as dictionary and validate against keys
         self.params = kwargs
         self.valid_keys = ['path', 'data', 'ilist', 'elist',
-                           'imht', 'imwd', 'name']
+                           'imht', 'imwd', 'name', 'bits']
         for key in self.params.keys():
             if key not in self.valid_keys:
                 print('Terminating - ERROR Invalid Task Parameter: {}'.format(key))

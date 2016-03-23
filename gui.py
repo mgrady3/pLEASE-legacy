@@ -9,6 +9,7 @@ Maxwell Grady 2015
 import data
 import terminal
 import LEEMFUNCTIONS as LF
+import styles as pls
 from experiment import Experiment
 from qthreads import WorkerThread
 
@@ -26,7 +27,7 @@ import matplotlib.pyplot as plt
 import multiprocessing as mp  # this may be removed as a dependency
 import numpy as np
 import seaborn as sns
-import styles as pls
+
 from matplotlib import colorbar
 from matplotlib import colors as clrs
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -529,10 +530,10 @@ class Viewer(QtGui.QWidget):
         smoothAction.triggered.connect(self.toggle_smoothing)
         settingsMenu.addAction(smoothAction)
 
-        setEnergyAction = QtGui.QAction('Set Energy Parameters', self)
-        setEnergyAction.setShortcut('Ctrl+Shift+E')
-        setEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEEM'))
-        settingsMenu.addAction(setEnergyAction)
+        setLEEMEnergyAction = QtGui.QAction('Set Energy Parameters', self)
+        #setLEEMEnergyAction.setShortcut('Ctrl+Shift+E')
+        setLEEMEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEEM'))
+        settingsMenu.addAction(setLEEMEnergyAction)
 
         boxAction = QtGui.QAction('Set Integration Window', self)
         boxAction.setShortcut('Ctrl+Shift+B')
@@ -540,10 +541,10 @@ class Viewer(QtGui.QWidget):
         boxAction.triggered.connect(self.set_integration_window)
         settingsMenu.addAction(boxAction)
 
-        setEnergyAction = QtGui.QAction('Set Energy Parameters', self)
-        setEnergyAction.setShortcut('Ctrl+Shift+N')
-        setEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEED'))
-        settingsMenu.addAction(setEnergyAction)
+        setLEEDEnergyAction = QtGui.QAction('Set LEED Energy Parameters', self)
+        #setLEEDEnergyAction.setShortcut('Ctrl+Shift+N')
+        setLEEDEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEED'))
+        settingsMenu.addAction(setLEEDEnergyAction)
 
     def init_layout(self):
         """
@@ -607,6 +608,10 @@ class Viewer(QtGui.QWidget):
             print('No Config file found. Please Select a directory with a .yaml file')
             print('Loading Canceled ...')
             return
+
+        if self.exp is not None:
+            # already loaded an experiment; save old experiment then load new
+            self.prev_exp = self.exp
 
         self.exp = Experiment()
         self.exp.fromFile(new_dir+'/'+config)
@@ -877,16 +882,40 @@ class Viewer(QtGui.QWidget):
         """
         if dat is None:
             return
+
         if self.exp is not None:
             # get energy params from loaded config file
 
-            energy_list = [self.exp.mine]
-            while energy_list[-1] != self.exp.maxe:
-                energy_list.append(round(energy_list[-1]+self.exp.stepe, 2))
-            if dat == 'LEEM':
+            if dat == 'LEEM' and self.exp.exp_type == 'LEEM':
+                energy_list = [self.exp.mine]
+                while energy_list[-1] != self.exp.maxe:
+                    energy_list.append(round(energy_list[-1] + self.exp.stepe, 2))
                 self.leemdat.elist = energy_list
-            if dat == 'LEED':
+
+            elif dat == 'LEEM' and self.prev_exp is not None:
+                # dat = LEEM but most current exp is not a LEEM exp
+                # check if another exp has been loaded and is a LEEM exp
+                if self.prev_exp.exp_type == 'LEEM':
+                    energy_list = [self.prev_exp.mine]
+                    while energy_list[-1] != self.prev_exp.maxe:
+                        energy_list.append(round(energy_list[-1] + self.prev_exp.stepe, 2))
+                    self.leemdat.elist = energy_list
+
+            elif dat == 'LEED' and self.exp.exp_type == 'LEED':
+                energy_list = [self.exp.mine]
+                while energy_list[-1] != self.exp.maxe:
+                    energy_list.append(round(energy_list[-1] + self.exp.stepe, 2))
                 self.leeddat.elist = energy_list
+
+            elif dat == 'LEED' and self.prev_exp is not None:
+                # dat = LEED but most current exp is not a LEED exp
+                # check if another exp has been loaded and is a LEED exp
+                if self.prev_exp.exp_type == 'LEED':
+                    energy_list = [self.prev_exp.mine]
+                    while energy_list[-1] != self.prev_exp.maxe:
+                        energy_list.append(round(energy_list[-1] + self.prev_exp.stepe, 2))
+                    self.leemdat.elist = energy_list
+
             return
 
 
@@ -1961,7 +1990,7 @@ class Viewer(QtGui.QWidget):
                                                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
                                                    QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
-                    self.smooth_curIV(ax, can)
+                    self.smooth_currrent_IV(ax, can)
                     return
 
                 else: return

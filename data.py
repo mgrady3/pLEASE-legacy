@@ -23,6 +23,7 @@ class LeedData(object):
     def __init__(self, br=20):
         self.dat_3d = np.zeros((10, 10, 10))  # placeholder for main data
         self.elist = []  # list of energy values
+        self.ilist = []
         self.data_dir = ''  # placeholder for path to currently stored data
         # Image settings will be set to appropriate values via the User inside gui.py
         self.ht = 0  # Height of image used in loading Raw data

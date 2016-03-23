@@ -19,6 +19,7 @@ class Experiment(object):
 
     def __init__(self):
         self._Test = False
+        self.exists = True
         self.exp_type = ''
         self.name = ''
         self.path = ''
