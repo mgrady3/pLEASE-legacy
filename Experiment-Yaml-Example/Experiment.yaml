@@ -1,0 +1,47 @@
+Experiment:  # Define Parameters for a Generic Experiment
+# Required Parameters
+    Type:  # Choose either "LEEM" or "LEED" [string]
+    Name:  # [string]
+    Data Type:  # Choose either "Image" or "Raw" [string]
+    File Format:  # File Extension including . [string]
+    Image Parameters:
+        Height:  # [int]
+        Width:  # [int]
+    Energy Parameters:
+        Min:  # [float]
+        Max:  # [float]
+        Step:  # [float]
+    Data Path:  # [string]
+
+# Optional Parameters or Required based on choice of above parameters
+    Date:  # [string]
+    Num Files:  # [int]
+    Bit Size:  # [int]
+    Byte Order:  # Choose either "L" or "B" [string]
+
+
+
+# Example
+# Experiment:
+#     Type: LEEM
+#     Name: "Graphene_on_Ruthenium"
+#     Data Type: "Raw"
+#     File Format: ".dat"
+#     Image Parameters:
+#          Height: 1200
+#          Width: 1200
+#     Energy Parameters:
+#          Min: -9.9
+#          Max: 15.0
+#          Step: 0.1
+#     Data Path: "/Users/Username/Data/Experiments/Graphene_on_Ruthenium/"
+#     # Additional required parameters since Raw was chosen as data type
+#     Bit Size: 16
+#     Byte Order: "L"
+#
+#
+#
+#
+#
+#
+#
