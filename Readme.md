@@ -32,7 +32,7 @@ a *convienient* method for loading data sets as an experiment with saved paramet
 
 The user can store experimental parameters in a .yaml file as human readable structured text using the format given in the template file provided with the source code. This makes anlayzig many sets of data easier as you do not need to remember which parameters to enter for each separate data set
 
-When data is loaded, PLEASE makes it easy to extract IV curves using a simple point and click method. Multiple curves can be extraced and plotted simultaneously with color coding displaying where on the image the dat was extracted from - This feature is shown for a LEEM data set in **Figure 1** with unsmoothed IV data:
+When data is loaded, PLEASE makes it easy to extract IV curves using a simple point and click method. Multiple curves can be extraced and plotted simultaneously with color coding displaying where on the image the dat was extracted from - This feature is shown for a LEEM data set in **Figure 1** with unsmoothed IV data from 50 micrometer FOV LEEM real space image of Graphene grown on Ruthenium(0001):
 
 ![Figure 1](./img/example1.png)
 
@@ -44,7 +44,7 @@ Curves can be saved to tab delimited text files which can then be plotted in ano
 
 For LEEM data, IV curves are generated from single pixels in an image stack. For LEED data, IV curves are generated from an adjustable size square integration window. Basic background subtraction is provided for LEED data by subtracting out the perimeter sum of the integration window on each energy step.
 
-An example of LEED-IV data is shown in **Figure 2** with unsmoothed IV data:
+An example of LEED-IV data is shown in **Figure 2** with unsmoothed IV data from MoS2:
 ![Figure 2](./img/example2.png)
 
 The LEEM and LEED data tabs are separate so two data sets can be loaded at the same time. This is beneficial for analyzing real space and reciprocal space data from the same surface area.
