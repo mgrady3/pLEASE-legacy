@@ -252,8 +252,24 @@ def get_img_array(path, ext=None):
     else:
         # Handle Tiff and Png with '.tif' and '.png'
         files = [name for name in os.listdir(path) if name.endswith(ext)]
-        files.sort()
+
         print('Number of Files found: {}'.format(len(files)))
+        if len(files) == 0 and ext=='tif':
+            print('Error: No Files Found')
+            print('Directory does not contain files with \'.tif\' extensions')
+            print('Trying \'.tiff\' instead')
+            files = [name for name in os.listdir(path) if name.endswith('.tiff')]
+            if len(files) == 0:
+                print('Error: No Files Found')
+                print('Aborting Loading ...')
+                return None
+        elif len(files) == 0:
+            print('Error no Files Found')
+            print('Directory does not contain files with \'.png\' extensions')
+            print('Aborting Loading ...')
+            return None
+
+        files.sort()
         arr_list = []
         for fl in files:
             arr_list.append(read_img(os.path.join(path, fl)))

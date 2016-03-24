@@ -753,14 +753,26 @@ class Viewer(QtGui.QWidget):
                         print('Loading Canceled ...')
                         return
                     print('New Data Directory set to {}'.format(new_dir))
-                    self.leeddat.dat_3d = self.leeddat.load_LEED_TIFF(new_dir)
-                    print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
-                    if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
-                        print('! Warning: New Data does not match current energy parameters !')
-                        print('Updating Energy parameters ...')
-                        self.set_energy_parameters(dat='LEED')
-                    self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
-                    self.update_LEED_img(index=self.current_leed_index)
+
+                    self.thread = WorkerThread(task='LOAD_LEED_IMAGES', path=new_dir, ext='.tif')
+
+                    # disconnect any previously connected Signals/Slots
+                    self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                    self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
+                    # connect appropriate signals for loading LEED data
+                    self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                    self.connect(self.thread, QtCore.SIGNAL('finished()'),
+                                 lambda: self.update_LEED_img(index=self.current_leed_index))
+                    self.thread.start()
+
+                    # self.leeddat.dat_3d = self.leeddat.load_LEED_TIFF(new_dir)
+                    # print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
+                    # if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
+                    #    print('! Warning: New Data does not match current energy parameters !')
+                    #    print('Updating Energy parameters ...')
+                    #    self.set_energy_parameters(dat='LEED')
+                    # self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
+                    # self.update_LEED_img(index=self.current_leed_index)
 
                 elif entry in ['PNG', 'png']:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing PNG files"))
@@ -768,14 +780,24 @@ class Viewer(QtGui.QWidget):
                         print('Loading Canceled ...')
                         return
                     print('New Data Directory set to {}'.format(new_dir))
-                    self.leeddat.dat_3d = self.leeddat.load_LEED_PNG(new_dir)
-                    print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
-                    if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
-                        print('! Warning: New Data does not match current energy parameters !')
-                        print('Updating Energy parameters ...')
-                        self.set_energy_parameters(dat='LEED')
-                    self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
-                    self.update_LEED_img(index=self.current_leed_index)
+                    self.thread = WorkerThread(task='LOAD_LEED_IMAGES', path=new_dir, ext='.png')
+                    # disconnect any previously connected Signals/Slots
+                    self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                    self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
+                    # connect appropriate signals for loading LEED data
+                    self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                    self.connect(self.thread, QtCore.SIGNAL('finished()'),
+                                 lambda: self.update_LEED_img(index=self.current_leed_index))
+                    self.thread.start()
+
+                    # self.leeddat.dat_3d = self.leeddat.load_LEED_PNG(new_dir)
+                    # print('New Data shape: {}'.format(self.leeddat.dat_3d.shape))
+                    # if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
+                    #    print('! Warning: New Data does not match current energy parameters !')
+                    #    print('Updating Energy parameters ...')
+                    #    self.set_energy_parameters(dat='LEED')
+                    # self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
+                    # self.update_LEED_img(index=self.current_leed_index)
 
                 else:
                     new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing DAT files"))

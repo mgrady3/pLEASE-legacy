@@ -41,7 +41,7 @@ class WorkerThread(QtCore.QThread):
         # Get parameters as dictionary and validate against keys
         self.params = kwargs
         self.valid_keys = ['path', 'data', 'ilist', 'elist',
-                           'imht', 'imwd', 'name', 'bits']
+                           'imht', 'imwd', 'name', 'bits', 'ext']
         for key in self.params.keys():
             if key not in self.valid_keys:
                 print('Terminating - ERROR Invalid Task Parameter: {}'.format(key))
@@ -63,6 +63,11 @@ class WorkerThread(QtCore.QThread):
             self.load_LEED()
             self.quit()
             self.exit()  # restrict action to one task
+
+        elif self.task == 'LOAD_LEED_IMAGES':
+            self.load_LEED_Images()
+            self.quit()
+            self.exit()
 
         elif self.task == 'LOAD_LEEM':
             self.load_LEEM()
@@ -113,6 +118,25 @@ class WorkerThread(QtCore.QThread):
         # emit output signal with np array as generic pyobject type
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)
 
+    def load_LEED_Images(self):
+        """
+        Load LEED data from image files
+        Supported formats are TIFF, PNG, JPG
+        emit the 3d data array as a custom SIGNAL to be retrieved in gui.py
+        """
+        if ('path' not in self.params.keys() and
+            'ext' not in self.params.keys()):
+            print('Terminating - ERROR: incorrect parameters for LOAD task')
+            print('Required Parameters: path, ext')
+        print('Loading LEED Data from Images via QThread ...')
+        data = np.array(LF.get_img_array(self.params['path'], ext=self.params['ext']))
+        if data is None:
+            self.quit()
+            self.exit()
+        else:
+            self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), data)
+
+
     def load_LEEM(self):
         """
         Load raw binary LEEM-IV data to a 3d numpy array
@@ -136,6 +160,9 @@ class WorkerThread(QtCore.QThread):
 
         # emit output signal with np array as generic pyobject type
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)
+
+    def load_LEEM_Images(self):
+        pass
 
     def output_to_Text(self):
         """
