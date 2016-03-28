@@ -601,7 +601,7 @@ class Viewer(QtGui.QWidget):
                         print('Loading Canceled ...')
                         return
         # get .yaml file from selected dir
-        files = [name for name in os.listdir(new_dir) if name.endswith('.yaml')]
+        files = [name for name in os.listdir(new_dir) if (name.endswith('.yaml') or name.endswith('.yml'))]
         if files:
             config = files[0]
         else:
@@ -673,7 +673,6 @@ class Viewer(QtGui.QWidget):
                 return
 
         elif self.exp.data_type == 'Image' or self.exp.data_type == 'image' or self.exp.data_type == 'IMAGE':
-            # TODO: LEEM tiff/jpg/png methods
             pass
 
 
@@ -717,7 +716,22 @@ class Viewer(QtGui.QWidget):
 
         elif self.exp.data_type == 'Image' or self.exp.data_type == 'image' or self.exp.data_type == 'IMAGE':
             # TODO: LEEM tiff/jpg/png methods
-            pass
+            try:
+                self.thread = WorkerThread(task='LOAD_LEED_IMAGES',
+                                           ext=self.exp.ext,
+                                           path=self.exp.path)
+                self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
+                # connect appropriate signals for loading LEED data
+                self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                self.connect(self.thread, QtCore.SIGNAL('finished()'),
+                             lambda: self.update_LEED_img(index=self.current_leed_index))
+                self.thread.start()
+            except ValueError:
+                print('Error Loading LEED Experiment from image files.')
+                print('Please Check YAML settings in experiment config file')
+                print('Required parameters: data path and data extension.')
+                print('Valid data extenstions: \'.tif\', \'.png\', \'.jpg\'')
 
 
 
