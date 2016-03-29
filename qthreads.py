@@ -74,6 +74,11 @@ class WorkerThread(QtCore.QThread):
             self.quit()
             self.exit()  # restrict action to one task
 
+        elif self.task == 'LOAD_LEEM_IMAGES':
+            self.load_LEEM_Images()
+            self.quit()
+            self.exit() # restrict action to one task
+
         elif self.task == 'OUTPUT_TO_TEXT':
             self.output_to_Text()
             self.quit()
@@ -136,7 +141,6 @@ class WorkerThread(QtCore.QThread):
         else:
             self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), data)
 
-
     def load_LEEM(self):
         """
         Load raw binary LEEM-IV data to a 3d numpy array
@@ -162,7 +166,29 @@ class WorkerThread(QtCore.QThread):
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)
 
     def load_LEEM_Images(self):
-        pass
+        """
+        """
+        if ('path' not in self.params.keys() and
+                    'ext' not in self.params.keys()):
+            print('Terminating - ERROR: incorrect parameters for LOAD task')
+            print('Required Parameters: path, ext')
+        print('Loading LEEM Data from Images via QThread ...')
+        try:
+            data = LF.get_img_array(self.params['path'],
+                                    ext=self.params['ext'])
+        except IOError as e:
+            print(e)
+            print('Error occurred while loading LEEM data from images using a QThread')
+            return
+        except ValueError as e:
+            print(e)
+            print('Error occurred while loading LEEM data from images using a QThread')
+            return
+
+        self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), data)
+
+
+
 
     def output_to_Text(self):
         """

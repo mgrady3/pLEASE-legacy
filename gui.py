@@ -673,7 +673,21 @@ class Viewer(QtGui.QWidget):
                 return
 
         elif self.exp.data_type == 'Image' or self.exp.data_type == 'image' or self.exp.data_type == 'IMAGE':
-            pass
+            try:
+                self.thread = WorkerThread(task='LOAD_LEEM_IMAGES',
+                                           path=self.exp.path,
+                                           ext=self.exp.ext)
+                # disconnect any previously connected Signals/Slots
+                self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEEM_data)
+                self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
+                # connect appropriate signals for loading LEED data
+                self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEEM_data)
+                self.connect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
+                self.thread.start()
+            except ValueError:
+                print('Error loading LEEM data from images. Please check YAML experiment config file')
+                print('Required parameters to load images from YAML config: path, ext')
+                print('Check for valid data path and valid file extensions: \'.tif\' and \'.png\'.')
 
 
     def load_LEED_experiment(self):
