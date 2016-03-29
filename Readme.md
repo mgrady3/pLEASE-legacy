@@ -55,14 +55,15 @@ The LEEM and LEED data tabs are separate so two data sets can be loaded at the s
 The python dependencies are as follows:
 
 * Python 2.7, 3.4, 3.5 - Other versions of python have not been tested
-* Numpy
-* Scipy
-* opencv
-* PyQt4
-* matplotlib
-* seaborn
-* yaml
-* qdarkstyle
+* Numpy : python library for fast manipulation of arrays
+* Scipy : collection of libraries for standard data analysis and scientific routines based on numpy
+* opencv : wrapper for c/c++ image/video analysis library
+* PIL (Pillow): python image library used for readng tiff and png files and converting to numpy array
+* PyQt4 : wrapper for c/c++ GUI framework
+* matplotlib : python library for plotting a la matlab
+* seaborn : wrapper for matplotlib adding additional convienience, better api, and better color schema among other things
+* yaml : python library for reading and writing YAML files. Loads YAML data into nested python dictionaries
+* qdarkstyle : collection of QSS/QML code for creating dark themed PyQt/PySide GUIs
 
 All of the above modules are freely available and can be easily installed using some combination of Pip or Conda
 
