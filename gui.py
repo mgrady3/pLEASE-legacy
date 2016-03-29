@@ -157,7 +157,7 @@ class Viewer(QtGui.QWidget):
 
         self.smooth_leed_plot = False
         self.smooth_window_type = 'hanning'  # default value
-        self.smooth_wndow_len = 8  # default value
+        self.smooth_window_len = 8  # default value
         self.smooth_file_output = False
 
         self.background = []
@@ -1047,6 +1047,9 @@ class Viewer(QtGui.QWidget):
         if self.Debug:
             print('LEED Click registered ...')
 
+        # We know the click was inside the image axis,
+        # however no check has been done to see if the click is near the edge
+        # TODO: Handle case where click center is not equal or further than boxrad from any edge
         if self.rect_count <= self.max_leed_click - 1:
             # not yet at maximum number of selected areas
             # print('User Clicked : {}'.format((event.xdata, event.ydata)))
@@ -1380,7 +1383,7 @@ class Viewer(QtGui.QWidget):
         nvbox.addWidget(self.nmpl_toolbar1)
         # raw data output button
         rawoutbut = QtGui.QPushButton("Output to Text", self)
-        rawoutbut.clicked.connect(lambda: self.output_to_text(data=self.raw_selections, smth=self.smooth_file_output))  # output button
+        rawoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.raw_selections, smth=self.smooth_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(rawoutbut)
         self.pop_window1.setLayout(nvbox)
@@ -1393,7 +1396,7 @@ class Viewer(QtGui.QWidget):
         nhbox.addWidget(self.nmpl_toolbar2)
         # corrected data output button
         coroutputbutton = QtGui.QPushButton("Output to Text", self)
-        coroutputbutton.clicked.connect(lambda: self.output_to_text(data=self.cor_data, smth=self.smooth_file_output))  # output button
+        coroutputbutton.clicked.connect(lambda: self.output_LEED_to_Text(data=self.cor_data, smth=self.smooth_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(coroutputbutton)
         nvbox.addLayout(nhbox)
@@ -1407,7 +1410,7 @@ class Viewer(QtGui.QWidget):
         nhbox.addWidget(self.nmpl_toolbar3)
         # extracted background output button
         exbackoutbut = QtGui.QPushButton("Output to Text", self)
-        exbackoutbut.clicked.connect(lambda: self.output_to_text(data=self.ex_back, smth=self.smooth_file_output))  # output button
+        exbackoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.ex_back, smth=self.smooth_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(exbackoutbut)
         self.pop_window3.setLayout(nvbox)
@@ -1419,7 +1422,7 @@ class Viewer(QtGui.QWidget):
         nvbox.addLayout(nhbox)
         nvbox.addWidget(self.nmpl_toolbar4)
         avgbackoutbut = QtGui.QPushButton("Output to Text", self)
-        avgbackoutbut.clicked.connect(lambda: self.output_to_text(data=self.avg_back, smth=self.smooth_file_output))  # output button
+        avgbackoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.avg_back, smth=self.smooth_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(avgbackoutbut)
         self.pop_window4.setLayout(nvbox)
@@ -1541,7 +1544,7 @@ class Viewer(QtGui.QWidget):
             return
 
 
-    def output_LEED_to_Text(self):
+    def output_LEED_to_Text(self, data=None, smth=None):
         """
 
         :return:
@@ -1565,36 +1568,54 @@ class Viewer(QtGui.QWidget):
             return
         entry = str(entry)  # convert from QString to String
 
-        # for each element in rect_coords - spin up a qthread to output the data to file
-        for idx, tup in enumerate(self.rect_coords):
+        if data is None:
+            # Output data from main window
+            # for each element in rect_coords - spin up a qthread to output the data to file
+            for idx, tup in enumerate(self.rect_coords):
 
-            # generate raw data to pass to new thread to be output
-            int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
-                                          tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
-                                          :]
-            ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
+                # generate raw data to pass to new thread to be output
+                int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
+                                              tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+                                              :]
+                ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
+                elist = self.leeddat.elist
+
+                # check if smoothing is enabled
+                if self.smooth_file_output:
+                    ilist = LF.smooth(ilist)
+                # full file name
+
+                # check for single file output
+                if len(self.rect_coords) == 1:
+                    full_path = out_dir + '/' + entry + '.txt'
+                else:
+                    full_path = out_dir + '/' + entry + '_' + str(idx+1)  + '.txt'
+                print('Starting thread {0} of {1} ...'.format(idx, len(self.rect_coords)))
+
+                self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
+                                           ilist=ilist, elist=elist,
+                                           name=full_path)
+
+                self.connect(self.thread, QtCore.SIGNAL('finished()'), self.output_complete)
+                self.thread.start()
+            print('Done Writing Files ...')
+            return
+        else:
+            # Output data from popped out window
+            # Currently only supports background subtraction for one curve at a time
+            ilist = data
             elist = self.leeddat.elist
-
-            # check if smoothing is enabled
-            if self.smooth_file_output:
-                ilist = LF.smooth(ilist)
-            # full file name
-
-            # check for single file output
-            if len(self.rect_coords) == 1:
-                full_path = out_dir + '/' + entry + '.txt'
-            else:
-                full_path = out_dir + '/' + entry + '_' + str(idx+1)  + '.txt'
-            print('Starting thread {0} of {1} ...'.format(idx, len(self.rect_coords)))
-
+            if smth:
+                ilist = LF.smooth(ilist, window_len=self.smooth_window_len, window_type=self.smooth_window_type)
+            full_path = os.path.join(out_dir, entry+'.txt')
+            print('Starting thread 0 of 1 ...')
             self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
                                        ilist=ilist, elist=elist,
                                        name=full_path)
-
             self.connect(self.thread, QtCore.SIGNAL('finished()'), self.output_complete)
             self.thread.start()
-        print('Done Writing Files ...')
-        return
+            print('Done Writing Files ...')
+            return
 
     @staticmethod
     def output_complete():
