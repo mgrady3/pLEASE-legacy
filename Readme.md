@@ -58,7 +58,7 @@ The python dependencies are as follows:
 * **Numpy** : python library for fast manipulation of arrays
 * **Scipy** : collection of libraries for standard data analysis and scientific routines based on numpy
 * **opencv** : wrapper for c/c++ image/video analysis library
-* PIL (Pillow): python image library used for readng tiff and png files and converting to numpy array
+* **PIL (Pillow)**: python image library used for readng tiff and png files and converting to numpy array
 * **PyQt4** : wrapper for c/c++ GUI framework
 * **matplotlib** : python library for plotting a la matlab
 * **seaborn** : wrapper for matplotlib adding additional convienience, better api, and better color schema among other things
