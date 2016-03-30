@@ -431,7 +431,7 @@ class Viewer(QtGui.QWidget):
 
         outputLEEDAction = QtGui.QAction('Output LEED to Text', self)
         outputLEEDAction.setShortcut('Ctrl+Shift+O')
-        outputLEEDAction.triggered.connect(self.output_LEED_to_Text)
+        outputLEEDAction.triggered.connect(lambda: self.output_LEED_to_Text(data=None, smth=self.smooth_file_output))
         fileMenu.addAction(outputLEEDAction)
 
         exitAction = QtGui.QAction('Quit', self)
@@ -614,7 +614,8 @@ class Viewer(QtGui.QWidget):
             self.prev_exp = self.exp
 
         self.exp = Experiment()
-        self.exp.fromFile(new_dir+'/'+config)
+        path_to_config = os.path.join(new_dir, config)
+        self.exp.fromFile(path_to_config)
         print("New Data Path loaded from file: {}".format(self.exp.path))
         print("Loaded the following settings:")
         yaml.dump(self.exp.loaded_settings, stream=self.message_console.stream)
@@ -1501,7 +1502,7 @@ class Viewer(QtGui.QWidget):
         for w in windows:
             w.show()
 
-    def output_to_text(self, data=None):
+    def output_to_text(self, data=None, smth=None):
         """
         Write out data to text files in columar format
         :param data: container for data to be output; may be single list or list of lists
@@ -1531,7 +1532,7 @@ class Viewer(QtGui.QWidget):
                 # gather data to output and handle smoothing
                 elist = tup[0]
                 ilist = tup[1]
-                if self.smooth_file_output:
+                if smth:
                     ilist = LF.smooth(ilist, window_len=self.smooth_window_len,
                                       window_type=self.smooth_window_type)
 
@@ -1587,9 +1588,11 @@ class Viewer(QtGui.QWidget):
 
                 # check for single file output
                 if len(self.rect_coords) == 1:
-                    full_path = out_dir + '/' + entry + '.txt'
+                    full_path = os.path.join(out_dir, entry+'.txt')
+                    # full_path = out_dir + '/' + entry + '.txt'
                 else:
-                    full_path = out_dir + '/' + entry + '_' + str(idx+1)  + '.txt'
+                    full_path = os.path.join(out_dir, entry+'_'+str(idx+1)+'.txt')
+                    # full_path = out_dir + '/' + entry + '_' + str(idx+1)  + '.txt'
                 print('Starting thread {0} of {1} ...'.format(idx, len(self.rect_coords)))
 
                 self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
