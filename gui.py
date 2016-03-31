@@ -50,7 +50,8 @@ class Viewer(QtGui.QWidget):
         """
         Initialize new GUI instance. Setup windows, menus, and UI elements.
         Setup Error Console and all plotting axes.
-        :param parent: This is a Top-Level Widget ie. parent=None
+        :param parent:
+            This is a Top-Level Widget ie. parent=None
         :return none:
         """
         super(Viewer, self).__init__(parent)
@@ -562,7 +563,8 @@ class Viewer(QtGui.QWidget):
         Override closeEvent() to call quit()
         If main window is closed - app will Quit instead of leaving the console open
         with the main window closed
-        :param args: will receive a close event from main QWidget
+        :param args:
+            receive a close event from main QWidget along with any additional args.
         :return none:
         """
         self.Quit()
@@ -867,7 +869,8 @@ class Viewer(QtGui.QWidget):
     def retrieve_LEED_data(self, dat):
         """
         Custom Slot to recieve data from a QThread object upon thread exit
-        :param dat: numpy array output by WorkerThread
+        :param dat:
+            numpy ndarray output by WorkerThread
         :return:
         """
         self.leeddat.dat_3d = dat
@@ -878,6 +881,7 @@ class Viewer(QtGui.QWidget):
         """
         Display LEED image by filenumber index
         :param index:
+            int pointing to position along third axis in self.leeddat.dat3d numpyndarray
         :return:
         """
 
@@ -900,8 +904,8 @@ class Viewer(QtGui.QWidget):
 
     def show_LEED_image_by_index(self):
         """
-
-        :return:
+        Display slice from self.leeddat.dat3d according to integer index input by User
+        :return none:
         """
         entry, ok = QtGui.QInputDialog.getInt(self, "Enter Image Number",
                                               "Enter an integer between 0 and {}".format(self.leeddat.dat_3d.shape[2]-1),
@@ -914,8 +918,8 @@ class Viewer(QtGui.QWidget):
 
     def show_LEED_image_by_energy(self):
         """
-
-        :return:
+        Display slice from self.leeddat.dat3d according to an energy value input by User in eV
+        :return none:
         """
         entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Image Number",
                                               "Enter an integer between {0} and {1}".format(self.leeddat.elist[0], self.leeddat.elist[-1]),
@@ -930,6 +934,10 @@ class Viewer(QtGui.QWidget):
 
     def set_energy_parameters(self, dat=None):
         """
+        Set the energy list for either self.leeddat or self.leemdat
+        If data was loaded from an experiment YAML config file, use the YAML settings
+        Otherwise, have User manually enter settings
+        :return none:
         """
         if dat is None:
             return
@@ -1014,7 +1022,9 @@ class Viewer(QtGui.QWidget):
 
     def swap_byte_order(self, dat=None):
         """
-
+        Change the byte order of data stored in numpy ndarray by invoking np.ndarray.swapbyteorder()
+        This is useful if the data is loaded from an experiment YAML config file but the byteorder
+        of the dat is unknown.
         :return:
         """
         if dat is None:
@@ -1032,12 +1042,11 @@ class Viewer(QtGui.QWidget):
             print('Unknown Data type for Swap Byte Order ...')
         return
 
-
-
     def leed_click(self, event):
         """
         Handle mouse-clicks in the main LEED Image Axis
-        :param event: matplotlib button_release_event for mouse clicks
+        :param event:
+            matplotlib button_release_event for mouse clicks
         :return none:
         """
         if not event.inaxes == self.LEED_img_ax:
@@ -1076,7 +1085,7 @@ class Viewer(QtGui.QWidget):
 
     def clear_leed_click(self):
         """
-
+        Reset click count, rectangle coordinates, rectangle patches, and clear LEED IV plot
         :return none:
         """
         self.rect_count = 0
@@ -1109,7 +1118,8 @@ class Viewer(QtGui.QWidget):
 
     def clear_leed_plots_only(self):
         """
-
+        Clear LEED IV plot but leave the stored rectangle patches as is
+        Useful if you want to toggle smoothing on and then re-plot the current selections
         :return none:
         """
         print('Clearing Plots ...')
@@ -1151,7 +1161,11 @@ class Viewer(QtGui.QWidget):
             int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
                                           tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
                                           :]
-            ilist = [img.sum()/tot_pix for img in np.rollaxis(int_win, 2)]
+            # plot unaveraged intensity 3/30/2016
+            # ilist = [img.sum()/tot_pix for img in np.rollaxis(int_win, 2)]
+
+            ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
+
             if self.smooth_leed_plot:
                 print('Plotting and Storing Smoothed Data ...')
                 self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
@@ -1310,6 +1324,7 @@ class Viewer(QtGui.QWidget):
 
             bkgnd = []
             for img in np.rollaxis(data_subset, 2).astype(np.int16):
+                """
                 # perimeter sum
                 ps = (img[0, 0:] + img[0:, -1] + img[-1, :] + img[0:, 0]).sum()  # sum edges
                 ps -= (img[0,0] + img[0, -1] + img[-1, -1] + img[-1, 0])  # subtract corners for double counting
@@ -1331,6 +1346,15 @@ class Viewer(QtGui.QWidget):
                 # calculate new total intensity of the integration window counting only positive values
                 # there should be no negatives but we discard them just incase
                 adj_ilist.append(img[img >= 0].sum())
+                """
+                total_int = img.sum()
+                per_sum = (img[0, :] + img[0:, -1] + img[-1, :] + img[:, 0]).sum()  # sum edges
+                per_sum -= (img[0, 0] + img[0, -1] + img[-1, -1] + img[-1, 0])  # subtract corners for double counting
+                per_sum  = (per_sum / float(4*self.leeddat.box_rad - 4))*self.leeddat.box_rad**2
+
+                corrected_int = total_int - per_sum
+                bkgnd.append(per_sum)
+                adj_ilist.append(corrected_int)
 
             self.background_curves.append(bkgnd)
 
@@ -1505,7 +1529,8 @@ class Viewer(QtGui.QWidget):
     def output_to_text(self, data=None, smth=None):
         """
         Write out data to text files in columar format
-        :param data: container for data to be output; may be single list or list of lists
+        :param data:
+            str flag for LEEM or LEED data now deprecated
         :return none:
         """
         if data is None:
@@ -1544,10 +1569,15 @@ class Viewer(QtGui.QWidget):
                 count += 1
             return
 
-
     def output_LEED_to_Text(self, data=None, smth=None):
         """
-
+        Output LEED I(V) data to a tab delimited text file
+        :param data:
+            flag for outputting data from main window (data=None)
+            or for outputting data from a popped out window after background subtraction
+            In this second case, data points to a list of intensity data points
+        :param smth:
+            boolean flag for smoothing the output intensity data
         :return:
         """
         # Begin File Output Logic
@@ -1636,11 +1666,15 @@ class Viewer(QtGui.QWidget):
         find the beam maximum in the integration window then return a
         new slice from leeddat.dat3d centered on the beam max.
 
-        :param int_win: 2d data slice from leeddat.dat3d
-        :param win_coords: tuple containing the coordinates of the center of
-                           int_win relative to (0,0,:) in leeddat.dat3d
-        :param img: full 2d array of pixels. represents one slice from image stack
-        :return new_slice: 2d numpy array sliced from leeddat.dat3d
+        :param int_win:
+            2d data slice from leeddat.dat3d
+        :param win_coords:
+            tuple containing the coordinates of the center of
+            int_win relative to (0,0,:) in leeddat.dat3d
+        :param img:
+            full 2d array of pixels. represents one slice from image stack
+        :return new_slice:
+            2d numpy array sliced from leeddat.dat3d
         """
         c_bm, r_bm = LF.find_local_maximum(int_win)  # find_local_max outputs (x,y) from opencv
         r_u, c_u = win_coords
@@ -1655,8 +1689,8 @@ class Viewer(QtGui.QWidget):
 
     def new_leed_extract(self):
         """
-
-        :return:
+        extract I(V) data from currently selected areas in self.leeddat.dat3d
+        :return none:
         """
         if (self.rect_count == 0) or (not self.rects) or (not self.rect_coords):
             # no data selected; do nothing
@@ -1696,10 +1730,6 @@ class Viewer(QtGui.QWidget):
 
         self.LEED_IV_canvas.draw()
         return
-
-
-
-
 
     def shift_user_selection(self):
         """
@@ -1760,7 +1790,7 @@ class Viewer(QtGui.QWidget):
 
     def load_LEEM(self):
         """
-
+        Manually load LEEM raw data
         :return none:
         """
         if self.hasplotted_leem:
@@ -1838,10 +1868,18 @@ class Viewer(QtGui.QWidget):
             return
 
     def retrieve_LEEM_data(self, dat):
+        """
+        Catch the emitted numpy ndarray emitted from QThread when finished loading data
+        :return none:
+        """
         self.leemdat.dat_3d = dat
         return
 
     def update_LEEM_img(self):
+        """
+        After loading data, format necessary LEEM plots and slider which in turn updates plot
+        :return none:
+        """
         # Assuming that data loading was successful - self.leemdat.dat_3d is now a 3d numpy array
         # Generate energy list to correspond to the third array axis
         print('Data Loaded successfully: {}'.format(self.leemdat.dat_3d.shape))
@@ -1857,13 +1895,18 @@ class Viewer(QtGui.QWidget):
         return
 
     def format_slider(self):
+        """
+        Reset the bounds on the LEEM image slider
+        :return none
+        """
         self.image_slider.setRange(0, self.leemdat.dat_3d.shape[2]-1)
 
     def update_image_slider(self, value):
         """
         Update the Slider label value to the new electron energy
         Call show_LEEM_Data() to display the correct LEEM image
-        :argument value: integer value from slider representing filenumber
+        :param value:
+            int value from slider representing filenumber
         :return none:
         """
 
@@ -1875,7 +1918,7 @@ class Viewer(QtGui.QWidget):
 
     def clear_LEEM_IV(self):
         """
-
+        Clear circular patches, patch coordinates, and LEEM IV plot
         :return none:
         """
         if not self.hasplotted_leem:
@@ -1901,9 +1944,11 @@ class Viewer(QtGui.QWidget):
 
     def show_LEEM_Data(self, data, imgnum):
         """
-
+        Display slice from self.leemdat.dat3d to self.LEEM_ax
         :param data:
+            numpy ndarray corresponding to LEEM IV image stack, self.leemdat.dat3d
         :param imgnum:
+            int index pointing to position along third axis of numpy ndarray self.leemdat.dat3d
         :return none:
         """
         self.leemdat.curimg = imgnum
@@ -1921,7 +1966,8 @@ class Viewer(QtGui.QWidget):
     def leem_click(self, event):
         """
         Handle mouse click events that originate from/in the LEEM image axis
-        :param event: mpl mouse_click_event
+        :param event:
+            matplotlib mouse_click_event
         :return none:
         """
         if not self.hasdisplayed_leem:
@@ -1955,7 +2001,8 @@ class Viewer(QtGui.QWidget):
         Load intensity data from the nearest pixel to the mouseclick into the leemdat construct
         Update current (X,Y) parameters
         Plot intensity against energy
-        :param event: mpl mouse_click_event
+        :param event:
+            matplotlib mouse_click_event
         :return none:
         """
         self.hasplotted_leem = True
@@ -1992,8 +2039,9 @@ class Viewer(QtGui.QWidget):
 
     def popout_LEEM_IV(self):
         """
-
-        :return:
+        Take data displayed in main LEEM_IV_ax and plot in a separate window
+        Useful for saving picture of I(V) plot without including the LEEM image plot
+        :return none:
         """
         if not self.hasplotted_leem or len(self.leem_IV_list) == 0:
             return
@@ -2041,8 +2089,10 @@ class Viewer(QtGui.QWidget):
     def smooth_current_IV(self, ax, can):
         """
         Apply data smoothing algorithm to currently plotted I(V) curves
-        :param ax: mpl axis element which ill be plotting data
-        :param can: canvas containing ax which needs to call draw() to update the image
+        :param ax:
+            mpl axis element which ill be plotting data
+        :param can:
+            canvas containing ax which needs to call draw() to update the image
         :return none:
         """
         if not self.hasplotted_leem or len(self.leem_IV_list) == 0:
@@ -2194,9 +2244,12 @@ class Viewer(QtGui.QWidget):
     def check_flat_old(self, xd, yd):
         """
         NOTE: Consider moving this function to data.py in the LeemData class
-        :param xd: array-like set of x values
-        :param yd: array-like set of y values
-        :return: tuple of two elements: (boolean for curve is flat?, integer # of minima found)
+        :param xd:
+            array-like set of x values
+        :param yd:
+            array-like set of y values
+        :return:
+            tuple of two elements: (boolean for curve is flat?, integer # of minima found)
         """
         mins = LF.count_minima_locations(xd, yd)
         if mins[0] >= 2:
@@ -2216,6 +2269,10 @@ class Viewer(QtGui.QWidget):
 
     @staticmethod
     def count_mins(data):
+        """
+
+        :return tuple:
+        """
         num = 0
         locs = []
         sgn = np.sign(data[0])
@@ -2234,8 +2291,10 @@ class Viewer(QtGui.QWidget):
     def check_flat(self, data, thresh=5):
         '''
 
-        :param data: 1d numpy array containing smoothed dI/dE data
-        :param thresh: threshold value for
+        :param data:
+            1d numpy array containing smoothed dI/dE data
+        :param thresh:
+            threshold value for
         :return:
         '''
 
@@ -2277,8 +2336,10 @@ class Viewer(QtGui.QWidget):
     def count_layers_new(self, data, ecut):
         '''
 
-        :param data: 3d numpy array of smooth data cut to specific data range
-        :param ecut: 1d list of energy values cut to specific data range
+        :param data:
+            3d numpy array of smooth data cut to specific data range
+        :param ecut:
+            1d list of energy values cut to specific data range
         :return none:
         '''
 
@@ -2304,8 +2365,10 @@ class Viewer(QtGui.QWidget):
     def discrete_imshow(self, data, clrmp=cm.Spectral):
         '''
 
-        :param data: 2d numpy array to be plotted
-        :param clrmp: mpl color map
+        :param data:
+            2d numpy array to be plotted
+        :param clrmp:
+            mpl color map
         :return none:
         '''
 
