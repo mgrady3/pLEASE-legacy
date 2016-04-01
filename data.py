@@ -29,6 +29,7 @@ class LeedData(object):
         self.ht = 0  # Height of image used in loading Raw data
         self.wd = 0  # Width of image used in loading Raw data
         self.box_rad = br  # default value is 20 yielding a 40x40 rectangular integration window
+        self.average_ilist = None
 
     def load_LEED_PNG(self, dirname):
         """

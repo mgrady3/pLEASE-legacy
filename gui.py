@@ -472,6 +472,10 @@ class Viewer(QtGui.QWidget):
         averageAction.triggered.connect(self.average_current_IV)
         LEEDMenu.addAction(averageAction)
 
+        outputAverageAction = QtGui.QAction('Output Average I(V)', self)
+        outputAverageAction.triggered.connect(self.output_average_LEED)
+        LEEDMenu.addAction(outputAverageAction)
+
         shiftAction = QtGui.QAction('Shift Selecttions', self)
         shiftAction.setShortcut('Ctrl+S')
         shiftAction.setStatusTip('Shift User Selections based on Beam Maximum')
@@ -1200,6 +1204,7 @@ class Viewer(QtGui.QWidget):
         # this creates a single list of intensity values to be plotted against energy
 
         average_int = [float(sum(l))/float(len(l)) for l in zip(*current_curves)]
+        self.leeddat.average_ilist = average_int
 
         if self.use_avg:
             print('Local Average Background Stored')
@@ -1214,7 +1219,9 @@ class Viewer(QtGui.QWidget):
             self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves', color='w')
         else:
             self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
+        print('Plotting Average LEED_I(V) ...')
         self.LEED_IV_canvas.draw()
+        return
 
     def toggle_debug_setting(self):
         """
@@ -1568,6 +1575,18 @@ class Viewer(QtGui.QWidget):
                 self.thread.start()
                 count += 1
             return
+
+    def output_average_LEED(self):
+        """
+
+        :return none:
+        """
+        # print('Call placed to output_average_LEED')
+        if self.leeddat.average_ilist is None:
+            pass
+        else:
+            self.output_LEED_to_Text(data=self.leeddat.average_ilist, smth=self.smooth_file_output)
+        return
 
     def output_LEED_to_Text(self, data=None, smth=None):
         """
@@ -2086,6 +2105,24 @@ class Viewer(QtGui.QWidget):
         self.ncanvas_lm.draw()
         self.pop_window_lm.show()
 
+    def plot_derivative(self):
+        """
+        Create new window and plot dI/dV for each current I(V) curve
+        Note, dI/dV will, in general, amplify noise in the data.
+        Thus it is recommended to smooth the data before calculating dI/dV
+        :return none:
+        """
+        if not self.hasplotted_leem or len(self.leem_IV_list) == 0:
+            return
+
+        self.leem_didv_window = QtGui.QWidget()
+        self.leem_didv_window.setMinimumHeight(0.35 * self.max_height)
+        self.leem_didv_window.setMinimumWidth(0.45*self.max_width)
+        self.leem_didv_fig, self.leem_didv_ax = plt.subplots(1,1, figsize=(8,6), dpi=100)
+        self.leem_didv_can = FigureCanvas(self.leem_didv_fig)
+
+
+
     def smooth_current_IV(self, ax, can):
         """
         Apply data smoothing algorithm to currently plotted I(V) curves
@@ -2332,10 +2369,9 @@ class Viewer(QtGui.QWidget):
         self.count_layers_new(data=self.leemdat.dat_3d[:, :, min_index:max_index],
                               ecut=self.leemdat.elist[min_index:max_index])
 
-
     def count_layers_new(self, data, ecut):
         '''
-
+        Method for counting the number of minima in a LEEM-I(V) curve
         :param data:
             3d numpy array of smooth data cut to specific data range
         :param ecut:
@@ -2361,6 +2397,7 @@ class Viewer(QtGui.QWidget):
         # convert back to np array and reshape
         outs = np.array(outs).reshape((data.shape[0], data.shape[1]))
         self.discrete_imshow(outs)
+        return
 
     def discrete_imshow(self, data, clrmp=cm.Spectral):
         '''
