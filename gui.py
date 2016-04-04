@@ -18,6 +18,7 @@ import os
 import pprint
 import sys
 import time
+from operator import add, sub
 
 # 3rd-party/scientific stack module imports
 import yaml
@@ -182,10 +183,12 @@ class Viewer(QtGui.QWidget):
         :return none:
         """
         # Format LEED IV Axis
+        self.LEED_img_ax.set_title("LEED Image", fontsize=20)
         self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
         self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
         self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
         if self.Style:
+            self.LEED_img_ax.set_title("LEED Image", fontsize=20, color='white')
             self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
             self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
@@ -476,6 +479,18 @@ class Viewer(QtGui.QWidget):
         outputAverageAction.triggered.connect(self.output_average_LEED)
         LEEDMenu.addAction(outputAverageAction)
 
+        selectBackgroundAction = QtGui.QAction('Select Background I(V)', self)
+        selectBackgroundAction.triggered.connect(self.get_background_from_selections)
+        LEEDMenu.addAction(selectBackgroundAction)
+
+        displayBackgroundAction = QtGui.QAction('Display Background I(V)', self)
+        displayBackgroundAction.triggered.connect(self.show_calculated_background)
+        LEEDMenu.addAction(displayBackgroundAction)
+
+        subtractStoredBackgroundAction = QtGui.QAction('Subtract Stored Background', self)
+        subtractStoredBackgroundAction.triggered.connect(self.subtract_stored_background)
+        LEEDMenu.addAction(subtractStoredBackgroundAction)
+
         shiftAction = QtGui.QAction('Shift Selecttions', self)
         shiftAction.setShortcut('Ctrl+S')
         shiftAction.setStatusTip('Shift User Selections based on Beam Maximum')
@@ -753,6 +768,17 @@ class Viewer(QtGui.QWidget):
                 print('Please Check YAML settings in experiment config file')
                 print('Required parameters: data path and data extension.')
                 print('Valid data extenstions: \'.tif\', \'.png\', \'.jpg\'')
+        # Ensure labels are redrawn correctly
+        self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
+        self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+        self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
+        self.LEED_img_ax.set_title("LEED Image", fontsize=20)
+        if self.Style:
+            self.LEED_img_ax.set_title("LEED Image", fontsize=20, color='white')
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
 
 
 
@@ -1302,6 +1328,95 @@ class Viewer(QtGui.QWidget):
             return
         self.leeddat.box_rad = entry
         print('New Integration Window set to {0} x {1}.'.format(2*self.leeddat.box_rad, 2*self.leeddat.box_rad))
+
+    def get_background_from_selections(self):
+        """
+        :return none:
+        """
+        if not self.hasplotted_leed:
+            return
+
+        self.manual_background = [0]*self.leeddat.dat_3d.shape[2]  # list of correct length to be used with map()
+        num_curves = len(self.current_selections)
+
+        # Sum the currently selected I(V) curves element by element
+        # Finally divide each element by the number of curves to generate average background I(V)
+        for tuple in self.current_selections:
+            curve = tuple[0]
+            self.manual_background = map(add, curve, self.manual_background)
+
+        self.manual_background = [k/(num_curves) for k in self.manual_background]
+        print("Background I(V) curve stored. Curve averaged from {0} user selected I(V) curves".format(num_curves))
+
+    def show_calculated_background(self):
+        """
+        :return none:
+        """
+        if not self.manual_background:
+            return
+
+        self.bkgnd_window = QtGui.QWidget()
+        self.bkgnd_window.setMinimumHeight(0.35 * self.max_height)
+        self.bkgnd_window.setMinimumWidth(0.45 * self.max_width)
+        self.bfig, self.bplot_ax = plt.subplots(1, 1, figsize=(8, 6), dpi=100)
+        self.bcanvas = FigureCanvas(self.bfig)
+        self.bcanvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                   QtGui.QSizePolicy.Expanding
+                                   )
+        self.bmpl_toolbar = NavigationToolbar(self.bcanvas, self.bkgnd_window)
+        nvbox = QtGui.QVBoxLayout()
+        nvbox.addWidget(self.bcanvas)
+        nvbox.addWidget(self.bmpl_toolbar)
+        self.bkgnd_window.setLayout(nvbox)
+
+        rect = self.bfig.patch
+        if self.Style:
+            rect.set_facecolor((68 / 255., 67 / 255., 67 / 255.))
+            self.bplot_ax.set_title("Average Background I(V)", fontsize=20, color='w')
+            self.bplot_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
+            self.bplot_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.bplot_ax.xaxis.label.set_color('w')
+            self.bplot_ax.yaxis.label.set_color('w')
+        self.bplot_ax.plot(self.leeddat.elist, self.manual_background)
+        plt.grid(False)
+        self.bcanvas.draw()
+        self.bkgnd_window.show()
+        return
+
+    def subtract_stored_background(self):
+        """
+        :return none
+        """
+        if (not self.hasdisplayed_leed) or (not self.manual_background):
+            # if no current I(V) curves or no background curve simply return
+            return
+        self.LEED_IV_ax.clear()
+        curves = []
+        OFFSET = False
+        for tuple in self.current_selections:
+            curve = tuple[0]
+            corrected_curve = map(sub, curve, self.manual_background)
+            if np.min(corrected_curve) < 0:
+                OFFSET = True
+            curves.append((corrected_curve, tuple[1]))
+        for curve in curves:
+            if OFFSET:
+                # prevent negative intensity by adding constant offset to each data point
+                self.LEED_IV_ax.plot(self.leeddat.elist, map(add, curve[0], [100000]*len(curve[0])), color=curve[1])
+                print("Plotting with manual offset after subtraction")
+            else:
+                self.LEED_IV_ax.plot(self.leeddat.elist, curve[0], color=curve[1])
+
+        if self.Style:
+            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=20,color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+        self.LEED_IV_canvas.draw()
+
+
+
+
+
 
     def subtract_background(self):
         """
