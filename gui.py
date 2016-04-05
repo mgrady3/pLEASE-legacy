@@ -1345,7 +1345,7 @@ class Viewer(QtGui.QWidget):
         # Finally divide each element by the number of curves to generate average background I(V)
         for tuple in self.current_selections:
             curve = tuple[0]
-            self.manual_background = map(add, curve, self.manual_background)
+            self.manual_background = list(map(add, curve, self.manual_background))  # list() for py3 compatibility
 
         self.manual_background = [k/(num_curves) for k in self.manual_background]
         print("Background I(V) curve stored. Curve averaged from {0} user selected I(V) curves".format(num_curves))
@@ -1397,14 +1397,15 @@ class Viewer(QtGui.QWidget):
         OFFSET = False
         for tuple in self.current_selections:
             curve = tuple[0]
-            corrected_curve = map(sub, curve, self.manual_background)
+            corrected_curve = list(map(sub, curve, self.manual_background))  # list() for py3 compatibility
             if np.min(corrected_curve) < 0:
                 OFFSET = True
             curves.append((corrected_curve, tuple[1]))
         for curve in curves:
             if OFFSET:
                 # prevent negative intensity by adding constant offset to each data point
-                self.LEED_IV_ax.plot(self.leeddat.elist, map(add, curve[0], [100000]*len(curve[0])), color=curve[1])
+                # list() for py3 compatibility
+                self.LEED_IV_ax.plot(self.leeddat.elist, list(map(add, curve[0], [100000]*len(curve[0]))), color=curve[1])
                 print("Plotting with manual offset after subtraction")
             else:
                 self.LEED_IV_ax.plot(self.leeddat.elist, curve[0], color=curve[1])
