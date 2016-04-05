@@ -156,6 +156,7 @@ class Viewer(QtGui.QWidget):
         self.smooth_colors = sns.color_palette("Set2", 10)
 
         self.smooth_leed_plot = False
+        self.smooth_leem_plot = False
         self.smooth_window_type = 'hanning'  # default value
         self.smooth_window_len = 8  # default value
         self.smooth_file_output = False
@@ -542,6 +543,11 @@ class Viewer(QtGui.QWidget):
         smoothLEEMAction.triggered.connect(lambda: self.smooth_current_IV(ax=self.LEEM_IV_ax, can=self.LEEM_canvas))
         LEEMMenu.addAction(smoothLEEMAction)
 
+        derivativeMenu = LEEMMenu.addMenu("Derivative")
+        leemdIdVAction = QtGui.QAction("Plot dI/dV", self)
+        leemdIdVAction.triggered.connect(self.plot_derivative)
+        derivativeMenu.addAction(leemdIdVAction)
+
         countAction = QtGui.QAction('Count Layers', self)
         countAction.setShortcut('Meta+L')
         countAction.triggered.connect(self.count_helper)
@@ -669,10 +675,27 @@ class Viewer(QtGui.QWidget):
             self.clear_LEEM_IV()
         self.LEEM_ax.clear()
         self.LEEM_IV_ax.clear()
+        # Make sure labels are correctly redrawn
+        if self.Style:
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20, color='white')
+            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='white')
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='white')
+            self.LEEM_IV_ax.tick_params(labelcolor='w', top='off', right='off')
+        else:
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20)
+            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
+            self.LEEM_IV_ax.tick_params(top='off', right='off')
+
+
         self.leemdat.data_dir = self.exp.path  # manually cast from QString to String
         self.leemdat.img_mask_count_dir = os.path.join(self.exp.path, 'img_mask_count')
         self.leemdat.ht = self.exp.imh
         self.leemdat.wd = self.exp.imw
+
+        # Shift focus to LEEM tab when loading LEEM data
+        self.tabs.setCurrentWidget(self.LEEM_Tab)
+        # self.LEEM_Tab.show()
 
         if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
 
@@ -732,6 +755,10 @@ class Viewer(QtGui.QWidget):
         self.leeddat.ht = self.exp.imh
         self.leeddat.wd = self.exp.imw
 
+        # Shift focus to LEED tab when loading LEED data
+        self.tabs.setCurrentWidget(self.LEED_Tab)
+        # self.LEED_Tab.show()
+
         if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
             try:
                 self.thread = WorkerThread(task='LOAD_LEED',
@@ -781,7 +808,6 @@ class Viewer(QtGui.QWidget):
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
             self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
-
 
 
     # Core Functionality:
@@ -1274,6 +1300,7 @@ class Viewer(QtGui.QWidget):
 
         if self.smooth_leed_plot:
             # smoothing already enabled - disable it
+            self.smooth_leem_plot = False
             self.smooth_leed_plot = False
             self.smooth_file_output = False
             print('Smoothing Disabled ...')
@@ -1314,6 +1341,7 @@ class Viewer(QtGui.QWidget):
             else:
                 self.smooth_window_len = int(entry)
         self.smooth_leed_plot = True
+        self.smooth_leem_plot = True
         self.smooth_file_output = True
         print('Smoothing Enabled: Window = {0}; Window Length = {1}'.format(self.smooth_window_type, self.smooth_window_len))
         return
@@ -1415,11 +1443,6 @@ class Viewer(QtGui.QWidget):
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
             self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
         self.LEED_IV_canvas.draw()
-
-
-
-
-
 
     def subtract_background(self):
         """
@@ -2009,7 +2032,7 @@ class Viewer(QtGui.QWidget):
         """
         # Assuming that data loading was successful - self.leemdat.dat_3d is now a 3d numpy array
         # Generate energy list to correspond to the third array axis
-        print('Data Loaded successfully: {}'.format(self.leemdat.dat_3d.shape))
+        print('Data Loaded successfully to numpy array with shape: {}'.format(self.leemdat.dat_3d.shape))
         self.set_energy_parameters(dat='LEEM')
         self.format_slider()
         self.hasdisplayed_leem = True
@@ -2018,7 +2041,7 @@ class Viewer(QtGui.QWidget):
             self.update_image_slider(self.leemdat.dat_3d.shape[2]-1)
             self.has_loaded_data = True
             return
-        self.update_image_slider(0)
+        # self.update_image_slider(0)
         return
 
     def format_slider(self):
@@ -2041,6 +2064,8 @@ class Viewer(QtGui.QWidget):
                                     LF.filenumber_to_energy(
                                                             self.leemdat.elist,
                                                             value)) + " eV")
+        # set slider to value
+        self.image_slider.setValue(value)
         self.show_LEEM_Data(self.leemdat.dat_3d, value)
 
     def clear_LEEM_IV(self):
@@ -2156,7 +2181,15 @@ class Viewer(QtGui.QWidget):
             print('Error in Energy List Size')
             return
 
-        self.LEEM_IV_ax.plot(self.leemdat.elist, self.leemdat.ilist, color=self.colors[self.click_count-1])
+        if self.smooth_leem_plot:
+            self.LEEM_IV_ax.plot(self.leemdat.elist, LF.smooth(self.leemdat.ilist,
+                                                               self.smooth_window_len,
+                                                               self.smooth_window_type),
+                                 color=self.colors[self.click_count-1]
+                                 )
+        else:
+            self.LEEM_IV_ax.plot(self.leemdat.elist, self.leemdat.ilist, color=self.colors[self.click_count-1])
+
         self.leem_IV_list.append((self.leemdat.elist, self.leemdat.ilist,
                                   self.leemdat.curX, self.leemdat.curY,
                                   self.click_count-1)) # color stored by click count index
@@ -2228,6 +2261,30 @@ class Viewer(QtGui.QWidget):
         self.leem_didv_window.setMinimumWidth(0.45*self.max_width)
         self.leem_didv_fig, self.leem_didv_ax = plt.subplots(1,1, figsize=(8,6), dpi=100)
         self.leem_didv_can = FigureCanvas(self.leem_didv_fig)
+
+        self.LEEM_IV_ax.clear()
+        for tuple in self.leem_IV_list:
+            data = tuple[1]
+            color_idx = tuple[4]
+
+            # Smooth data before taking derivative:
+            if self.smooth_leem_plot:
+                # use user settings
+                data = LF.smooth(data, self.smooth_window_len, self.smooth_window_type)
+            else:
+                # use default settings
+                data = LF.smooth(data)
+            # calculate derivative; note this reduces the length by 1
+            data = np.diff(data)/np.diff(self.leemdat.elist)
+
+            if self.smooth_leem_plot:
+                self.LEEM_IV_ax.plot(self.leemdat.elist[:-1], LF.smooth(data, self.smooth_window_len, self.smooth_window_type), color=self.colors[color_idx])
+            else:
+                self.LEEM_IV_ax.plot(self.leemdat.elist[:-1], data, color=self.colors[color_idx])
+        self.LEEM_IV_ax.set_title("LEEM dI/dV")
+        self.LEEM_canvas.draw()
+
+
 
 
 
