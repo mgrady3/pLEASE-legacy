@@ -2,7 +2,6 @@
 This module contains classes pertinent
 to creating the main GUI for the data
 analysis suite
-
 Maxwell Grady 2015
 """
 # local project imports
@@ -126,7 +125,6 @@ class Viewer(QtGui.QWidget):
         """
         Setup main data constructs
         Setup plotting flags
-
         :return none:
         """
         self.exp = None
@@ -283,7 +281,6 @@ class Viewer(QtGui.QWidget):
         One Tab for LEEM
         One Tab for LEED
         One Tab for Settings/Config
-
         :return:
         """
         self.tabs = QtGui.QTabWidget()
@@ -447,6 +444,7 @@ class Viewer(QtGui.QWidget):
 
         # LEED Menu
         LEEDMenu = self.menubar.addMenu('LEED Actions')
+
         loadLEEDAction = QtGui.QAction('Load LEED Data', self)
         loadLEEDAction.setShortcut('Ctrl+D')
         loadLEEDAction.triggered.connect(self.load_LEED_Data)
@@ -464,32 +462,39 @@ class Viewer(QtGui.QWidget):
         new_extractAction.triggered.connect(self.new_leed_extract)
         LEEDMenu.addAction(new_extractAction)
 
+        # Add submenu for background subtraction tasks
+        backgroundMenu = LEEDMenu.addMenu('Background Subtraction')
+
+
         subtractAction = QtGui.QAction('Subtract Background', self)
         subtractAction.setShortcut('Ctrl+B')
         subtractAction.triggered.connect(self.subtract_background)
-        LEEDMenu.addAction(subtractAction)
+        backgroundMenu.addAction(subtractAction)
+
+        selectBackgroundAction = QtGui.QAction('Select Background I(V)', self)
+        selectBackgroundAction.triggered.connect(self.get_background_from_selections)
+        backgroundMenu.addAction(selectBackgroundAction)
+
+        displayBackgroundAction = QtGui.QAction('Display Background I(V)', self)
+        displayBackgroundAction.triggered.connect(self.show_calculated_background)
+        backgroundMenu.addAction(displayBackgroundAction)
+
+        subtractStoredBackgroundAction = QtGui.QAction('Subtract Stored Background', self)
+        subtractStoredBackgroundAction.triggered.connect(self.subtract_stored_background)
+        backgroundMenu.addAction(subtractStoredBackgroundAction)
+
+        # Add submenu for functiosn related to averaging I(V)
+        averageMenu = LEEDMenu.addMenu('Averaging')
 
         averageAction = QtGui.QAction('Average I(V)', self)
         averageAction.setShortcut('Ctrl+A')
         averageAction.setStatusTip('Average currently selected I(V) curves')
         averageAction.triggered.connect(self.average_current_IV)
-        LEEDMenu.addAction(averageAction)
+        averageMenu.addAction(averageAction)
 
         outputAverageAction = QtGui.QAction('Output Average I(V)', self)
         outputAverageAction.triggered.connect(self.output_average_LEED)
-        LEEDMenu.addAction(outputAverageAction)
-
-        selectBackgroundAction = QtGui.QAction('Select Background I(V)', self)
-        selectBackgroundAction.triggered.connect(self.get_background_from_selections)
-        LEEDMenu.addAction(selectBackgroundAction)
-
-        displayBackgroundAction = QtGui.QAction('Display Background I(V)', self)
-        displayBackgroundAction.triggered.connect(self.show_calculated_background)
-        LEEDMenu.addAction(displayBackgroundAction)
-
-        subtractStoredBackgroundAction = QtGui.QAction('Subtract Stored Background', self)
-        subtractStoredBackgroundAction.triggered.connect(self.subtract_stored_background)
-        LEEDMenu.addAction(subtractStoredBackgroundAction)
+        averageMenu.addAction(outputAverageAction)
 
         shiftAction = QtGui.QAction('Shift Selecttions', self)
         shiftAction.setShortcut('Ctrl+S')
@@ -613,7 +618,6 @@ class Viewer(QtGui.QWidget):
 
     def load_experiment(self):
         """
-
         :return:
         """
 
@@ -655,7 +659,6 @@ class Viewer(QtGui.QWidget):
 
     def load_LEEM_experiment(self):
         """
-
         :return:
         """
         if self.exp is None:
@@ -714,7 +717,6 @@ class Viewer(QtGui.QWidget):
 
     def load_LEED_experiment(self):
         """
-
         :return:
         """
         if self.exp is None:
@@ -1450,21 +1452,16 @@ class Viewer(QtGui.QWidget):
                 # perimeter sum
                 ps = (img[0, 0:] + img[0:, -1] + img[-1, :] + img[0:, 0]).sum()  # sum edges
                 ps -= (img[0,0] + img[0, -1] + img[-1, -1] + img[-1, 0])  # subtract corners for double counting
-
                 num_pixels = 2*(2*(2*self.leeddat.box_rad)-2)
                 ps /= num_pixels
                 bkgnd.append(ps)  # store average perimeter pixel value
-
                 if self.Debug:
                     print("Average Background calculated as {}".format(ps))
                     print("Raw Sum: {}".format(img.sum()))
-
                 img -= int(ps)  # subtract background from each pixel
-
                 if self.Debug:
                     print("Adjusted Sum: {}".format(img[img >= 0].sum()))
                     print(img)
-
                 # calculate new total intensity of the integration window counting only positive values
                 # there should be no negatives but we discard them just incase
                 adj_ilist.append(img[img >= 0].sum())
@@ -1693,7 +1690,6 @@ class Viewer(QtGui.QWidget):
 
     def output_average_LEED(self):
         """
-
         :return none:
         """
         # print('Call placed to output_average_LEED')
@@ -1799,7 +1795,6 @@ class Viewer(QtGui.QWidget):
         Given a 2d integration window centered on a user selected point,
         find the beam maximum in the integration window then return a
         new slice from leeddat.dat3d centered on the beam max.
-
         :param int_win:
             2d data slice from leeddat.dat3d
         :param win_coords:
@@ -1870,13 +1865,10 @@ class Viewer(QtGui.QWidget):
         Using opencv, find the relative beam maximum nearest to the user selection.
         Shift the user selected integration window to be centered on the
         located maxima.
-
         This takes out some ambiguity when comparing I(V) curves from the same
         LEED beams at extracted at different times.
-
         In the future, a CONFIG setting will be toggle-able such that this function can be
         always enabled or always disabled.
-
         :return: none
         """
         self.shifted_rects = []
@@ -2302,16 +2294,12 @@ class Viewer(QtGui.QWidget):
         """
         Attempt to count the number of minima for each I(V) curve by iterating over all
         pixels in the topmost image in the most efficient way using np.nditer()
-
         This method iterates over the 3d numpy array in stored memory order
-
         Each I(V) curve is first smoothed with a boxcar window convolution in order
         to remove noise in the data.
-
         The main data array is sub-set for each curve extraction to only pull the data
         in the relevant energy range so as to save computational time when calculating
         numeric derivatives
-
         :return none:
         """
         if not self.hasdisplayed_leem or len(self.leemdat.elist) <= 2:
@@ -2422,7 +2410,6 @@ class Viewer(QtGui.QWidget):
     @staticmethod
     def count_mins(data):
         """
-
         :return tuple:
         """
         num = 0
@@ -2442,7 +2429,6 @@ class Viewer(QtGui.QWidget):
 
     def check_flat(self, data, thresh=5):
         '''
-
         :param data:
             1d numpy array containing smoothed dI/dE data
         :param thresh:
@@ -2516,7 +2502,6 @@ class Viewer(QtGui.QWidget):
 
     def discrete_imshow(self, data, clrmp=cm.Spectral):
         '''
-
         :param data:
             2d numpy array to be plotted
         :param clrmp:
@@ -2553,13 +2538,10 @@ class Viewer(QtGui.QWidget):
 
         self.count_window.show()
 
-
-
     def old_discrete_imshow(self, data, cmap, title=None):
         """
         Create a color bar with discrete integer values with a scale set
         according to the max/min in your dta set
-
         courtesy of user2559070 @ stackoverflow.com
         :return none:
         """
@@ -2591,6 +2573,3 @@ class Viewer(QtGui.QWidget):
         plt.axis('off')
         self.cplot_ax.set_title('LEEM-I(V) Color Coded to # of minima Counted')
         self.count_window.show()
-
-
-
