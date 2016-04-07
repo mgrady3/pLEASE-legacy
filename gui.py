@@ -31,6 +31,8 @@ from matplotlib import colorbar
 from matplotlib import colors as clrs
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+
+# Start intial testing of updating to pyqt5
 from PyQt4 import QtGui, QtCore
 from scipy.stats import linregress as lreg
 
