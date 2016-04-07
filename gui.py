@@ -27,14 +27,12 @@ import matplotlib.pyplot as plt
 import multiprocessing as mp  # this may be removed as a dependency
 import numpy as np
 import seaborn as sns
-
 from matplotlib import colorbar
 from matplotlib import colors as clrs
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt4 import QtGui, QtCore
 from scipy.stats import linregress as lreg
-
 
 
 class Viewer(QtGui.QWidget):
@@ -256,7 +254,7 @@ class Viewer(QtGui.QWidget):
         self.message_console.setWindowTitle('Message Console')
         self.message_console.setMinimumWidth(self.max_width/3)
         self.message_console.setMinimumHeight(self.max_height/3)
-        self.message_console.move(0,0)
+        self.message_console.move(0, 0)
         self.message_console.setFocus()
         self.message_console.raise_()
         self.already_catching_output = True

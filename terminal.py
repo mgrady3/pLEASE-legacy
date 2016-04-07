@@ -60,6 +60,7 @@ class ErrorConsole(QtGui.QWidget):
         # style formatting
         if not self._light:
             # dark style
+            # use rgba for the QWidget background. This allows setting alpha channel transparency
             self.setStyleSheet('background-color: rgba(36, 35, 35, 200)')
             self.textEdit.setStyleSheet('color: rgb(238, 232, 213)')
         else:
