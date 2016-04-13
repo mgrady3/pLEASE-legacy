@@ -4,6 +4,12 @@ to creating the main GUI for the data
 analysis suite
 Maxwell Grady 2015
 """
+
+# pyqt5
+import matplotlib
+matplotlib.use("Qt5agg", force=True)
+
+
 # local project imports
 import data
 import terminal
@@ -31,13 +37,14 @@ from matplotlib import colorbar
 from matplotlib import colors as clrs
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-
-# Start intial testing of updating to pyqt5
-from PyQt4 import QtGui, QtCore
 from scipy.stats import linregress as lreg
 
+# Start intial testing of updating to pyqt5
+from PyQt5 import QtGui, QtCore, QtWidgets
 
-class Viewer(QtGui.QWidget):
+
+
+class Viewer(QtWidgets.QWidget):
     """
     Main GUI construct
     """
@@ -56,7 +63,7 @@ class Viewer(QtGui.QWidget):
         """
         super(Viewer, self).__init__(parent)
         self.setWindowTitle("LEED/LEEM Image Analysis in python with Qt")
-        resolution = QtGui.QDesktopWidget().screenGeometry()
+        resolution = QtWidgets.QDesktopWidget().screenGeometry()
         self.max_width = resolution.width()
         self.max_height = resolution.height()
         # Set App size to be 0.75 * screen width and 0.75 * screen height
@@ -284,12 +291,12 @@ class Viewer(QtGui.QWidget):
         One Tab for Settings/Config
         :return:
         """
-        self.tabs = QtGui.QTabWidget()
+        self.tabs = QtWidgets.QTabWidget()
         self.tabs.setStyleSheet(self.styles['tab'])
 
-        self.LEED_Tab = QtGui.QWidget()
-        self.LEEM_Tab = QtGui.QWidget()
-        self.Config_Tab = QtGui.QWidget()
+        self.LEED_Tab = QtWidgets.QWidget()
+        self.LEEM_Tab = QtWidgets.QWidget()
+        self.Config_Tab = QtWidgets.QWidget()
         self.tabs.addTab(self.LEED_Tab, "LEED-IV")
         self.tabs.addTab(self.LEEM_Tab, "LEEM-IV")
         self.tabs.addTab(self.Config_Tab, "CONFIG")
@@ -309,8 +316,8 @@ class Viewer(QtGui.QWidget):
         self.LEED_IV_canvas.setParent(self.LEED_Tab)
         self.LEED_IV_toolbar = NavigationToolbar(self.LEED_IV_canvas, self)
 
-        LEED_Tab_Layout_V1 = QtGui.QVBoxLayout()
-        LEED_Tab_Layout_H1 = QtGui.QHBoxLayout()
+        LEED_Tab_Layout_V1 = QtWidgets.QVBoxLayout()
+        LEED_Tab_Layout_H1 = QtWidgets.QHBoxLayout()
 
         LEED_Tab_Layout_V1.addWidget(self.LEED_IV_canvas)
         # LEED_Tab_Layout_V1.addStretch(1)
@@ -328,26 +335,26 @@ class Viewer(QtGui.QWidget):
         self.LEEM_canvas = FigureCanvas(self.LEEM_fig)
         self.LEEM_canvas.setParent(self.LEEM_Tab)
         # Hey look, now it expands just like we wanted ...
-        self.LEEM_canvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                                       QtGui.QSizePolicy.Expanding)
+        self.LEEM_canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                       QtWidgets.QSizePolicy.Expanding)
         self.LEEM_toolbar = NavigationToolbar(self.LEEM_canvas, self)
 
         # divide layout into three main containers
-        LEEM_Tab_Main_VBox = QtGui.QVBoxLayout()
-        LEEM_Tab_Image_Slider_HBox = QtGui.QHBoxLayout()
-        LEEM_Tab_ToolBar_HBox = QtGui.QHBoxLayout()  # may be implemented later
+        LEEM_Tab_Main_VBox = QtWidgets.QVBoxLayout()
+        LEEM_Tab_Image_Slider_HBox = QtWidgets.QHBoxLayout()
+        LEEM_Tab_ToolBar_HBox = QtWidgets.QHBoxLayout()  # may be implemented later
 
         # Slider Layout
-        self.image_slider = QtGui.QSlider(QtCore.Qt.Horizontal, self.LEEM_Tab)
+        self.image_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, self.LEEM_Tab)
         self.image_slider.setMaximumHeight(200)
         self.image_slider.valueChanged[int].connect(self.update_image_slider)
         self.image_slider.setTickInterval(10)
-        self.image_slider.setTickPosition(QtGui.QSlider.TicksAbove)
+        self.image_slider.setTickPosition(QtWidgets.QSlider.TicksAbove)
 
-        self.image_slider_label = QtGui.QLabel(self)
+        self.image_slider_label = QtWidgets.QLabel(self)
         self.image_slider_label.setText("Electron Energy [eV]")
 
-        self.image_slider_value_label = QtGui.QLabel(self)
+        self.image_slider_value_label = QtWidgets.QLabel(self)
         self.image_slider_value_label.setText("0"+"eV")
 
         LEEM_Tab_Image_Slider_HBox.addWidget(self.image_slider_label)
@@ -366,27 +373,27 @@ class Viewer(QtGui.QWidget):
         Setup GUI items for CONFIG and SETTINGS
         :return none:
         """
-        config_Tab_groupbox = QtGui.QGroupBox()
-        config_Tab_bottom_button_Hbox = QtGui.QHBoxLayout()
-        config_Tab_group_button_box = QtGui.QHBoxLayout()
-        config_Tab_Vbox = QtGui.QVBoxLayout()
+        config_Tab_groupbox = QtWidgets.QGroupBox()
+        config_Tab_bottom_button_Hbox = QtWidgets.QHBoxLayout()
+        config_Tab_group_button_box = QtWidgets.QHBoxLayout()
+        config_Tab_Vbox = QtWidgets.QVBoxLayout()
 
-        self.quitbut = QtGui.QPushButton('Quit', self)
+        self.quitbut = QtWidgets.QPushButton('Quit', self)
         self.quitbut.clicked.connect(self.Quit)
 
-        self.set_energy__leem_but = QtGui.QPushButton('Set Energy LEEM', self)
+        self.set_energy__leem_but = QtWidgets.QPushButton('Set Energy LEEM', self)
         self.set_energy__leem_but.clicked.connect(lambda: self.set_energy_parameters('leem'))
 
-        self.set_energy__leed_but = QtGui.QPushButton('Set Energy LEED', self)
+        self.set_energy__leed_but = QtWidgets.QPushButton('Set Energy LEED', self)
         self.set_energy__leed_but.clicked.connect(lambda: self.set_energy_parameters('leed'))
 
-        self.toggle_debug = QtGui.QPushButton('Toggle Debug', self)
+        self.toggle_debug = QtWidgets.QPushButton('Toggle Debug', self)
         self.toggle_debug.clicked.connect(self.toggle_debug_setting)
 
-        self.swap_byte_order_LEED = QtGui.QPushButton('Swap LEED Bytes', self)
+        self.swap_byte_order_LEED = QtWidgets.QPushButton('Swap LEED Bytes', self)
         self.swap_byte_order_LEED.clicked.connect(lambda: self.swap_byte_order(dat='LEED'))
 
-        self.swap_byte_order_LEEM = QtGui.QPushButton('Swap LEEM Bytes', self)
+        self.swap_byte_order_LEEM = QtWidgets.QPushButton('Swap LEEM Bytes', self)
         self.swap_byte_order_LEEM.clicked.connect(lambda: self.swap_byte_order(dat='LEEM'))
 
         buts = [self.set_energy__leem_but, self.set_energy__leed_but, self.toggle_debug,
@@ -412,31 +419,31 @@ class Viewer(QtGui.QWidget):
         :return none:
         """
         if sys.platform == 'darwin':
-            QtGui.qt_mac_set_native_menubar(False)
+            QtWidgets.qt_mac_set_native_menubar(False)
 
-        self.menubar = QtGui.QMenuBar()
+        self.menubar = QtWidgets.QMenuBar()
         self.menubar.setStyleSheet(self.styles['menu'])
 
         # File Menu
         fileMenu = self.menubar.addMenu('File')
 
-        loadExperimentAction = QtGui.QAction('Load Experiment', self)
+        loadExperimentAction = QtWidgets.QAction('Load Experiment', self)
         loadExperimentAction.setShortcut('Ctrl+X')
         loadExperimentAction.triggered.connect(self.load_experiment)
         fileMenu.addAction(loadExperimentAction)
 
 
-        outputLEEMAction = QtGui.QAction('Output LEEM to Text', self)
+        outputLEEMAction = QtWidgets.QAction('Output LEEM to Text', self)
         outputLEEMAction.setShortcut('Ctrl+O')
         outputLEEMAction.triggered.connect(lambda: self.output_to_text(data='LEEM', smth=self.smooth_file_output))
         fileMenu.addAction(outputLEEMAction)
 
-        outputLEEDAction = QtGui.QAction('Output LEED to Text', self)
+        outputLEEDAction = QtWidgets.QAction('Output LEED to Text', self)
         outputLEEDAction.setShortcut('Ctrl+Shift+O')
         outputLEEDAction.triggered.connect(lambda: self.output_LEED_to_Text(data=None, smth=self.smooth_file_output))
         fileMenu.addAction(outputLEEDAction)
 
-        exitAction = QtGui.QAction('Quit', self)
+        exitAction = QtWidgets.QAction('Quit', self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Quit PyLEEM')
         exitAction.triggered.connect(self.Quit)
@@ -446,18 +453,18 @@ class Viewer(QtGui.QWidget):
         # LEED Menu
         LEEDMenu = self.menubar.addMenu('LEED Actions')
 
-        loadLEEDAction = QtGui.QAction('Load LEED Data', self)
+        loadLEEDAction = QtWidgets.QAction('Load LEED Data', self)
         loadLEEDAction.setShortcut('Ctrl+D')
         loadLEEDAction.triggered.connect(self.load_LEED_Data)
         LEEDMenu.addAction(loadLEEDAction)
 
-        extractAction = QtGui.QAction('Extract I(V)', self)
+        extractAction = QtWidgets.QAction('Extract I(V)', self)
         extractAction.setShortcut('Ctrl+E')
         extractAction.setStatusTip('Extract I(V) from current selections')
         extractAction.triggered.connect(self.plot_leed_IV)
         LEEDMenu.addAction(extractAction)
 
-        new_extractAction = QtGui.QAction('New Extract I(V)', self)
+        new_extractAction = QtWidgets.QAction('New Extract I(V)', self)
         new_extractAction.setShortcut('Ctrl+Shift+E')
         new_extractAction.setStatusTip('New Extract I(V) from current selections')
         new_extractAction.triggered.connect(self.new_leed_extract)
@@ -467,54 +474,54 @@ class Viewer(QtGui.QWidget):
         backgroundMenu = LEEDMenu.addMenu('Background Subtraction')
 
 
-        subtractAction = QtGui.QAction('Subtract Background', self)
+        subtractAction = QtWidgets.QAction('Subtract Background', self)
         subtractAction.setShortcut('Ctrl+B')
         subtractAction.triggered.connect(self.subtract_background)
         backgroundMenu.addAction(subtractAction)
 
-        selectBackgroundAction = QtGui.QAction('Select Background I(V)', self)
+        selectBackgroundAction = QtWidgets.QAction('Select Background I(V)', self)
         selectBackgroundAction.triggered.connect(self.get_background_from_selections)
         backgroundMenu.addAction(selectBackgroundAction)
 
-        displayBackgroundAction = QtGui.QAction('Display Background I(V)', self)
+        displayBackgroundAction = QtWidgets.QAction('Display Background I(V)', self)
         displayBackgroundAction.triggered.connect(self.show_calculated_background)
         backgroundMenu.addAction(displayBackgroundAction)
 
-        subtractStoredBackgroundAction = QtGui.QAction('Subtract Stored Background', self)
+        subtractStoredBackgroundAction = QtWidgets.QAction('Subtract Stored Background', self)
         subtractStoredBackgroundAction.triggered.connect(self.subtract_stored_background)
         backgroundMenu.addAction(subtractStoredBackgroundAction)
 
         # Add submenu for functiosn related to averaging I(V)
         averageMenu = LEEDMenu.addMenu('Averaging')
 
-        averageAction = QtGui.QAction('Average I(V)', self)
+        averageAction = QtWidgets.QAction('Average I(V)', self)
         averageAction.setShortcut('Ctrl+A')
         averageAction.setStatusTip('Average currently selected I(V) curves')
         averageAction.triggered.connect(self.average_current_IV)
         averageMenu.addAction(averageAction)
 
-        outputAverageAction = QtGui.QAction('Output Average I(V)', self)
+        outputAverageAction = QtWidgets.QAction('Output Average I(V)', self)
         outputAverageAction.triggered.connect(self.output_average_LEED)
         averageMenu.addAction(outputAverageAction)
 
-        shiftAction = QtGui.QAction('Shift Selecttions', self)
+        shiftAction = QtWidgets.QAction('Shift Selecttions', self)
         shiftAction.setShortcut('Ctrl+S')
         shiftAction.setStatusTip('Shift User Selections based on Beam Maximum')
         shiftAction.triggered.connect(self.shift_user_selection)
         LEEDMenu.addAction(shiftAction)
 
-        changeAction = QtGui.QAction('Change LEED Image by Energy', self)
+        changeAction = QtWidgets.QAction('Change LEED Image by Energy', self)
         changeAction.setShortcut('Ctrl+G')
         changeAction.triggered.connect(self.show_LEED_image_by_energy)
         LEEDMenu.addAction(changeAction)
 
-        clearAction = QtGui.QAction('Clear Current I(V)', self)
+        clearAction = QtWidgets.QAction('Clear Current I(V)', self)
         clearAction.setShortcut('Ctrl+C')
         clearAction.setStatusTip('Clear Current Selected I(V)')
         clearAction.triggered.connect(self.clear_leed_click)
         LEEDMenu.addAction(clearAction)
 
-        clearPlotsOnlyAction = QtGui.QAction('Clear Plots', self)
+        clearPlotsOnlyAction = QtWidgets.QAction('Clear Plots', self)
         clearPlotsOnlyAction.setShortcut('Ctrl+Alt+C')
         clearPlotsOnlyAction.setStatusTip('Clear Current Plots')
         clearPlotsOnlyAction.triggered.connect(self.clear_leed_plots_only)
@@ -522,57 +529,57 @@ class Viewer(QtGui.QWidget):
 
         # LEEM Menu
         LEEMMenu = self.menubar.addMenu('LEEM Actions')
-        loadLEEMAction = QtGui.QAction('Load LEEM Data', self)
+        loadLEEMAction = QtWidgets.QAction('Load LEEM Data', self)
         loadLEEMAction.setShortcut('Meta+M')
         loadLEEMAction.triggered.connect(self.load_LEEM)
         LEEMMenu.addAction(loadLEEMAction)
 
-        clearLEEMAction = QtGui.QAction('Clear Current I(V)', self)
+        clearLEEMAction = QtWidgets.QAction('Clear Current I(V)', self)
         clearLEEMAction.setShortcut('Meta+C')
         clearLEEMAction.setStatusTip('Clear Current Selected I(V)')
         clearLEEMAction.triggered.connect(self.clear_LEEM_IV)
         LEEMMenu.addAction(clearLEEMAction)
 
-        popLEEMAction = QtGui.QAction('Popout I()V', self)
+        popLEEMAction = QtWidgets.QAction('Popout I()V', self)
         popLEEMAction.setShortcut('Meta+P')
         popLEEMAction.triggered.connect(self.popout_LEEM_IV)
         LEEMMenu.addAction(popLEEMAction)
 
-        smoothLEEMAction = QtGui.QAction('Smooth Current I(V)', self)
+        smoothLEEMAction = QtWidgets.QAction('Smooth Current I(V)', self)
         smoothLEEMAction.setShortcut('Meta+S')
         smoothLEEMAction.triggered.connect(lambda: self.smooth_current_IV(ax=self.LEEM_IV_ax, can=self.LEEM_canvas))
         LEEMMenu.addAction(smoothLEEMAction)
 
         derivativeMenu = LEEMMenu.addMenu("Derivative")
-        leemdIdVAction = QtGui.QAction("Plot dI/dV", self)
+        leemdIdVAction = QtWidgets.QAction("Plot dI/dV", self)
         leemdIdVAction.triggered.connect(self.plot_derivative)
         derivativeMenu.addAction(leemdIdVAction)
 
-        countAction = QtGui.QAction('Count Layers', self)
+        countAction = QtWidgets.QAction('Count Layers', self)
         countAction.setShortcut('Meta+L')
         countAction.triggered.connect(self.count_helper)
         LEEMMenu.addAction(countAction)
 
         # Settings Menu
         settingsMenu = self.menubar.addMenu('Settings')
-        smoothAction = QtGui.QAction('Toggle Data Smoothing', self)
+        smoothAction = QtWidgets.QAction('Toggle Data Smoothing', self)
         smoothAction.setShortcut('Ctrl+Shift+S')
         smoothAction.setStatusTip('Turn on/off Data Smoothing')
         smoothAction.triggered.connect(self.toggle_smoothing)
         settingsMenu.addAction(smoothAction)
 
-        setLEEMEnergyAction = QtGui.QAction('Set Energy Parameters', self)
+        setLEEMEnergyAction = QtWidgets.QAction('Set Energy Parameters', self)
         #setLEEMEnergyAction.setShortcut('Ctrl+Shift+E')
         setLEEMEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEEM'))
         settingsMenu.addAction(setLEEMEnergyAction)
 
-        boxAction = QtGui.QAction('Set Integration Window', self)
+        boxAction = QtWidgets.QAction('Set Integration Window', self)
         boxAction.setShortcut('Ctrl+Shift+B')
         boxAction.setStatusTip('Set Integration Window Radius')
         boxAction.triggered.connect(self.set_integration_window)
         settingsMenu.addAction(boxAction)
 
-        setLEEDEnergyAction = QtGui.QAction('Set LEED Energy Parameters', self)
+        setLEEDEnergyAction = QtWidgets.QAction('Set LEED Energy Parameters', self)
         #setLEEDEnergyAction.setShortcut('Ctrl+Shift+N')
         setLEEDEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEED'))
         settingsMenu.addAction(setLEEDEnergyAction)
@@ -583,7 +590,7 @@ class Viewer(QtGui.QWidget):
         :return none:
         """
 
-        vbox1 = QtGui.QVBoxLayout()
+        vbox1 = QtWidgets.QVBoxLayout()
         vbox1.addWidget(self.menubar)
         vbox1.addWidget(self.tabs)
         self.setLayout(vbox1)
@@ -627,7 +634,7 @@ class Viewer(QtGui.QWidget):
         :return:
         """
 
-        new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment Config File"))
+        new_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment Config File"))
         if new_dir == '':
                         print('Loading Canceled ...')
                         return
@@ -821,7 +828,7 @@ class Viewer(QtGui.QWidget):
         Then calls appropriate loading function
         :return none:
         """
-        entry, ok = QtGui.QInputDialog.getText(self, "Please Enter Data Type to Load",
+        entry, ok = QtWidgets.QInputDialog.getText(self, "Please Enter Data Type to Load",
                                               "Enter a valid data type from list: TIFF, PNG, DAT")
         if not ok:
             print('Loading Canceled ...')
@@ -837,7 +844,7 @@ class Viewer(QtGui.QWidget):
                 return
             else:
                 if entry in ['TIFF', 'tiff', 'TIF', 'tif']:
-                    new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing TIFF files"))
+                    new_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select directory containing TIFF files"))
                     if new_dir == '':
                         print('Loading Canceled ...')
                         return
@@ -864,7 +871,7 @@ class Viewer(QtGui.QWidget):
                     # self.update_LEED_img(index=self.current_leed_index)
 
                 elif entry in ['PNG', 'png']:
-                    new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing PNG files"))
+                    new_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select directory containing PNG files"))
                     if new_dir == '':
                         print('Loading Canceled ...')
                         return
@@ -889,20 +896,20 @@ class Viewer(QtGui.QWidget):
                     # self.update_LEED_img(index=self.current_leed_index)
 
                 else:
-                    new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing DAT files"))
+                    new_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select directory containing DAT files"))
                     if new_dir == '':
                         print('Loading Canceled ...')
                         return
                     print('New Data Directory set to {}'.format(new_dir))
 
-                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Height", "Enter Positive Int >= 2", value=544, min=2, max=8000)
+                    entry, ok = QtWidgets.QInputDialog.getInt(self, "Choose Image Height", "Enter Positive Int >= 2", value=544, min=2, max=8000)
                     if not ok:
                         print("Loading Raw Data Canceled ...")
                         return
                     else:
                         self.leeddat.ht = entry
 
-                    entry, ok = QtGui.QInputDialog.getInt(self, "Choose Image Width", "Enter Positive Int >= 2", value=576, min=2, max=8000)
+                    entry, ok = QtWidgets.QInputDialog.getInt(self, "Choose Image Width", "Enter Positive Int >= 2", value=576, min=2, max=8000)
                     if not ok:
                         print("Loading Raw Data Canceled ...")
                         return
@@ -965,7 +972,7 @@ class Viewer(QtGui.QWidget):
         Display slice from self.leeddat.dat3d according to integer index input by User
         :return none:
         """
-        entry, ok = QtGui.QInputDialog.getInt(self, "Enter Image Number",
+        entry, ok = QtWidgets.QInputDialog.getInt(self, "Enter Image Number",
                                               "Enter an integer between 0 and {}".format(self.leeddat.dat_3d.shape[2]-1),
                                               value=self.leeddat.dat_3d.shape[2]-1,
                                               min=0,
@@ -979,7 +986,7 @@ class Viewer(QtGui.QWidget):
         Display slice from self.leeddat.dat3d according to an energy value input by User in eV
         :return none:
         """
-        entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Image Number",
+        entry, ok = QtWidgets.QInputDialog.getDouble(self, "Enter Image Number",
                                               "Enter an integer between {0} and {1}".format(self.leeddat.elist[0], self.leeddat.elist[-1]),
                                               value=len(self.leeddat.elist)/2,
                                               min=0,
@@ -1037,7 +1044,7 @@ class Viewer(QtGui.QWidget):
 
 
         # Get Starting Energy in eV
-        entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Starting Energy in eV",
+        entry, ok = QtWidgets.QInputDialog.getDouble(self, "Enter Starting Energy in eV",
                                                  "Enter a decimal for Starting Energy in eV",
                                                  value=20.5, min=-500, max=5000)
         if not ok:
@@ -1046,7 +1053,7 @@ class Viewer(QtGui.QWidget):
         start_e = float(entry)
 
         # Get Final Energy in eV
-        entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Final Energy in eV (must be larger than Start Energy)",
+        entry, ok = QtWidgets.QInputDialog.getDouble(self, "Enter Final Energy in eV (must be larger than Start Energy)",
                                                  "Enter a decimal for Final Energy > Start Energy",
                                                  value=150, min=-500, max=5000)
         if not ok:
@@ -1059,7 +1066,7 @@ class Viewer(QtGui.QWidget):
             return
 
         # Get Energy Step in eV
-        entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Energy Step in eV",
+        entry, ok = QtWidgets.QInputDialog.getDouble(self, "Enter Energy Step in eV",
                                                  "Enter a decimal for Energy Step >0.0",
                                                  value=0.5, min=0.000001, max=500)
         if not ok:
@@ -1312,17 +1319,17 @@ class Viewer(QtGui.QWidget):
         msg = '''Please enter the window type to use for data smoothing:\n
         Acceptable entries are flat, hanning, hamming, bartlett, or blackman
               '''
-        entry, ok = QtGui.QInputDialog.getText(self, "Choose Window Type", msg)
+        entry, ok = QtWidgets.QInputDialog.getText(self, "Choose Window Type", msg)
         if not ok:
             return
         else:
             if entry not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
                 #print '''Invalid Entry - try again: acceptable entries are\n
                 #      flat, hanning, hamming, bartlett, or blackman '''
-                reply = QtGui.QMessageBox.question(self, 'Invalid Entry:', 'Invalid Entry for Smoothing Window:\nTry again?',
-                                                   QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
-                                                   QtGui.QMessageBox.No)
-                if reply == QtGui.QMessageBox.Yes:
+                reply = QtWidgets.QMessageBox.question(self, 'Invalid Entry:', 'Invalid Entry for Smoothing Window:\nTry again?',
+                                                   QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                   QtWidgets.QMessageBox.No)
+                if reply == QtWidgets.QMessageBox.Yes:
                     self.toggle_smoothing()
                     return
                 else: return
@@ -1330,7 +1337,7 @@ class Viewer(QtGui.QWidget):
                 self.smooth_window_type = str(entry)
 
         # Query user for window length
-        entry, ok = QtGui.QInputDialog.getInt(self, "Choose Window Length", "Enter Positive Even Int >= 4", value=14, min=4, max=40)
+        entry, ok = QtWidgets.QInputDialog.getInt(self, "Choose Window Length", "Enter Positive Even Int >= 4", value=14, min=4, max=40)
         if not ok:
             return
         else:
@@ -1352,7 +1359,7 @@ class Viewer(QtGui.QWidget):
         Integration is a square of side length 2*(box radius)
         :return none:
         """
-        entry, ok = QtGui.QInputDialog.getInt(self, "Set Integration Window Half Length",
+        entry, ok = QtWidgets.QInputDialog.getInt(self, "Set Integration Window Half Length",
                                               "Enter a valid integer >= 2.", value=20, min=2, max=2000)
         if not ok:
             return
@@ -1385,16 +1392,16 @@ class Viewer(QtGui.QWidget):
         if not self.manual_background:
             return
 
-        self.bkgnd_window = QtGui.QWidget()
+        self.bkgnd_window = QtWidgets.QWidget()
         self.bkgnd_window.setMinimumHeight(0.35 * self.max_height)
         self.bkgnd_window.setMinimumWidth(0.45 * self.max_width)
         self.bfig, self.bplot_ax = plt.subplots(1, 1, figsize=(8, 6), dpi=100)
         self.bcanvas = FigureCanvas(self.bfig)
-        self.bcanvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                                   QtGui.QSizePolicy.Expanding
+        self.bcanvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                   QtWidgets.QSizePolicy.Expanding
                                    )
         self.bmpl_toolbar = NavigationToolbar(self.bcanvas, self.bkgnd_window)
-        nvbox = QtGui.QVBoxLayout()
+        nvbox = QtWidgets.QVBoxLayout()
         nvbox.addWidget(self.bcanvas)
         nvbox.addWidget(self.bmpl_toolbar)
         self.bkgnd_window.setLayout(nvbox)
@@ -1508,11 +1515,11 @@ class Viewer(QtGui.QWidget):
         print("Re-plotting original data and corrected data")
 
         # pop out a new window and plot side by side
-        # self.pop_window = QtGui.QWidget()
-        self.pop_window1 = QtGui.QWidget()  # raw data
-        self.pop_window2 = QtGui.QWidget()  # corrected data
-        self.pop_window3 = QtGui.QWidget()  # extracted backgrounds
-        self.pop_window4 = QtGui.QWidget()  # average background
+        # self.pop_window = QtWidgets.QWidget()
+        self.pop_window1 = QtWidgets.QWidget()  # raw data
+        self.pop_window2 = QtWidgets.QWidget()  # corrected data
+        self.pop_window3 = QtWidgets.QWidget()  # extracted backgrounds
+        self.pop_window4 = QtWidgets.QWidget()  # average background
 
         windows = [self.pop_window1, self.pop_window2, self.pop_window3, self.pop_window4]
 
@@ -1544,26 +1551,26 @@ class Viewer(QtGui.QWidget):
 
         # format layout in pop_windows
         # raw data
-        nvbox = QtGui.QVBoxLayout()
+        nvbox = QtWidgets.QVBoxLayout()
         nvbox.addWidget(self.ncanvas1)
-        nhbox = QtGui.QHBoxLayout()
+        nhbox = QtWidgets.QHBoxLayout()
         nvbox.addLayout(nhbox)
         nvbox.addWidget(self.nmpl_toolbar1)
         # raw data output button
-        rawoutbut = QtGui.QPushButton("Output to Text", self)
+        rawoutbut = QtWidgets.QPushButton("Output to Text", self)
         rawoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.raw_selections, smth=self.smooth_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(rawoutbut)
         self.pop_window1.setLayout(nvbox)
 
         # corrected data
-        nvbox = QtGui.QVBoxLayout()
+        nvbox = QtWidgets.QVBoxLayout()
         nvbox.addWidget(self.ncanvas2)
-        nhbox = QtGui.QHBoxLayout()
+        nhbox = QtWidgets.QHBoxLayout()
 
         nhbox.addWidget(self.nmpl_toolbar2)
         # corrected data output button
-        coroutputbutton = QtGui.QPushButton("Output to Text", self)
+        coroutputbutton = QtWidgets.QPushButton("Output to Text", self)
         coroutputbutton.clicked.connect(lambda: self.output_LEED_to_Text(data=self.cor_data, smth=self.smooth_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(coroutputbutton)
@@ -1571,25 +1578,25 @@ class Viewer(QtGui.QWidget):
         self.pop_window2.setLayout(nvbox)
 
         # extracted backgrounds
-        nvbox = QtGui.QVBoxLayout()
+        nvbox = QtWidgets.QVBoxLayout()
         nvbox.addWidget(self.ncanvas3)
-        nhbox = QtGui.QHBoxLayout()
+        nhbox = QtWidgets.QHBoxLayout()
         nvbox.addLayout(nhbox)
         nhbox.addWidget(self.nmpl_toolbar3)
         # extracted background output button
-        exbackoutbut = QtGui.QPushButton("Output to Text", self)
+        exbackoutbut = QtWidgets.QPushButton("Output to Text", self)
         exbackoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.ex_back, smth=self.smooth_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(exbackoutbut)
         self.pop_window3.setLayout(nvbox)
 
         # average background
-        nvbox = QtGui.QVBoxLayout()
+        nvbox = QtWidgets.QVBoxLayout()
         nvbox.addWidget(self.ncanvas4)
-        nhbox = QtGui.QHBoxLayout()
+        nhbox = QtWidgets.QHBoxLayout()
         nvbox.addLayout(nhbox)
         nvbox.addWidget(self.nmpl_toolbar4)
-        avgbackoutbut = QtGui.QPushButton("Output to Text", self)
+        avgbackoutbut = QtWidgets.QPushButton("Output to Text", self)
         avgbackoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.avg_back, smth=self.smooth_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(avgbackoutbut)
@@ -1736,8 +1743,8 @@ class Viewer(QtGui.QWidget):
         """
         # Begin File Output Logic
         # Query User for directory to output to
-        out_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory for File Output",
-                                                             options=QtGui.QFileDialog.ShowDirsOnly))
+        out_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory for File Output",
+                                                             options=QtWidgets.QFileDialog.ShowDirsOnly))
         out_dir = LF.parse_dir(out_dir)  # get rid of trailing '/untitled/' if it exists
         if out_dir == '':
             print('File Output Canceled...')
@@ -1747,7 +1754,7 @@ class Viewer(QtGui.QWidget):
     A consecutive number will be appended to the end of the file name.
                 """
         # Query User for filename
-        entry, ok = QtGui.QInputDialog.getText(self, "Enter Filename without Extension", instrc)
+        entry, ok = QtWidgets.QInputDialog.getText(self, "Enter Filename without Extension", instrc)
         if not ok:
             print("File Output Canceled ...")
             return
@@ -1950,7 +1957,7 @@ class Viewer(QtGui.QWidget):
         self.LEEM_ax.clear()
         self.LEEM_IV_ax.clear()
         prev_ddir = self.leemdat.data_dir  # in case of error in loading data, keep reference to previous data directory
-        ddir = QtGui.QFileDialog.getExistingDirectory(self, "Select Data Directory")  # note this is a QString
+        ddir = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Data Directory")  # note this is a QString
 
         if ddir == '':
             # Error Loading Data
@@ -1963,8 +1970,8 @@ class Viewer(QtGui.QWidget):
         print('Setting LEEM Data directory to {}'.format(self.leemdat.data_dir))
 
         # Use manual dialog creation to set size and text properly
-        id = QtGui.QInputDialog(self)
-        id.setInputMode(QtGui.QInputDialog.IntInput)
+        id = QtWidgets.QInputDialog(self)
+        id.setInputMode(QtWidgets.QInputDialog.IntInput)
         id.setLabelText("Enter Positive Integer >= 2")
         id.setWindowTitle("Enter Image Height in Pixels")
         id.setIntMinimum(2)
@@ -1980,8 +1987,8 @@ class Viewer(QtGui.QWidget):
             self.leemdat.ht = entry
 
         # Use manual dialog creation to set size and text properly
-        id = QtGui.QInputDialog(self)
-        id.setInputMode(QtGui.QInputDialog.IntInput)
+        id = QtWidgets.QInputDialog(self)
+        id.setInputMode(QtWidgets.QInputDialog.IntInput)
         id.setLabelText("Enter Positive Integer >= 2")
         id.setWindowTitle("Enter Image Width in Pixels")
         id.setIntMinimum(2)
@@ -2206,20 +2213,20 @@ class Viewer(QtGui.QWidget):
         if not self.hasplotted_leem or len(self.leem_IV_list) == 0:
             return
 
-        self.pop_window_lm = QtGui.QWidget()
+        self.pop_window_lm = QtWidgets.QWidget()
         self.pop_window_lm.setMinimumHeight(0.35*self.max_height)
         self.pop_window_lm.setMinimumWidth(0.45*self.max_width)
         self.nfig_lm, self.nplot_ax_lm = plt.subplots(1,1, figsize=(8,6), dpi=100)
         self.ncanvas_lm = FigureCanvas(self.nfig_lm)
-        self.ncanvas_lm.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                                       QtGui.QSizePolicy.Expanding)
-        self.popsmoothbut = QtGui.QPushButton("Smooth I(V)")
+        self.ncanvas_lm.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                       QtWidgets.QSizePolicy.Expanding)
+        self.popsmoothbut = QtWidgets.QPushButton("Smooth I(V)")
         self.popsmoothbut.clicked.connect(lambda: self.smooth_current_IV(self.nplot_ax_lm, self.ncanvas_lm))
         self.nmpl_toolbar_lm = NavigationToolbar(self.ncanvas_lm, self.pop_window_lm)
 
-        nvbox = QtGui.QVBoxLayout()
+        nvbox = QtWidgets.QVBoxLayout()
         nvbox.addWidget(self.ncanvas_lm)
-        nhbox = QtGui.QHBoxLayout()
+        nhbox = QtWidgets.QHBoxLayout()
         nhbox.addWidget(self.nmpl_toolbar_lm)
         nhbox.addStretch(1)
         nhbox.addWidget(self.popsmoothbut)
@@ -2256,7 +2263,7 @@ class Viewer(QtGui.QWidget):
         if not self.hasplotted_leem or len(self.leem_IV_list) == 0:
             return
 
-        self.leem_didv_window = QtGui.QWidget()
+        self.leem_didv_window = QtWidgets.QWidget()
         self.leem_didv_window.setMinimumHeight(0.35 * self.max_height)
         self.leem_didv_window.setMinimumWidth(0.45*self.max_width)
         self.leem_didv_fig, self.leem_didv_ax = plt.subplots(1,1, figsize=(8,6), dpi=100)
@@ -2305,17 +2312,17 @@ class Viewer(QtGui.QWidget):
         msg = '''Please enter the window type to use for data smoothing:\n
         Acceptable entries are flat, hanning, hamming, bartlett, or blackman
               '''
-        entry, ok = QtGui.QInputDialog.getText(self, "Choose Window Type", msg)
+        entry, ok = QtWidgets.QInputDialog.getText(self, "Choose Window Type", msg)
         if not ok:
             return
         else:
             if entry not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
                 #print '''Invalid Entry - try again: acceptable entries are\n
                 #      flat, hanning, hamming, bartlett, or blackman '''
-                reply = QtGui.QMessageBox.question(self, 'Invalid Entry:', 'Invalid Entry for Smoothing Window:\nTry again?',
-                                                   QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
-                                                   QtGui.QMessageBox.No)
-                if reply == QtGui.QMessageBox.Yes:
+                reply = QtWidgets.QMessageBox.question(self, 'Invalid Entry:', 'Invalid Entry for Smoothing Window:\nTry again?',
+                                                   QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                   QtWidgets.QMessageBox.No)
+                if reply == QtWidgets.QMessageBox.Yes:
                     self.smooth_currrent_IV(ax, can)
                     return
 
@@ -2324,7 +2331,7 @@ class Viewer(QtGui.QWidget):
                 self.smooth_window_type = str(entry)
 
         # Query user for window length
-        entry, ok = QtGui.QInputDialog.getInt(self, "Choose Window Length", "Enter Positive Even Int >= 4", value=14, min=4, max=40)
+        entry, ok = QtWidgets.QInputDialog.getInt(self, "Choose Window Length", "Enter Positive Even Int >= 4", value=14, min=4, max=40)
         if not ok:
             return
         else:
@@ -2363,10 +2370,10 @@ class Viewer(QtGui.QWidget):
         if not self.hasdisplayed_leem or len(self.leemdat.elist) <= 2:
             return
 
-        reply = QtGui.QMessageBox.question(self, "Continue?", "Mapping the number of layers may take 2-10 mins. \n" +
-                                                          "Are you sure you want to continue?", QtGui.QMessageBox.Yes|
-                                                           QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.No:
+        reply = QtWidgets.QMessageBox.question(self, "Continue?", "Mapping the number of layers may take 2-10 mins. \n" +
+                                                          "Are you sure you want to continue?", QtWidgets.QMessageBox.Yes|
+                                                           QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.No:
             return
 
         # SKIP Loading PRE-Computed Image Mask for now
@@ -2376,13 +2383,13 @@ class Viewer(QtGui.QWidget):
         def_max_e = 5.1
 
         # query user to set minimum energy
-        min_e, ok = QtGui.QInputDialog.getDouble(self,"Set Minimum Energy", "Input a float value for Min Energy greater or equal to 0.",
+        min_e, ok = QtWidgets.QInputDialog.getDouble(self,"Set Minimum Energy", "Input a float value for Min Energy greater or equal to 0.",
                                              0, 0, 10, 1)
         if not ok:
             min_e = def_min_e  # use default if input was canceled
 
         # query and set max energy
-        max_e, ok = QtGui.QInputDialog.getDouble(self,"Set Maximum Energy", "Input a float value for Max Energy less than or equal to 15.",
+        max_e, ok = QtWidgets.QInputDialog.getDouble(self,"Set Maximum Energy", "Input a float value for Max Energy less than or equal to 15.",
                                              0, 0, 10, 1)
         if not ok:
             max_e = def_max_e  # use default if input was canceled
@@ -2510,13 +2517,13 @@ class Viewer(QtGui.QWidget):
         def_max_e = 5.1
 
         # query user to set minimum energy
-        min_e, ok = QtGui.QInputDialog.getDouble(self,"Set Minimum Energy", "Input a float value for Min Energy greater or equal to 0.",
+        min_e, ok = QtWidgets.QInputDialog.getDouble(self,"Set Minimum Energy", "Input a float value for Min Energy greater or equal to 0.",
                                              0, 0, 10, 1)
         if not ok:
             min_e = def_min_e  # use default if input was canceled
 
         # query and set max energy
-        max_e, ok = QtGui.QInputDialog.getDouble(self,"Set Maximum Energy", "Input a float value for Max Energy less than or equal to 15.",
+        max_e, ok = QtWidgets.QInputDialog.getDouble(self,"Set Maximum Energy", "Input a float value for Max Energy less than or equal to 15.",
                                              0, 0, 10, 1)
         if not ok:
             max_e = def_max_e  # use default if input was canceled
@@ -2576,15 +2583,15 @@ class Viewer(QtGui.QWidget):
         bounds = np.linspace(min_val, max_val, (max_val - min_val)+1)
         norm = clrs.BoundaryNorm(bounds, cmap.N)
 
-        self.count_window = QtGui.QWidget()
+        self.count_window = QtWidgets.QWidget()
         self.cfig, self.cplot_ax = plt.subplots(1,1, figsize=(8,8), dpi=100)
         self.ccanvas = FigureCanvas(self.cfig)
         self.ccanvas.setParent(self.count_window)
-        self.ccanvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                                       QtGui.QSizePolicy.Expanding)
+        self.ccanvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                       QtWidgets.QSizePolicy.Expanding)
         self.cmpl_toolbar = NavigationToolbar(self.ccanvas, self.count_window)
 
-        cvbox = QtGui.QVBoxLayout()
+        cvbox = QtWidgets.QVBoxLayout()
         cvbox.addWidget(self.ccanvas)
         cvbox.addWidget(self.cmpl_toolbar)
         self.count_window.setLayout(cvbox)
@@ -2606,15 +2613,15 @@ class Viewer(QtGui.QWidget):
         if title is None:
             # do this later
             pass
-        self.count_window = QtGui.QWidget()
+        self.count_window = QtWidgets.QWidget()
         self.cfig, self.cplot_ax = plt.subplots(1,1, figsize=(8,8), dpi=100)
         self.ccanvas = FigureCanvas(self.cfig)
         self.ccanvas.setParent(self.count_window)
-        self.ccanvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                                       QtGui.QSizePolicy.Expanding)
+        self.ccanvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                       QtWidgets.QSizePolicy.Expanding)
         self.cmpl_toolbar = NavigationToolbar(self.ccanvas, self.count_window)
 
-        cvbox = QtGui.QVBoxLayout()
+        cvbox = QtWidgets.QVBoxLayout()
         cvbox.addWidget(self.ccanvas)
         cvbox.addWidget(self.cmpl_toolbar)
         self.count_window.setLayout(cvbox)

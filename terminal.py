@@ -9,7 +9,9 @@ the Terminal or Python Interpreter.
 Maxwell Grady 2015
 """
 import sys
-from PyQt4 import QtCore, QtGui
+
+# start testing PyQt5
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class CustomStream(QtCore.QObject):
@@ -38,7 +40,7 @@ class CustomStream(QtCore.QObject):
         pass
 
 
-class ErrorConsole(QtGui.QWidget):
+class ErrorConsole(QtWidgets.QWidget):
     """
     Custom QWidget to receive messages from sys.stdout
     This serves as a way to send Error messages to the User rather
@@ -52,8 +54,8 @@ class ErrorConsole(QtGui.QWidget):
         # this is a top-level widget
         super(ErrorConsole, self).__init__(parent)
         # widget to receive and display messages from custom_stream ie. std_out
-        self.textEdit = QtGui.QTextEdit()
-        vbox = QtGui.QVBoxLayout()
+        self.textEdit = QtWidgets.QTextEdit()
+        vbox = QtWidgets.QVBoxLayout()
         vbox.addWidget(self.textEdit)
         self.setLayout(vbox)
 
@@ -101,5 +103,5 @@ class ErrorConsole(QtGui.QWidget):
         :return none:
         """
         # display received message in plaintext at bottom of widget
-        self.textEdit.moveCursor(QtGui.QTextCursor.End)
+        self.textEdit.moveCursor(QtWidgets.QTextCursor.End)
         self.textEdit.insertPlainText(message)

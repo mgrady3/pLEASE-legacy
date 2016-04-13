@@ -15,7 +15,9 @@ Common tasks for the worker thread will be:
 
 import LEEMFUNCTIONS as LF
 import numpy as np
-from PyQt4 import QtGui, QtCore
+
+# start testing PyQt5
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 
 # TODO: Consider splitting to multiple classes for separate tasks

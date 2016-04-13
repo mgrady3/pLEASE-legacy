@@ -3,7 +3,9 @@ import os
 import sys
 import time
 import qdarkstyle
-from PyQt4 import QtGui, QtCore
+
+# start testing PyQt5
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 
 def main():
@@ -11,7 +13,7 @@ def main():
 
     :return:
     """
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     # SplashScreen
     source_path = os.path.dirname(gui.__file__)
@@ -20,7 +22,7 @@ def main():
     # print(graphics_path)
     splash_picture = QtGui.QPixmap(os.path.join(graphics_path, 'pLEASE.png'))
     # print(os.path.join(graphics_path, 'pLEASE.png'))
-    splash = QtGui.QSplashScreen(splash_picture, QtCore.Qt.WindowStaysOnTopHint)
+    splash = QtWidgets.QSplashScreen(splash_picture, QtCore.Qt.WindowStaysOnTopHint)
     splash.setMask(splash_picture.mask())
     splash.show()
     time.sleep(3.5)
