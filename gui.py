@@ -8,6 +8,7 @@ Maxwell Grady 2015
 # pyqt5
 import matplotlib
 matplotlib.use("Qt5agg", force=True)
+# import os; print(os.environ.get("QT_API"))
 
 
 # local project imports
@@ -35,12 +36,13 @@ import numpy as np
 import seaborn as sns
 from matplotlib import colorbar
 from matplotlib import colors as clrs
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+
 from scipy.stats import linregress as lreg
 
 # Start intial testing of updating to pyqt5
 from PyQt5 import QtGui, QtCore, QtWidgets
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 
 
@@ -418,8 +420,12 @@ class Viewer(QtWidgets.QWidget):
         Setup Menu bar at top of main window
         :return none:
         """
+
+        # PyQt5 Fix
+        """
         if sys.platform == 'darwin':
             QtWidgets.qt_mac_set_native_menubar(False)
+        """
 
         self.menubar = QtWidgets.QMenuBar()
         self.menubar.setStyleSheet(self.styles['menu'])
