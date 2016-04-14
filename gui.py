@@ -10,6 +10,7 @@ import terminal
 import LEEMFUNCTIONS as LF
 import styles as pls
 from experiment import Experiment
+from ipyembed import put_ipy
 from qthreads import WorkerThread
 
 # stdlib imports
@@ -575,6 +576,10 @@ class Viewer(QtGui.QWidget):
         setLEEDEnergyAction.triggered.connect(lambda: self.set_energy_parameters(dat='LEED'))
         settingsMenu.addAction(setLEEDEnergyAction)
 
+        debugConsoleAction = QtGui.QAction('IPython', self)
+        debugConsoleAction.triggered.connect(self.debug_console)
+        settingsMenu.addAction(debugConsoleAction)
+
     def init_layout(self):
         """
         Setup layout of main Window usig Hbox and VBox
@@ -616,6 +621,15 @@ class Viewer(QtGui.QWidget):
         print('Exiting ...')
         QtCore.QCoreApplication.instance().quit()
         return
+
+    def debug_console(self):
+        print("Starting an IPython Session ... ")
+        self.ipyconsole = QtGui.QWidget()
+        self.ipyconsole.show()
+        test_pass = {"leemdat": self.leemdat}
+        put_ipy(self.ipyconsole, passthrough=test_pass)
+        return
+
 
     # New Methods for loading Generic Experiments
     # All Necessary Parameters are loaded from YAML configuration file
