@@ -627,7 +627,20 @@ class Viewer(QtGui.QWidget):
         self.ipyconsole = QtGui.QWidget()
         self.ipyconsole.show()
         test_pass = {"leemdat": self.leemdat}
-        put_ipy(self.ipyconsole, passthrough=test_pass)
+
+        pass_through_vars = {}
+
+        if self.hasdisplayed_leed:
+            pass_through_vars["leeddat"] = self.leeddat
+        if self.hasdisplayed_leem:
+            pass_through_vars["leemdat"] = self.leemdat
+
+        # CAUTION, Here be Dragons ...
+        # pass_through_vars["main_gui"] = self     ##### DON'T DO THIS ####
+
+        # matplotlib.pyplot may recursively start showing previous plots Inception style ...
+
+        put_ipy(self.ipyconsole, passthrough=pass_through_vars)
         return
 
 
