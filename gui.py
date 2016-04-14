@@ -628,8 +628,10 @@ class Viewer(QtGui.QWidget):
         self.ipyconsole.show()
         test_pass = {"leemdat": self.leemdat}
 
+        # dict of vars to pass into namespace of the IPython kernel
         pass_through_vars = {}
 
+        # fill variables to pass in a logical manner
         if self.hasdisplayed_leed:
             pass_through_vars["leeddat"] = self.leeddat
         if self.hasdisplayed_leem:
