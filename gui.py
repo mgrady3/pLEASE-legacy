@@ -623,6 +623,12 @@ class Viewer(QtGui.QWidget):
         return
 
     def debug_console(self):
+        """
+        Open a new window with an embedded IPython REPL
+        Some local variables will be passed into the namespace of
+        the IPython kernel
+        :return:
+        """
         print("Starting an IPython Session ... ")
         self.ipyconsole = QtGui.QWidget()
         self.ipyconsole.show()
