@@ -435,6 +435,10 @@ class Viewer(QtGui.QWidget):
         outputLEEDAction.triggered.connect(lambda: self.output_LEED_to_Text(data=None, smth=self.smooth_file_output))
         fileMenu.addAction(outputLEEDAction)
 
+        genConfigAction = QtGui.QAction("Generate Experiment Config File", self)
+        genConfigAction.triggered.connect(self.generate_config)
+        fileMenu.addAction(genConfigAction)
+
         exitAction = QtGui.QAction('Quit', self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Quit PyLEEM')
@@ -663,6 +667,9 @@ class Viewer(QtGui.QWidget):
         load data into one of the main data constructs
         :return none:
         """
+        # TODO: print to console to confirm a file was written
+        # TODO: finish second half of file output
+        # TODO: test loading data from a file written by this function
 
         # get path to data
         ddir = QtGui.QFileDialog.getExistingDirectory(self, "Select Data Directory")  # note this is a QString
@@ -693,14 +700,86 @@ class Viewer(QtGui.QWidget):
         exp_type = str(entry).upper()
 
         # get data type (Raw or Image)
+        msg = """Please enter data type: Raw or Image."""
+        entry, ok = QtGui.QInputDialog.getText(self, "Enter data type", msg)
+        if not ok:
+            print("Error getting data type ...")
+            return
+        if entry not in ["Raw", "Image", "raw", "image"]:
+            print("Error getting data type ...")
+            return
+        if str(entry).startswith('R') or str(entry).startswith('r'):
+            data_type = "Raw"
+        else:
+            data_type = "Image"
 
+        # get file extension
+        if data_type == "Raw":
+            file_ext = '.dat'
+        else:
+            msg = """Please image file extension with no leading dot.
+            Valid extensions are tif and png"""
+            entry, ok = QtGui.QInputDialog.getText(self, "Enter file extension", msg)
+            if not ok:
+                print("Error getting file extension ...")
+                return
+            if str(entry).startswith('.'):
+                file_ext = str(entry).split('.')[1]
+            else:
+                file_ext = str(entry)
+            if file_ext not in ['tiff', 'TIFF', 'tif', 'TIF', 'png', 'PNG']:
+                print("Error invalid file extension. Valid choices are tif and png")
+                return
+            elif file_ext in ['tiff', 'TIFF', 'tif', 'TIF']:
+                file_ext = '.tif'
+            elif file_ext in ['png', 'PNG']:
+                file_ext = '.png'
+
+        # get Image parameters
+        id = QtGui.QInputDialog(self)
+        id.setInputMode(QtGui.QInputDialog.IntInput)
+        id.setLabelText("Enter Positive Integer >= 2")
+        id.setWindowTitle("Enter Image Height in Pixels")
+        id.setIntMinimum(2)
+        id.setIntMaximum(10000)
+        id.resize(400, 300)
+        ok = id.exec_()
+        entry = id.intValue()
+
+        if not ok:
+            print("Loading Raw Data Canceled ...")
+            return
+        else:
+            im_ht = entry
+
+        id = QtGui.QInputDialog(self)
+        id.setInputMode(QtGui.QInputDialog.IntInput)
+        id.setLabelText("Enter Positive Integer >= 2")
+        id.setWindowTitle("Enter Image width in Pixels")
+        id.setIntMinimum(2)
+        id.setIntMaximum(10000)
+        id.resize(400, 300)
+        ok = id.exec_()
+        entry = id.intValue()
+
+        if not ok:
+            print("Loading Raw Data Canceled ...")
+            return
+        else:
+            im_wd = entry
+
+        tab = "    "  # translate '\t' = 4 spaces
 
         with open(os.path.join(ddir, file_name), 'w') as f:
             f.write("Experiment:\n")
-            f.write("# Required Parameters")
-            f.write("\tType:  {0}".format("\""+exp_type+"\""))
-            f.write("\tName:  {0}".format("\""+file_name+"\""))
-            f.write("\tDate type: {0}".format())
+            f.write("# Required Parameters\n")
+            f.write(tab+"Type:  {0}\n".format("\""+exp_type+"\""))
+            f.write(tab+"Name:  {0}\n".format("\""+file_name+"\""))
+            f.write(tab+"Date type: {0}\n".format("\""+data_type+"\""))
+            f.write(tab+"File Format: {0}\n".format("\""+file_ext+"\""))
+            f.write(tab+"Image Parameters:\n")
+            f.write(tab+tab+"Height:  {0}\n".format(str(im_ht)))
+            f.write(tab+tab+"Width:  {0}\n".format(str(im_wd)))
 
 
     def load_experiment(self):
