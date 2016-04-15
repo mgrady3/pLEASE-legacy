@@ -13,7 +13,7 @@ from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 
 
-def put_ipy(parent, passthrough=None):
+def embed_ipy(parent, passthrough=None):
     """
     Embed an ipython kernel into the parent widget using a RichJupyterWidget
     :param parent: Qt Widget to receive the RichJupyterWidget

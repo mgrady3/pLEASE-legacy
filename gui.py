@@ -10,7 +10,7 @@ import terminal
 import LEEMFUNCTIONS as LF
 import styles as pls
 from experiment import Experiment
-from ipyembed import put_ipy
+from ipyembed import embed_ipy
 from qthreads import WorkerThread
 
 # stdlib imports
@@ -648,7 +648,7 @@ class Viewer(QtGui.QWidget):
 
         # matplotlib.pyplot may recursively start showing previous plots Inception style ...
 
-        put_ipy(self.ipyconsole, passthrough=pass_through_vars)
+        embed_ipy(self.ipyconsole, passthrough=pass_through_vars)
         return
 
 
