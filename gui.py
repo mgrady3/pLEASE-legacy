@@ -627,7 +627,7 @@ class Viewer(QtGui.QWidget):
         Open a new window with an embedded IPython REPL
         Some local variables will be passed into the namespace of
         the IPython kernel
-        :return:
+        :return none:
         """
         print("Starting an IPython Session ... ")
         self.ipyconsole = QtGui.QWidget()
@@ -655,9 +655,57 @@ class Viewer(QtGui.QWidget):
     # New Methods for loading Generic Experiments
     # All Necessary Parameters are loaded from YAML configuration file
 
+    def generate_config(self):
+        """
+        Query User for experiment settings
+        Write settings to a YAML config file with .yaml extension
+        This file can then be loaded via load_experiment() to
+        load data into one of the main data constructs
+        :return none:
+        """
+
+        # get path to data
+        ddir = QtGui.QFileDialog.getExistingDirectory(self, "Select Data Directory")  # note this is a QString
+
+        if ddir == '':
+            # Error Loading Data
+            print('Error Selecting Data Directory ...')
+            return
+
+        # get name for config file
+        msg = """Please enter a name for the experiment config file.
+        Do not include a file extension, one will be added automatically"""
+        entry, ok = QtGui.QInputDialog.getText(self, "Enter name for experiment config file", msg)
+        if not ok:
+            print("Error getting file name ...")
+            return
+        file_name = str(entry) + '.yaml'
+
+        # get experiment type (LEEM or LEED)
+        msg="""Please enter experiment type: LEEM or LEED."""
+        entry, ok = QtGui.QInputDialog.getText(self, "Enter experiment type", msg)
+        if not ok:
+            print("Error getting experiment type ...")
+            return
+        if entry not in ['LEEM', 'LEED', 'leem', 'leed']:
+            print("Error getting experiment type ...")
+            return
+        exp_type = str(entry).upper()
+
+        # get data type (Raw or Image)
+
+
+        with open(os.path.join(ddir, file_name), 'w') as f:
+            f.write("Experiment:\n")
+            f.write("# Required Parameters")
+            f.write("\tType:  {0}".format("\""+exp_type+"\""))
+            f.write("\tName:  {0}".format("\""+file_name+"\""))
+            f.write("\tDate type: {0}".format())
+
+
     def load_experiment(self):
         """
-        :return:
+        :return none
         """
 
         new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment Config File"))
