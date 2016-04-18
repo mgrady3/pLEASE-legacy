@@ -49,10 +49,12 @@ def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
     print('Processing Data ...')
     # progress = pb.ProgressBar(fd=sys.stdout)
     arr_list = []
-    files = [name for name in os.listdir(dirname) if name.endswith('.dat')]
+    flag = True
+    # add filter on file names to exclude hidden files beginning with a leading period
+    files = [name for name in os.listdir(dirname) if name.endswith('.dat') and not name.startswith(".")]
     files.sort()
     print('First file is {}.'.format(files[0]))
-    flag = True
+
     for fl in files:
         with open(os.path.join(dirname, fl), 'rb') as f:
             # dynamically calculate file header length
@@ -70,10 +72,10 @@ def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
 
             # Generate format string given a bit size read from YAML config file
             if bits == 8:
-                formatstring = '<u1'  # 1 byte (8bits) per pixel
+                formatstring = '<u1'  # 1 byte (8 bits) per pixel
 
             elif bits == 16:
-                formatstring = '<u2'  # 2 bytes (16 btis) per pixel
+                formatstring = '<u2'  # 2 bytes (16 bits) per pixel
 
             elif bits is None:
                 formatstring = '<u2'  # default to 16 bit images
