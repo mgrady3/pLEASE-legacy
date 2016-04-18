@@ -1756,7 +1756,7 @@ class Viewer(QtGui.QWidget):
         self.pop_window4.setLayout(nvbox)
 
         num_curves = len(self.current_selections)
-        last_raw_curve_idx = int(num_curves/2) -1
+        last_raw_curve_idx = int(num_curves/2) -1  # manually cast to int for py3 compliance
         if self.Debug:
             print("Number of total curves to plot = {}".format(num_curves))
             print("Index of last raw curve = {}".format(last_raw_curve_idx))
