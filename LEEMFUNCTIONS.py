@@ -1,14 +1,10 @@
 import os
-import sys
 import numpy as np
 import cv2
 import multiprocessing as mp
-from math import pi, log
 from PIL import Image
-from scipy import fft, ifft
-from scipy.optimize import curve_fit
 
-
+# deprecated
 DEF_IMHEIGHT = 600
 DEF_IMWIDTH = 592
 DEF_IMHEAD = 520
@@ -379,6 +375,9 @@ def find_local_maximum(window, radius=25):
 
 def count_layers_new(data, ecut):
         '''
+        Currently set to use multiprocessing.
+        Note this will not work well with the PyQt Gui
+        Alternate methods need to be used to parallelize this code for use in the main GUI
 
         :param data: 3d numpy array of smooth data cut to specific data range
         :param ecut: 1d list of energy values cut to specific data range
