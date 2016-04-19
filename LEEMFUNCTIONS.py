@@ -296,7 +296,24 @@ def read_img(path):
         w, h = im.size
         # generate list of lists of pixel values then convert to numpy array
         pixels = [pixels[i*w:(i+1)*w] for i in range(h)]
-        return np.array(pixels)
+
+        # try to determine optimal numpy data type
+        m = max(max(pixels))
+        if m > 0 and m <= 255:
+            typ = np.uint8
+        elif m > 255 and m <= 65535:
+            typ = np.uint16
+        elif m > 65535 and m <= 4294967295:
+            typ = np.uint32
+        else:
+            typ = np.uint64
+
+        try:
+            return np.array(pixels).astype(typ)
+        except TypeError as e:
+            print("Error reading image into numpy array")
+            print("Max value stored exceeds that of 64 bit integer")
+            raise e
 
 
 def parse_dir(dirname):
