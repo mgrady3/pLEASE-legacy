@@ -658,6 +658,7 @@ class Viewer(QtGui.QWidget):
 
     # New Methods for loading Generic Experiments
     # All Necessary Parameters are loaded from YAML configuration file
+    # Merged into master: 4/19/16
 
     def generate_config(self):
         """
