@@ -305,11 +305,11 @@ def read_img(path):
 
         # try to determine optimal numpy data type
         m = max(max(pixels))
-        if m > 0 and m <= 255:
+        if 0 < m <= 255:
             typ = np.uint8
-        elif m > 255 and m <= 65535:
+        elif 255 < m <= 65535:
             typ = np.uint16
-        elif m > 65535 and m <= 4294967295:
+        elif 65535 < m <= 4294967295:
             typ = np.uint32
         else:
             typ = np.uint64
