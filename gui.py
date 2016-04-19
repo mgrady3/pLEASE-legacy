@@ -768,18 +768,83 @@ class Viewer(QtGui.QWidget):
         else:
             im_wd = entry
 
+        # Get starting energy in eV
+        entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Starting Energy in eV",
+                                                     "Enter a decimal for Starting Energy in eV",
+                                                     value=20.5, min=-500, max=5000)
+        if not ok:
+            print('New Energy settings canceled ...')
+            return
+        min_energy = float(entry)
+
+        # Get Final Energy in eV
+        entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Final Energy in eV (must be larger than Start Energy)",
+                                                 "Enter a decimal for Final Energy > Start Energy",
+                                                 value=150, min=-500, max=5000)
+        if not ok:
+            print('New Energy settings canceled ...')
+            return
+
+        max_energy = float(entry)
+        if max_energy <= min_energy:
+            print('Error: Final Energy must be larger than Starting Energy')
+            return
+
+        # Get Energy Step in eV
+        entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Energy Step in eV",
+                                                 "Enter a decimal for Energy Step >0.0",
+                                                 value=0.5, min=0.000001, max=500)
+        if not ok:
+            print('New Energy settings canceled ...')
+            return
+        step_energy = float(entry)
+
+        # get bit size if data_type is "Raw"
+        if data_type == "Raw":
+            id = QtGui.QInputDialog(self)
+            id.setInputMode(QtGui.QInputDialog.IntInput)
+            id.setLabelText("Enter Positive Integer >= 2")
+            id.setWindowTitle("Enter Bit Size as integer: default 16bit.")
+            id.setIntMinimum(2)
+            id.setIntMaximum(64)
+            id.resize(400, 300)
+            ok = id.exec_()
+            entry = id.intValue()
+            if not ok:
+                print("Error getting bit size ...")
+                return
+            bit_size = entry
+
+        # get byte order if data_type is "Raw"
+        # TODO: implement this
+        byte_order = "L"
+
         tab = "    "  # translate '\t' = 4 spaces
+
+        # write user input to file using correct formatting for each line
 
         with open(os.path.join(ddir, file_name), 'w') as f:
             f.write("Experiment:\n")
             f.write("# Required Parameters\n")
             f.write(tab+"Type:  {0}\n".format("\""+exp_type+"\""))
             f.write(tab+"Name:  {0}\n".format("\""+file_name+"\""))
-            f.write(tab+"Date type: {0}\n".format("\""+data_type+"\""))
-            f.write(tab+"File Format: {0}\n".format("\""+file_ext+"\""))
+            f.write(tab+"Data Type:  {0}\n".format("\""+data_type+"\""))
+            f.write(tab+"File Format:  {0}\n".format("\""+file_ext+"\""))
             f.write(tab+"Image Parameters:\n")
             f.write(tab+tab+"Height:  {0}\n".format(str(im_ht)))
             f.write(tab+tab+"Width:  {0}\n".format(str(im_wd)))
+            f.write(tab+"Energy Parameters:\n")
+            f.write(tab+tab+"Min:  {0}\n".format(str(min_energy)))
+            f.write(tab+tab+"Max:  {0}\n".format(str(max_energy)))
+            f.write(tab+tab+"Step:  {0}\n".format(str(step_energy)))
+            f.write(tab+"Data Path:  \"{0}\"\n".format(str(ddir)))
+            f.write("\n")
+            f.write("# Additional Parameters\n")
+            if data_type == "Raw":
+                f.write(tab+"Bit Size:  {0}\n".format(str(bit_size)))
+                f.write(tab+"Byte Order:  {0}".format(str(byte_order)))
+        print("Experiment YAML config file written to {0}".format(str(os.path.join(ddir, file_name))))
+
 
 
     def load_experiment(self):
@@ -841,14 +906,16 @@ class Viewer(QtGui.QWidget):
             self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='white')
             self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='white')
             self.LEEM_IV_ax.tick_params(labelcolor='w', top='off', right='off')
+            self.LEEM_ax.set_title("LEEM Image", fontsize=20, color='white')
         else:
             self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20)
             self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
             self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
             self.LEEM_IV_ax.tick_params(top='off', right='off')
+            self.LEEM_ax.set_title("LEEM Image", fontsize=20)
 
 
-        self.leemdat.data_dir = self.exp.path  # manually cast from QString to String
+        self.leemdat.data_dir = str(self.exp.path)  # manually cast from QString to String
         self.leemdat.img_mask_count_dir = os.path.join(self.exp.path, 'img_mask_count')
         self.leemdat.ht = self.exp.imh
         self.leemdat.wd = self.exp.imw
@@ -857,6 +924,7 @@ class Viewer(QtGui.QWidget):
         self.tabs.setCurrentWidget(self.LEEM_Tab)
         # self.LEEM_Tab.show()
 
+        # TODO: for all these case searches, reduce to if x.lower() == 'raw':
         if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
 
             try:

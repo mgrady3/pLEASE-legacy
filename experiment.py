@@ -74,9 +74,10 @@ class Experiment(object):
             # self.loaded_settings = None
             # pp.pprint(vars(self))
 
-        except KeyError:
+        except KeyError as e:
             # TODO: Rewrite this section; Add additional Error handling
             print("Error in Experiment YAML - Check for usage of Valid Keys Only")
+            print("Invalid key is {0}".format(e.args[0]))
             print("Valid Experiment Parameters are: name, path, type, ext, bits, byteo, mine, maxe, stepe, and numf")
             print("Please refer to experiment.py docstrings for explanation of valid YAML parameter files.")
 
