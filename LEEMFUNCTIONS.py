@@ -290,6 +290,12 @@ def read_img(path):
         """
         # print 'opening image %s' % path
         im = Image.open(path)
+
+        # Use the greyscale transformation as defined in the Python Image Library
+        # When converting from a colour image to black and white, the library uses the
+        # ITU - R 601 - 2 luma transform:
+        # L = R * 299 / 1000 + G * 587 / 1000 + B * 114 / 1000
+
         im = im.convert('L')
 
         pixels = list(im.getdata())
