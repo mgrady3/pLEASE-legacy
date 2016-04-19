@@ -852,7 +852,10 @@ class Viewer(QtGui.QWidget):
         """
         :return none
         """
-
+        # On Windows 10 there seems to be an error where files are not displayed in the FileDialog
+        # The user may select a directory they know to contain a .yaml file but no files are shown
+        # one possible work around may be to use options=QtGui.QFileDialog.DontUseNativeDialog
+        # but this changes the entire look and feel of the window. Thus is not an ideal solution
         new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment Config File"))
         if new_dir == '':
                         print('Loading Canceled ...')
