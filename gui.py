@@ -846,8 +846,6 @@ class Viewer(QtGui.QWidget):
                 f.write(tab+"Byte Order:  {0}".format(str(byte_order)))
         print("Experiment YAML config file written to {0}".format(str(os.path.join(ddir, file_name))))
 
-
-
     def load_experiment(self):
         """
         :return none

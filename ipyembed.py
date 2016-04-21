@@ -18,6 +18,8 @@ def embed_ipy(parent, passthrough=None):
     Embed an ipython kernel into the parent widget using a RichJupyterWidget
     :param parent: Qt Widget to receive the RichJupyterWidget
     :param passthrough: dict containing variables to pass into scope of the IPython Kernel
+            Use this with caution; strange things can happen if you pass GUI elements to the IPython scope
+            and then call any of their show() or draw() methods.
     :return: dict with reference to jupyter widget and ipython kernel
     """
     kernel_manager = QtInProcessKernelManager()
