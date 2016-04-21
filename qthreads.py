@@ -41,7 +41,7 @@ class WorkerThread(QtCore.QThread):
         # Get parameters as dictionary and validate against keys
         self.params = kwargs
         self.valid_keys = ['path', 'data', 'ilist', 'elist',
-                           'imht', 'imwd', 'name', 'bits', 'ext']
+                           'imht', 'imwd', 'name', 'bits', 'ext', 'byte']
         for key in self.params.keys():
             if key not in self.valid_keys:
                 print('Terminating - ERROR Invalid Task Parameter: {}'.format(key))
@@ -114,11 +114,15 @@ class WorkerThread(QtCore.QThread):
             # if bit size is not specified, use default values in process_LEEM_Data()
             self.params['bits'] = None
 
+        if 'byte' not in self.params.keys():
+            self.params['byte'] = 'L'  # default to Little Endian
+
         # load raw data
         dat_3d = LF.process_LEEM_Data(dirname=self.params['path'],
                                       ht=self.params['imht'],
                                       wd=self.params['imwd'],
-                                      bits=self.params['bits'])
+                                      bits=self.params['bits'],
+                                      byte=self.params['byte'])
 
         # emit output signal with np array as generic pyobject type
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)
@@ -129,12 +133,24 @@ class WorkerThread(QtCore.QThread):
         Supported formats are TIFF, PNG, JPG
         emit the 3d data array as a custom SIGNAL to be retrieved in gui.py
         """
-        if ('path' not in self.params.keys() and
+        if ('path' not in self.params.keys() or
             'ext' not in self.params.keys()):
             print('Terminating - ERROR: incorrect parameters for LOAD task')
             print('Required Parameters: path, ext')
         print('Loading LEED Data from Images via QThread ...')
-        data = np.array(LF.get_img_array(self.params['path'], ext=self.params['ext']))
+
+        """
+        if 'byte' in self.params.keys():
+            if self.params['byte'] == 'L':
+                swap = False
+            elif self.params['byte'] == 'B':
+                print("Byte order set as Big-Endian - swapping order when plotting data ...")
+                swap = True
+            else:
+                swap = False
+                print("Error reading byte order from experimental config ...")
+        """
+        data = LF.get_img_array(self.params['path'], ext=self.params['ext'], swap=False)
         if data is None:
             self.quit()
             self.exit()
@@ -157,10 +173,19 @@ class WorkerThread(QtCore.QThread):
             self.quit()
             self.exit()
 
+        if 'bits' not in self.params.keys():
+            # if bit size is not specified, use default values in process_LEEM_Data()
+            self.params['bits'] = None
+
+        if 'byte' not in self.params.keys():
+            self.params['byte'] = 'L'  # default to Little Endian
+
         # load raw data
         dat_3d = LF.process_LEEM_Data(dirname=self.params['path'],
                                       ht=self.params['imht'],
-                                      wd=self.params['imwd'])
+                                      wd=self.params['imwd'],
+                                      bits=self.params['bits'],
+                                      byte=self.params['byte'])
 
         # emit output signal with np array as generic pyobject type
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)

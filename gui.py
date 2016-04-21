@@ -933,7 +933,9 @@ class Viewer(QtGui.QWidget):
                 self.thread = WorkerThread(task='LOAD_LEEM',
                                            path=self.leemdat.data_dir,
                                            imht=self.leemdat.ht,
-                                           imwd=self.leemdat.wd)
+                                           imwd=self.leemdat.wd,
+                                           bits=self.exp.bit,
+                                           byte=self.exp.byte_order)
                 # disconnect any previously connected Signals/Slots
                 self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEEM_data)
                 self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
@@ -989,13 +991,14 @@ class Viewer(QtGui.QWidget):
         self.tabs.setCurrentWidget(self.LEED_Tab)
         # self.LEED_Tab.show()
 
-        if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
+        if self.exp.data_type.lower() == 'raw':
             try:
                 self.thread = WorkerThread(task='LOAD_LEED',
                                            path=self.leeddat.data_dir,
                                            imht=self.leeddat.ht,
                                            imwd=self.leeddat.wd,
-                                           bits=self.exp.bit)
+                                           bits=self.exp.bit,
+                                           byte=self.exp.byte_order)
 
                 # disconnect any previously connected Signals/Slots
                 self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
@@ -1009,12 +1012,12 @@ class Viewer(QtGui.QWidget):
                 print('Error Loading LEED Experiment: Please Recheck YAML Settings')
                 return
 
-        elif self.exp.data_type == 'Image' or self.exp.data_type == 'image' or self.exp.data_type == 'IMAGE':
+        elif self.exp.data_type.lower() == 'image':
             # TODO: LEEM tiff/jpg/png methods
             try:
                 self.thread = WorkerThread(task='LOAD_LEED_IMAGES',
                                            ext=self.exp.ext,
-                                           path=self.exp.path)
+                                           path=self.exp.path, byte=self.exp.byte_order)
                 self.disconnect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
                 self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEED_img)
                 # connect appropriate signals for loading LEED data
@@ -1319,12 +1322,12 @@ class Viewer(QtGui.QWidget):
             return
 
         elif dat == 'LEED' and self.hasdisplayed_leed:
-            self.leeddat.dat_3d = self.leeddat.dat_3d.newbyteorder()
+            self.leeddat.dat_3d = self.leeddat.dat_3d.byteswap()
             print('Byte order of current LEED data set has been swapped.')
             self.update_LEED_img(index=self.current_leed_index)
 
         elif dat == 'LEEM' and self.hasdisplayed_leem:
-            self.leemdat.dat_3d = self.leemdat.dat_3d.newbyteorder()
+            self.leemdat.dat_3d = self.leemdat.dat_3d.byteswap()
             print('Byte order of current LEEM data set has been swapped.')
         else:
             print('Unknown Data type for Swap Byte Order ...')

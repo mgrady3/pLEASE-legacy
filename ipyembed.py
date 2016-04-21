@@ -48,4 +48,5 @@ def embed_ipy(parent, passthrough=None):
     # pass variables from main GUI environment into IPython Kernel namespace
     if passthrough is not None:
         kernel.shell.push(passthrough)
+        # variables stored in this dict are now accessible in the IPython shell
     return {'widget': widget, 'kernel': kernel}

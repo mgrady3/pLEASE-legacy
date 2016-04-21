@@ -30,7 +30,7 @@ def energy_to_filenumber(el, val):
     return el.index(val)
 
 
-def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
+def process_LEEM_Data(dirname, ht=0, wd=0, bits=None, byte='L'):
     """
     read in all .dat files in current data directory
     process each .dat file into a numpy array
@@ -40,6 +40,8 @@ def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
     :argument dirname: string path to current data directory
     :param ht: integer pixel height of image
     :param wd: integer pixel width of image
+    :param bits: integer representing bit depth of image, default is 16 bit
+    :param byte: string representing byte order, 'L' for Little-Endian (Intel), 'B' for Big-Endian (Motorola)
     :return dat_arr: 3d numpy array
     """
     print('Processing Data ...')
@@ -67,11 +69,15 @@ def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
             f.seek(0)
 
             # Generate format string given a bit size read from YAML config file
-            if bits == 8:
+            if bits == 8 and byte == 'L':
                 formatstring = '<u1'  # 1 byte (8 bits) per pixel
+            elif bits == 8 and byte == 'B':
+                formatstring = '>u1'
 
-            elif bits == 16:
+            elif bits == 16 and byte == 'L':
                 formatstring = '<u2'  # 2 bytes (16 bits) per pixel
+            elif bits == 16 and byte == 'B':
+                formatstring = '>u2'
 
             elif bits is None:
                 formatstring = '<u2'  # default to 16 bit images
@@ -237,11 +243,12 @@ def crop_images(data, indices):
                 indices[0][1]:indices[1][1]+1]
 
 
-def get_img_array(path, ext=None):
+def get_img_array(path, ext=None, swap=False):
     """
     Generate a 3d numpy array of gray-scale image files
     :param path: path to image files
     :param ext: file extension, default None for raw (.dat) data (not yet implemented)
+    :param swap: boolean to swap the byte order of the array; default False
     :return dat_3d: 3d numpy array (height, width, image number)
     """
     if ext is None:
@@ -273,7 +280,10 @@ def get_img_array(path, ext=None):
         arr_list = []
         for fl in files:
             arr_list.append(read_img(os.path.join(path, fl)))
-        return np.dstack(arr_list)
+        if swap:
+            return np.dstack(arr_list).byteswap()
+        else:
+            return np.dstack(arr_list)
 
 
 def read_img(path):
@@ -285,6 +295,7 @@ def read_img(path):
         :return:
         """
         # print 'opening image %s' % path
+
         im = Image.open(path)
 
         # Use the greyscale transformation as defined in the Python Image Library
