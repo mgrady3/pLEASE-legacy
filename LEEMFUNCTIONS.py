@@ -4,6 +4,13 @@ import cv2
 import multiprocessing as mp
 from PIL import Image
 
+try:
+    import tifffile
+except ImportError as e:
+    print("Error loading tifffile.py")
+
+
+
 # deprecated
 DEF_IMHEIGHT = 600
 DEF_IMWIDTH = 592
@@ -279,7 +286,10 @@ def get_img_array(path, ext=None, swap=False):
         files.sort()
         arr_list = []
         for fl in files:
-            arr_list.append(read_img(os.path.join(path, fl)))
+            if ext == '.tif':
+                arr_list.append(tifffile.imread(os.path.join(path,fl)))
+            else:
+                arr_list.append(read_img(os.path.join(path, fl)))
         if swap:
             return np.dstack(arr_list).byteswap()
         else:
