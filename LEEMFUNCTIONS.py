@@ -69,7 +69,7 @@ def process_LEEM_Data(dirname, ht=0, wd=0, bits=None, byte='L'):
                 hdln = DEF_IMHEAD
                 ht = DEF_IMHEIGHT
                 wd = DEF_IMWIDTH
-            else: hdln = len(f.read()) - (2*ht*wd)
+            else: hdln = len(f.read()) - (int(bits/8)*ht*wd)
 
             if flag:
                 print('Calculated Header Length of First File: {}'.format(hdln))

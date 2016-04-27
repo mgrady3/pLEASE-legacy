@@ -12,6 +12,7 @@ import styles as pls
 from experiment import Experiment
 from ipyembed import embed_ipy
 from qthreads import WorkerThread
+from newthreads import Worker
 
 # stdlib imports
 import os
@@ -993,6 +994,7 @@ class Viewer(QtGui.QWidget):
 
         if self.exp.data_type.lower() == 'raw':
             try:
+                """
                 self.thread = WorkerThread(task='LOAD_LEED',
                                            path=self.leeddat.data_dir,
                                            imht=self.leeddat.ht,
@@ -1008,6 +1010,27 @@ class Viewer(QtGui.QWidget):
                 self.connect(self.thread, QtCore.SIGNAL('finished()'), lambda: self.update_LEED_img(index=self.current_leed_index))
                 self.thread.start()
 
+            except ValueError:
+                print('Error Loading LEED Experiment: Please Recheck YAML Settings')
+                return
+                """
+                # Create new QThread to do intensive work
+                self.thread = QtCore.QThread()
+                # Setup Worker object, assign a task to run, pass through necessary parameters
+                self.worker = Worker(task='LOAD_LEED',
+                                     path=self.leeddat.data_dir,
+                                     imht=self.leeddat.ht,
+                                     imwd=self.leeddat.wd,
+                                     bits=self.exp.bit,
+                                     byte=self.exp.byte_order)
+
+                self.worker.moveToThread(self.thread)
+                self.worker.finished.connect(self.thread.quit)
+                self.thread.started.connect(self.worker.work_to_do)
+                self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_LEED_data)
+                # self.connect(self.thread, QtCore.SIGNAL('finished()'),
+                #         lambda: self.update_LEED_img(index=self.current_leed_index))
+                self.thread.start()
             except ValueError:
                 print('Error Loading LEED Experiment: Please Recheck YAML Settings')
                 return
@@ -1164,6 +1187,8 @@ class Viewer(QtGui.QWidget):
             numpy ndarray output by WorkerThread
         :return:
         """
+        print("The received data structure has type {0}".format(type(dat)))
+        print("The received data structure has shape {0}".format(dat.shape))
         self.leeddat.dat_3d = dat
         self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
         return
@@ -1179,7 +1204,8 @@ class Viewer(QtGui.QWidget):
         if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
             print('! Warning: New Data does not match current energy parameters !')
             print('Updating Energy parameters ...')
-            self.set_energy_parameters(dat='LEED')
+            print("dat3d.shape[2] : {0}  len(leeddat.elist): {1}".format(self.leeddat.dat_3d.shape[2], len(self.leeddat.elist)))
+            # self.set_energy_parameters(dat='LEED')
         self.LEED_IV_ax.set_aspect('auto')
         if index <= self.leeddat.dat_3d.shape[2]:
             self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, index], cmap=cm.Greys_r)
