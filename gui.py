@@ -1449,8 +1449,8 @@ class Viewer(QtGui.QWidget):
         for idx, tup in enumerate(self.rect_coords):
             # generate 3d slice of main data array
             # this represents the integration window projected along the third array axis
-            int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
-                                          tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+            int_win = self.leeddat.dat_3d[int(tup[0]-self.leeddat.box_rad):int(tup[0]+self.leeddat.box_rad),
+                                          int(tup[1]-self.leeddat.box_rad):int(tup[1]+self.leeddat.box_rad),
                                           :]
             # plot unaveraged intensity 3/30/2016
             # ilist = [img.sum()/tot_pix for img in np.rollaxis(int_win, 2)]
