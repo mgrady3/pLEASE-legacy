@@ -6,8 +6,10 @@ from PIL import Image
 
 try:
     import tifffile
+    use_tifffile = True  # tell image loading methods to use tifffile.py's imread()
 except ImportError as e:
     print("Error loading tifffile.py")
+    use_tifffile = False  # use PIL/Pillow's imread() instead of tifffile
 
 
 
@@ -77,17 +79,18 @@ def process_LEEM_Data(dirname, ht=0, wd=0, bits=None, byte='L'):
 
             # Generate format string given a bit size read from YAML config file
             if bits == 8 and byte == 'L':
-                formatstring = '<u1'  # 1 byte (8 bits) per pixel
+                formatstring = '<u1'  # 1 byte (8 bits) per pixel Little(Intel)-Endian
             elif bits == 8 and byte == 'B':
-                formatstring = '>u1'
+                formatstring = '>u1'  # 1 byte (8 bits) per pixel Big(Motorola)-Endian
 
             elif bits == 16 and byte == 'L':
-                formatstring = '<u2'  # 2 bytes (16 bits) per pixel
+                formatstring = '<u2'  # 2 bytes (16 bits) per pixel Little(Intel)-Endian
             elif bits == 16 and byte == 'B':
-                formatstring = '>u2'
+                formatstring = '>u2'  # 2 bytes (16 bits) per pixel Big(Motorola)-Endian
 
             elif bits is None:
-                formatstring = '<u2'  # default to 16 bit images
+                # DEFAULT CASE
+                formatstring = '<u2'  # default to 16 bit images Little(Intel)-Endian
 
             else:
                 print("Error in process_LEEM_Data() - unknown bit size when loading raw data")
@@ -286,8 +289,8 @@ def get_img_array(path, ext=None, swap=False):
         files.sort()
         arr_list = []
         for fl in files:
-            if ext == '.tif':
-                arr_list.append(tifffile.imread(os.path.join(path,fl)))
+            if ext == '.tif' and use_tifffile:
+                arr_list.append(tifffile.imread(os.path.join(path, fl)))
             else:
                 arr_list.append(read_img(os.path.join(path, fl)))
         if swap:
