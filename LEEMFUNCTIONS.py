@@ -290,8 +290,10 @@ def get_img_array(path, ext=None, swap=False):
         arr_list = []
         for fl in files:
             if ext == '.tif' and use_tifffile:
+                # use tifffile.py
                 arr_list.append(tifffile.imread(os.path.join(path, fl)))
             else:
+                # use PIL/Pillow
                 arr_list.append(read_img(os.path.join(path, fl)))
         if swap:
             return np.dstack(arr_list).byteswap()

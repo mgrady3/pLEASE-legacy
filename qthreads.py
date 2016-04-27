@@ -139,6 +139,9 @@ class WorkerThread(QtCore.QThread):
             print('Required Parameters: path, ext')
         print('Loading LEED Data from Images via QThread ...')
 
+        # Deprecated code for auto-swapping byte order
+        # Was unable to fix issue with one data set
+        # Problem is the PIL/Pillow imread() issue with 16-bit Big-Endian tiffs
         """
         if 'byte' in self.params.keys():
             if self.params['byte'] == 'L':
@@ -217,7 +220,7 @@ class WorkerThread(QtCore.QThread):
 
     def output_to_Text(self):
         """
-
+        Output tab delimited text file consisting of LEEM/LEED I(V) data
         :return:
         """
         # requires params: path, ilist, elist, name
@@ -226,6 +229,7 @@ class WorkerThread(QtCore.QThread):
         ilist = self.params['ilist']
         print('Writing to file {} ...'.format(filename))
         with open(filename, 'w') as f:
+            # Label columns
             f.write('E' + '\t' + 'I' + '\n')
 
             for index, item in enumerate(elist):
