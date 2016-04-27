@@ -9,6 +9,7 @@ bound task
 Common tasks for the worker thread will be:
     Loading raw data files from disk to
     memory
+    Loading image files using PIL/Pillow or other libraries
     Outputting IV-data to text files(s)
 
 """
@@ -18,7 +19,11 @@ import numpy as np
 from PyQt4 import QtGui, QtCore
 
 
-# TODO: Consider splitting to multiple classes for separate tasks
+# TODO: The proper way to handle execution in separate threads is not to overlaod run()
+# Rather create a subclass of QObject with a task_to_run() method defined
+# Then use moveToThread() to push the object to a new QThread, link the appropriate signals for start, finish, etc.
+# Finally call the start() method (which in turn calls task_to_run()
+
 class WorkerThread(QtCore.QThread):
     """
     Worker Thread to execute specific tasks which
