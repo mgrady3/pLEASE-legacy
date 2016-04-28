@@ -816,9 +816,20 @@ class Viewer(QtGui.QWidget):
                 return
             bit_size = entry
 
-        # get byte order if data_type is "Raw"
-        # TODO: implement this
-        byte_order = "L"
+            msg = """Please Enter Byte Order: Little (Intel) or Big (Motorola) Endian.
+                Default to Little if you are unsure"""
+            entry, ok = QtGui.QInputDialog.getText(self, "Enter Byte Order: Little or Big", msg)
+            if not ok:
+                print("Error getting byte order ...")
+                return
+            if str(entry).lower().startswith('l'):
+                byte_order = 'L'
+            elif str(entry).lower().startswith('b'):
+                byte_order = 'B'
+            else:
+                print("Error getting byte order ...")
+                print("Valid entries are Little or Big")
+                return
 
         tab = "    "  # translate '\t' = 4 spaces
 
