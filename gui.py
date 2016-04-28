@@ -937,8 +937,9 @@ class Viewer(QtGui.QWidget):
         self.tabs.setCurrentWidget(self.LEEM_Tab)
         # self.LEEM_Tab.show()
 
-        # TODO: for all these case searches, reduce to if x.lower() == 'raw':
-        if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
+
+        # if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
+        if self.exp.data_type.lower() == 'raw':
 
             try:
                 self.thread = WorkerThread(task='LOAD_LEEM',
@@ -963,7 +964,8 @@ class Viewer(QtGui.QWidget):
                 # print('Resetting data directory to previous setting, {}'.format(prev_ddir))
                 return
 
-        elif self.exp.data_type == 'Image' or self.exp.data_type == 'image' or self.exp.data_type == 'IMAGE':
+        # elif self.exp.data_type == 'Image' or self.exp.data_type == 'image' or self.exp.data_type == 'IMAGE':
+        elif self.exp.data_type.lower() == 'image':
             try:
                 self.thread = WorkerThread(task='LOAD_LEEM_IMAGES',
                                            path=self.exp.path,
@@ -979,7 +981,6 @@ class Viewer(QtGui.QWidget):
                 print('Error loading LEEM data from images. Please check YAML experiment config file')
                 print('Required parameters to load images from YAML config: path, ext')
                 print('Check for valid data path and valid file extensions: \'.tif\' and \'.png\'.')
-
 
     def load_LEED_experiment(self):
         """
