@@ -668,10 +668,6 @@ class Viewer(QtGui.QWidget):
         load data into one of the main data constructs
         :return none:
         """
-        # TODO: print to console to confirm a file was written
-        # TODO: finish second half of file output
-        # TODO: test loading data from a file written by this function
-
         # get path to data
         ddir = QtGui.QFileDialog.getExistingDirectory(self, "Select Data Directory")  # note this is a QString
 
