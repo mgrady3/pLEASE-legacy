@@ -1348,9 +1348,18 @@ class Viewer(QtGui.QWidget):
         if self.Debug:
             print('LEED Click registered ...')
 
-        # We know the click was inside the image axis,
-        # however no check has been done to see if the click is near the edge
-        # TODO: Handle case where click center is not equal or further than boxrad from any edge
+        # Handle Edge cases:
+        if (event.xdata - self.leeddat.box_rad) < 0 or \
+           (event.ydata - self.leeddat.box_rad) < 0 or \
+           (event.xdata + self.leeddat.box_rad) > self.leeddat.dat_3d.shape[1] or \
+           (event.ydata + self.leeddat.box_rad) > self.leeddat.dat_3d.shape[0]:
+
+            print("Click located too close to image edge.")
+            print("No IV will be selected.")
+            print("Use smaller integration window or data area further from edge.")
+            return
+
+        # We know the click was inside the image axis and not near the edge:
         if self.rect_count <= self.max_leed_click - 1:
             # not yet at maximum number of selected areas
             # print('User Clicked : {}'.format((event.xdata, event.ydata)))
