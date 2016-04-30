@@ -500,12 +500,13 @@ class Viewer(QtGui.QWidget):
         outputAverageAction.triggered.connect(self.output_average_LEED)
         averageMenu.addAction(outputAverageAction)
 
+        """
         shiftAction = QtGui.QAction('Shift Selecttions', self)
         shiftAction.setShortcut('Ctrl+S')
         shiftAction.setStatusTip('Shift User Selections based on Beam Maximum')
         shiftAction.triggered.connect(self.shift_user_selection)
         LEEDMenu.addAction(shiftAction)
-
+        """
         changeAction = QtGui.QAction('Change LEED Image by Energy', self)
         changeAction.setShortcut('Ctrl+G')
         changeAction.triggered.connect(self.show_LEED_image_by_energy)
@@ -584,6 +585,10 @@ class Viewer(QtGui.QWidget):
         debugConsoleAction.triggered.connect(self.debug_console)
         settingsMenu.addAction(debugConsoleAction)
 
+        # testButtonsAction = QtGui.QAction('Test Buttons', self)
+        # testButtonsAction.triggered.connect(self.test_buttons)
+        # settingsMenu.addAction(testButtonsAction)
+
     def init_layout(self):
         """
         Setup layout of main Window usig Hbox and VBox
@@ -654,6 +659,32 @@ class Viewer(QtGui.QWidget):
 
         embed_ipy(self.ipyconsole, passthrough=pass_through_vars)
         return
+
+    """
+    def test_buttons(self):
+
+        self.new_widget= QtGui.QWidget()
+        self.new_widget.setWindowTitle("Select Data Type")
+        layout = QtGui.QVBoxLayout()
+        option1 = QtGui.QCheckBox("Raw Data", self)
+        option2 = QtGui.QCheckBox("Image Data", self)
+        okbutton = QtGui.QPushButton("Ok", self)
+        oklayout = QtGui.QHBoxLayout()
+        oklayout.addStretch(1)
+        oklayout.addWidget(okbutton)
+        okbutton.clicked.connect(self.new_widget.close)
+
+        layout.addWidget(option1)
+        layout.addWidget(option2)
+        layout.addLayout(oklayout)
+
+        option1.stateChanged.connect(lambda: print("Option1 state changed to {}".format(option1.checkState())))
+        option2.stateChanged.connect(lambda: print("Option2 state changed to {}".format(option2.checkState())))
+        self.new_widget.setLayout(layout)
+        self.new_widget.show()
+    """
+
+
 
 
     # New Methods for loading Generic Experiments
@@ -1021,7 +1052,6 @@ class Viewer(QtGui.QWidget):
                 return
 
         elif self.exp.data_type.lower() == 'image':
-            # TODO: LEEM tiff/jpg/png methods
             try:
                 self.thread = WorkerThread(task='LOAD_LEED_IMAGES',
                                            ext=self.exp.ext,
@@ -2157,7 +2187,7 @@ class Viewer(QtGui.QWidget):
             #           in the stack as the image to compute gaussian blur?
             # TODO: IN PROGRESS - implementing full beam centering algorithm for each image in stack
 
-            maxLoc = LF.find_local_maximum(int_win[:, :, -1])  # (x,y)
+            maxLoc = LF.find_local_maximum(int_win[:, :, int(int_win.shape[2]/2)])  # (x,y)
             # print('Old Beam Center: (r,c) =  {}'.format(tup))
             r_u, c_u = tup  # user selected coordinates
             c_3, r_3 = maxLoc  # beam center offset relative to top left corner of integration window
