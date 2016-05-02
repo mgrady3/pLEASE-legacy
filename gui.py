@@ -615,6 +615,35 @@ class Viewer(QtGui.QWidget):
         """
         self.Quit()
 
+    def debug_console(self):
+        """
+        Open a new window with an embedded IPython REPL
+        Some local variables will be passed into the namespace of
+        the IPython kernel
+        :return none:
+        """
+        print("Starting an IPython Session ... ")
+        self.ipyconsole = QtGui.QWidget()
+        self.ipyconsole.show()
+        test_pass = {"leemdat": self.leemdat}
+
+        # dict of vars to pass into namespace of the IPython kernel
+        pass_through_vars = {}
+
+        # fill variables to pass in a logical manner
+        if self.hasdisplayed_leed:
+            pass_through_vars["leeddat"] = self.leeddat
+        if self.hasdisplayed_leem:
+            pass_through_vars["leemdat"] = self.leemdat
+
+        # CAUTION, Here be Dragons ...
+        # pass_through_vars["main_gui"] = self     ##### DON'T DO THIS ####
+
+        # matplotlib.pyplot may recursively start showing previous plots Inception style ...
+
+        embed_ipy(self.ipyconsole, passthrough=pass_through_vars)
+        return
+
     ###########################################################################################
     # Static Methods
     ###########################################################################################
@@ -1059,9 +1088,10 @@ class Viewer(QtGui.QWidget):
             self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
 
-
+    ###########################################################################################
     # Core Functionality:
-    # LEED Functions and Processes #
+    # LEED Functions and Processes
+    ###########################################################################################
 
     def load_LEED_Data(self):
         """
@@ -1236,35 +1266,6 @@ class Viewer(QtGui.QWidget):
                                               max=self.leeddat.elist[-1])
         if ok:
             self.update_LEED_img(index=LF.energy_to_filenumber(self.leeddat.elist, entry))
-        return
-
-    def debug_console(self):
-        """
-        Open a new window with an embedded IPython REPL
-        Some local variables will be passed into the namespace of
-        the IPython kernel
-        :return none:
-        """
-        print("Starting an IPython Session ... ")
-        self.ipyconsole = QtGui.QWidget()
-        self.ipyconsole.show()
-        test_pass = {"leemdat": self.leemdat}
-
-        # dict of vars to pass into namespace of the IPython kernel
-        pass_through_vars = {}
-
-        # fill variables to pass in a logical manner
-        if self.hasdisplayed_leed:
-            pass_through_vars["leeddat"] = self.leeddat
-        if self.hasdisplayed_leem:
-            pass_through_vars["leemdat"] = self.leemdat
-
-        # CAUTION, Here be Dragons ...
-        # pass_through_vars["main_gui"] = self     ##### DON'T DO THIS ####
-
-        # matplotlib.pyplot may recursively start showing previous plots Inception style ...
-
-        embed_ipy(self.ipyconsole, passthrough=pass_through_vars)
         return
 
     def set_energy_parameters(self, dat=None):
@@ -2228,8 +2229,10 @@ class Viewer(QtGui.QWidget):
         self.rects = self.shifted_rects[:]
         self.rect_coords = self.shifted_rect_coords[:]
 
+    ###########################################################################################
     # Core Functionality:
-    # LEEM Functions and Processes #
+    # LEEM Functions and Processes
+    ###########################################################################################
 
     def load_LEEM(self):
         """
