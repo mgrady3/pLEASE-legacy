@@ -117,8 +117,8 @@ class Viewer(QtGui.QWidget):
         Setup GUI elements
         :return none:
         """
-        self.init_styles()
-        self.init_tabs()
+        self.init_Styles()
+        self.init_Tabs()
         self.init_Menu()
         self.init_Layout()
 
@@ -271,7 +271,7 @@ class Viewer(QtGui.QWidget):
     # functions short and ordered
     ###########################################################################################
 
-    def init_styles(self):
+    def init_Styles(self):
         """
         setup dictionary variable containing QSS style strings
         :return none:
@@ -279,7 +279,7 @@ class Viewer(QtGui.QWidget):
         pstyles = pls.PyLeemStyles()
         self.styles = pstyles.get_styles()  # get_styles() returns a dictionary of key, qss string pairs
 
-    def init_tabs(self):
+    def init_Tabs(self):
         """
         Setup QTabWidgets
         One Tab for LEEM
