@@ -309,6 +309,8 @@ class Viewer(QtGui.QWidget):
         """
         self.LEED_IV_fig, (self.LEED_img_ax, self.LEED_IV_ax) = plt.subplots(1, 2, figsize=(6,6), dpi=100)
         self.LEED_IV_canvas = FigureCanvas(self.LEED_IV_fig)
+        self.LEED_IV_canvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                          QtGui.QSizePolicy.Expanding)
         self.LEED_IV_canvas.setParent(self.LEED_Tab)
         self.LEED_IV_toolbar = NavigationToolbar(self.LEED_IV_canvas, self)
 
@@ -329,6 +331,8 @@ class Viewer(QtGui.QWidget):
         """
         self.LEEM_fig, (self.LEEM_ax, self.LEEM_IV_ax) = plt.subplots(1, 2, figsize=(6,6))
         self.LEEM_canvas = FigureCanvas(self.LEEM_fig)
+        self.LEEM_canvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Expanding)
         self.LEEM_canvas.setParent(self.LEEM_Tab)
         # Hey look, now it expands just like we wanted ...
         self.LEEM_canvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
