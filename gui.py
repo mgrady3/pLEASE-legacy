@@ -106,9 +106,11 @@ class Viewer(QtGui.QWidget):
     def Error(self, value):
         self.Error = value
 
+    ###########################################################################################
     # Top-Level Initialization Functions
     # These functions simply place calls to second-level init functions in an orderly manner
     # or are brief enough to not need any separate functions
+    ###########################################################################################
 
     def init_UI(self):
         """
@@ -262,10 +264,12 @@ class Viewer(QtGui.QWidget):
         self.pp = pprint.PrettyPrinter(indent=4, stream=self.message_console.stream)
         self.welcome()
 
+    ###########################################################################################
     # Second Level initialization functions
     # These functions do the runt of the UI, image, and plot initialization
     # they sometimes delegate to third level functions in order to keep
     # functions short and ordered
+    ###########################################################################################
 
     def init_styles(self):
         """
@@ -316,7 +320,7 @@ class Viewer(QtGui.QWidget):
         LEED_Tab_Layout_V1.addWidget(self.LEED_IV_toolbar)
 
         self.LEED_Tab.setLayout(LEED_Tab_Layout_V1)
-        self.LEED_IV_fig.canvas.mpl_connect('button_release_event', self.leed_click)
+        self.LEED_IV_fig.canvas.mpl_connect('button_release_event', self.LEED_click)
 
     def init_LEEM_Tab(self):
         """
@@ -457,7 +461,7 @@ class Viewer(QtGui.QWidget):
         extractAction = QtGui.QAction('Extract I(V)', self)
         extractAction.setShortcut('Ctrl+E')
         extractAction.setStatusTip('Extract I(V) from current selections')
-        extractAction.triggered.connect(self.plot_leed_IV)
+        extractAction.triggered.connect(self.plot_LEED_IV)
         LEEDMenu.addAction(extractAction)
 
         new_extractAction = QtGui.QAction('New Extract I(V)', self)
@@ -515,13 +519,13 @@ class Viewer(QtGui.QWidget):
         clearAction = QtGui.QAction('Clear Current I(V)', self)
         clearAction.setShortcut('Ctrl+C')
         clearAction.setStatusTip('Clear Current Selected I(V)')
-        clearAction.triggered.connect(self.clear_leed_click)
+        clearAction.triggered.connect(self.clear_LEED_click)
         LEEDMenu.addAction(clearAction)
 
         clearPlotsOnlyAction = QtGui.QAction('Clear Plots', self)
         clearPlotsOnlyAction.setShortcut('Ctrl+Alt+C')
         clearPlotsOnlyAction.setStatusTip('Clear Current Plots')
-        clearPlotsOnlyAction.triggered.connect(self.clear_leed_plots_only)
+        clearPlotsOnlyAction.triggered.connect(self.clear_LEED_plots_only)
         LEEDMenu.addAction(clearPlotsOnlyAction)
 
         # LEEM Menu
@@ -611,6 +615,10 @@ class Viewer(QtGui.QWidget):
         """
         self.Quit()
 
+    ###########################################################################################
+    # Static Methods
+    ###########################################################################################
+
     @staticmethod
     def welcome():
         """
@@ -631,34 +639,6 @@ class Viewer(QtGui.QWidget):
         QtCore.QCoreApplication.instance().quit()
         return
 
-    def debug_console(self):
-        """
-        Open a new window with an embedded IPython REPL
-        Some local variables will be passed into the namespace of
-        the IPython kernel
-        :return none:
-        """
-        print("Starting an IPython Session ... ")
-        self.ipyconsole = QtGui.QWidget()
-        self.ipyconsole.show()
-        test_pass = {"leemdat": self.leemdat}
-
-        # dict of vars to pass into namespace of the IPython kernel
-        pass_through_vars = {}
-
-        # fill variables to pass in a logical manner
-        if self.hasdisplayed_leed:
-            pass_through_vars["leeddat"] = self.leeddat
-        if self.hasdisplayed_leem:
-            pass_through_vars["leemdat"] = self.leemdat
-
-        # CAUTION, Here be Dragons ...
-        # pass_through_vars["main_gui"] = self     ##### DON'T DO THIS ####
-
-        # matplotlib.pyplot may recursively start showing previous plots Inception style ...
-
-        embed_ipy(self.ipyconsole, passthrough=pass_through_vars)
-        return
 
     """
     def test_buttons(self):
@@ -684,9 +664,11 @@ class Viewer(QtGui.QWidget):
         self.new_widget.show()
     """
 
+    ###########################################################################################
     # New Methods for loading Generic Experiments
     # All Necessary Parameters are loaded from YAML configuration file
     # Merged into master: 4/19/16
+    ###########################################################################################
 
     def generate_config(self):
         """
@@ -1014,8 +996,8 @@ class Viewer(QtGui.QWidget):
             return
 
         if self.hasdisplayed_leed:
-            self.clear_leed_click()
-            self.clear_leed_plots_only()
+            self.clear_LEED_click()
+            self.clear_LEED_plots_only()
 
         self.LEED_IV_ax.clear()
         self.LEED_img_ax.clear()
@@ -1256,7 +1238,34 @@ class Viewer(QtGui.QWidget):
             self.update_LEED_img(index=LF.energy_to_filenumber(self.leeddat.elist, entry))
         return
 
+    def debug_console(self):
+        """
+        Open a new window with an embedded IPython REPL
+        Some local variables will be passed into the namespace of
+        the IPython kernel
+        :return none:
+        """
+        print("Starting an IPython Session ... ")
+        self.ipyconsole = QtGui.QWidget()
+        self.ipyconsole.show()
+        test_pass = {"leemdat": self.leemdat}
 
+        # dict of vars to pass into namespace of the IPython kernel
+        pass_through_vars = {}
+
+        # fill variables to pass in a logical manner
+        if self.hasdisplayed_leed:
+            pass_through_vars["leeddat"] = self.leeddat
+        if self.hasdisplayed_leem:
+            pass_through_vars["leemdat"] = self.leemdat
+
+        # CAUTION, Here be Dragons ...
+        # pass_through_vars["main_gui"] = self     ##### DON'T DO THIS ####
+
+        # matplotlib.pyplot may recursively start showing previous plots Inception style ...
+
+        embed_ipy(self.ipyconsole, passthrough=pass_through_vars)
+        return
 
     def set_energy_parameters(self, dat=None):
         """
@@ -1368,7 +1377,7 @@ class Viewer(QtGui.QWidget):
             print('Unknown Data type for Swap Byte Order ...')
         return
 
-    def leed_click(self, event):
+    def LEED_click(self, event):
         """
         Handle mouse-clicks in the main LEED Image Axis
         :param event:
@@ -1416,9 +1425,9 @@ class Viewer(QtGui.QWidget):
             self.LEED_IV_canvas.draw()
         else:
             print('Resetting Click Count and Clearing Current Patches ...')
-            self.clear_leed_click()
+            self.clear_LEED_click()
 
-    def clear_leed_click(self):
+    def clear_LEED_click(self):
         """
         Reset click count, rectangle coordinates, rectangle patches, and clear LEED IV plot
         :return none:
@@ -1451,7 +1460,7 @@ class Viewer(QtGui.QWidget):
         self.LEED_IV_canvas.draw()
         return
 
-    def clear_leed_plots_only(self):
+    def clear_LEED_plots_only(self):
         """
         Clear LEED IV plot but leave the stored rectangle patches as is
         Useful if you want to toggle smoothing on and then re-plot the current selections
@@ -1471,7 +1480,7 @@ class Viewer(QtGui.QWidget):
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         self.LEED_IV_canvas.draw()
 
-    def plot_leed_IV(self):
+    def plot_LEED_IV(self):
         """
         Loop through currently selected integration windows
         Extract Intensities from each window
@@ -1936,7 +1945,6 @@ class Viewer(QtGui.QWidget):
                     ax.tick_params(labelcolor='k', top='off', right='off')
 
         else:
-
             rect1.set_facecolor((68/255., 67/255., 67/255.))
             rect2.set_facecolor((68/255., 67/255., 67/255.))
             rect3.set_facecolor((68/255., 67/255., 67/255.))
