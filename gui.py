@@ -668,6 +668,37 @@ class Viewer(QtGui.QWidget):
         QtCore.QCoreApplication.instance().quit()
         return
 
+    # This could be moved to LEEMFUNCTIONS.py
+    @staticmethod
+    def count_mins(data):
+        """
+        :return tuple:
+        """
+        num = 0
+        locs = []
+        sgn = np.sign(data[0])
+        for point in data:
+            if np.sign(point) != sgn and np.sign(point) == 1:
+                num += 1
+                locs.append(list(data).index(point))
+            sgn = np.sign(point)
+        if num >= 2:
+            return (num, locs[0], locs[-1])
+        else:
+            # num min = 0 or 1
+            # dummy indicies for location of minima
+            return (num, -1, -1)
+
+    @staticmethod
+    def output_complete():
+        """
+        This function executes when receiving a finished() SIGNAL from a QThread object
+        :return: none
+        """
+        # signals QThread has emitted a 'finished()' SIGNAL
+        print('File output successfully')
+        return
+
 
     """
     def test_buttons(self):
@@ -2098,16 +2129,6 @@ class Viewer(QtGui.QWidget):
             print('Done Writing Files ...')
             return
 
-    @staticmethod
-    def output_complete():
-        """
-        This function executes when receiving a finished() SIGNAL from a QThread object
-        :return: none
-        """
-        # signals QThread has emitted a 'finished()' SIGNAL
-        print('File output successfully')
-        return
-
     def get_beam_max_update_slice(self, int_win, win_coords, img):
         """
         Given a 2d integration window centered on a user selected point,
@@ -2389,7 +2410,6 @@ class Viewer(QtGui.QWidget):
                                                                                    self.leemdat.curimg)), fontsize=16, color='white')
         self.LEEM_canvas.draw()
 
-
     def show_LEEM_Data(self, data, imgnum):
         """
         Display slice from self.leemdat.dat3d to self.LEEM_ax
@@ -2580,10 +2600,6 @@ class Viewer(QtGui.QWidget):
         self.LEEM_IV_ax.set_title("LEEM dI/dV")
         self.LEEM_canvas.draw()
 
-
-
-
-
     def smooth_current_IV(self, ax, can):
         """
         Apply data smoothing algorithm to currently plotted I(V) curves
@@ -2760,26 +2776,6 @@ class Viewer(QtGui.QWidget):
         if cod >= self.leemdat.cod_thresh:
             isflat = True
         return (isflat, mins[0])
-
-    @staticmethod
-    def count_mins(data):
-        """
-        :return tuple:
-        """
-        num = 0
-        locs = []
-        sgn = np.sign(data[0])
-        for point in data:
-            if np.sign(point) != sgn and np.sign(point) == 1:
-                num += 1
-                locs.append(list(data).index(point))
-            sgn = np.sign(point)
-        if num >= 2:
-            return (num, locs[0], locs[-1])
-        else:
-            # num min = 0 or 1
-            # dummy indicies for location of minima
-            return (num,  -1,  -1)
 
     def check_flat(self, data, thresh=5):
         '''
