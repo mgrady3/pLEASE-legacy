@@ -684,9 +684,6 @@ class Viewer(QtGui.QWidget):
         self.new_widget.show()
     """
 
-
-
-
     # New Methods for loading Generic Experiments
     # All Necessary Parameters are loaded from YAML configuration file
     # Merged into master: 4/19/16
@@ -1636,6 +1633,14 @@ class Viewer(QtGui.QWidget):
                                               "Enter a valid integer >= 2.", value=20, min=2, max=2000)
         if not ok:
             return
+        if self.hasplotted_leed:
+            # Make sure User selected integration window is smaller than total data area
+            if int(entry) >= int(self.leeddat.dat_3d.shape[0]/2) or \
+               int(entry) >= int(self.leeddat.dat_3d.shape[1]/2):
+                print("Error: Integration window larger than viewable data area.")
+                print("Please choose an integer less than {0}.".format(min(int(self.leeddat.dat_3d.shape[0]/2),
+                                                                           int(self.leeddat.dat_3d.shape[1]/2))))
+                return
         self.leeddat.box_rad = entry
         print('New Integration Window set to {0} x {1}.'.format(2*self.leeddat.box_rad, 2*self.leeddat.box_rad))
 
