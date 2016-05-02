@@ -1,10 +1,10 @@
 """
 Define sub-class/sub-classes of QThread
-These define a model for worker threads
+these define a model for worker threads.
 The main thread responsible for GUI work
 can then start a worker thread to do a
 computationally intensive task or an I/O
-bound task
+bound task without blocking usage of the UI.
 
 Common tasks for the worker thread will be:
     Loading raw data files from disk to
