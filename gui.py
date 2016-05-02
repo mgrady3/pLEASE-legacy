@@ -119,8 +119,8 @@ class Viewer(QtGui.QWidget):
         """
         self.init_styles()
         self.init_tabs()
-        self.init_menu()
-        self.init_layout()
+        self.init_Menu()
+        self.init_Layout()
 
     def init_Data(self):
         """
@@ -409,7 +409,7 @@ class Viewer(QtGui.QWidget):
         config_Tab_Vbox.addLayout(config_Tab_bottom_button_Hbox)
         self.Config_Tab.setLayout(config_Tab_Vbox)
 
-    def init_menu(self):
+    def init_Menu(self):
         """
         Setup Menu bar at top of main window
         :return none:
@@ -593,7 +593,7 @@ class Viewer(QtGui.QWidget):
         # testButtonsAction.triggered.connect(self.test_buttons)
         # settingsMenu.addAction(testButtonsAction)
 
-    def init_layout(self):
+    def init_Layout(self):
         """
         Setup layout of main Window usig Hbox and VBox
         :return none:
