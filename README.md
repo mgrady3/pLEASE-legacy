@@ -62,7 +62,7 @@ The python dependencies are as follows:
 * **PyQt4** : wrapper for c/c++ GUI framework
 * **matplotlib** : python library for plotting a la matlab
 * **seaborn** : wrapper for matplotlib adding additional convienience, better api, and better color schema among other things
-* **yaml** : python library for reading and writing YAML files. Loads YAML data into nested python dictionaries
+* **pyyaml** : python library for reading and writing YAML files. Loads YAML data into nested python dictionaries
 * **qdarkstyle** : collection of QSS/QML code for creating dark themed PyQt/PySide GUIs
 * **tifffile** : This is an alternate library for reading/writing TIFF images. This library is needed due to a bug with PIL/Pillow where the byte-order of a 16-bit Big-Endian (Motorola) TIFF image is not correctly handled when getting the pixel data. **NOTE** tifffile.py can be used on its own, but for better performance, there is a c-extenstion, tifffile.c, which can be compiled using a standard c compiler (gcc, clang, etc). This improves performance when loading a compressed TIFF image. Tifffile.py and Tifffile.c are freely available at http://www.lfd.uci.edu/~gohlke/. In the source code of tifffile.py there are instructions for how to build the c-extension. The c-extension needs to be built on the same machine running your copy of PLEASE using the same python distribution that you are running PLEASE with. 
 
