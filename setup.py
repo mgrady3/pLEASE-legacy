@@ -58,7 +58,6 @@ For more info see https://github.com/mgrady3/pLEASE or contact the authors via E
      'Operating System :: OS Independent',
      'Programming Language :: Python :: 2.7',
      'Programming Language :: Python :: 3',
-     'Topic :: Scientific/Engineering :: Material Science',
      'Topic :: Scientific/Engineering :: Chemistry',
      'Topic :: Scientific/Engineering :: Physics',
      'Topic :: Scientific/Engineering :: Visualization',
