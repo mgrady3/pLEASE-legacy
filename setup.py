@@ -36,6 +36,8 @@ setup(
     packages=['.'],
     requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole', 
               'opencv_python', 'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
+    install_requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole',
+                      'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
     version='0.0',
     description='Software for the analysis of Low Energy Electron Microscopy data',
     long_description= """
@@ -58,7 +60,6 @@ For more info see https://github.com/mgrady3/pLEASE or contact the authors via E
      'Operating System :: OS Independent',
      'Programming Language :: Python :: 2.7',
      'Programming Language :: Python :: 3',
-     'Topic :: Scientific/Engineering :: Material Science',
      'Topic :: Scientific/Engineering :: Chemistry',
      'Topic :: Scientific/Engineering :: Physics',
      'Topic :: Scientific/Engineering :: Visualization',
