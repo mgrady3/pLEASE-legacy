@@ -2566,6 +2566,19 @@ class Viewer(QtGui.QWidget):
         self.ncanvas_lm.draw()
         self.pop_window_lm.show()
 
+
+    def LEEM_rectangular_selection(self):
+        """
+        User selects two points and a rectangle between them is
+        chosen as an area for I(V)-analysis
+
+        The average I(V) of the entire area is calculated
+        :return:
+        """
+        # We need some way to disable the normal register to leem clicks
+        # the leem click function can check a boolean flag to see if it should execute
+        pass
+
     def plot_derivative(self):
         """
         Create new window and plot dI/dV for each current I(V) curve
