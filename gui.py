@@ -2685,9 +2685,9 @@ class Viewer(QtGui.QWidget):
             w = self.x1 - self.x0
             h = self.y1 - self.y0
             xy = (self.x0, self.y0)
-
-            self.nplot_ax_leem.add_patch(patches.Rectangle(xy=xy, width=w, height=h,
-                                                          fill=False, linewidth=2, edgecolor='red'))
+            self.leem_rect = patches.Rectangle(xy=xy, width=w, height=h,
+                                                          fill=False, linewidth=2, edgecolor='red')
+            self.nplot_ax_leem.add_patch(self.leem_rect)
             self.ncanvas_leem.draw()
 
     @staticmethod
@@ -2698,6 +2698,8 @@ class Viewer(QtGui.QWidget):
         :return:
         """
         print("Parsing user selection ...")
+        # do something with self.leem_rect ...
+
         w.close()
 
     def plot_derivative(self):
