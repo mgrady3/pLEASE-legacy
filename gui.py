@@ -177,6 +177,8 @@ class Viewer(QtGui.QWidget):
         self.num_one_min = 0
         self.hascountedminima = False
 
+        self.LEEM_rect_enebaled = False
+
     def init_Plot_Axes(self):
         """
         Setup embedded matplotlib plotting axes
@@ -564,6 +566,11 @@ class Viewer(QtGui.QWidget):
         countAction.setShortcut('Meta+L')
         countAction.triggered.connect(self.count_helper)
         LEEMMenu.addAction(countAction)
+
+        rectAction = QtGui.QAction("Select Rectangle", self)
+        rectAction.setShortcut('Meta+R')
+        rectAction.triggered.connect(self.LEEM_rectangular_selection)
+        LEEMMenu.addAction(rectAction)
 
         # Settings Menu
         settingsMenu = self.menubar.addMenu('Settings')
@@ -2575,9 +2582,82 @@ class Viewer(QtGui.QWidget):
         The average I(V) of the entire area is calculated
         :return:
         """
-        # We need some way to disable the normal register to leem clicks
-        # the leem click function can check a boolean flag to see if it should execute
-        pass
+        if not self.hasdisplayed_leem:
+            return
+
+        def LEEM_rect_on_press(e):
+            """
+
+            :param e: mpl on_press event
+            :return:
+            """
+            print("Button Press Event caught by LEEM_rectangular_selection.")
+
+        def LEEM_rect_on_release(e):
+            """
+
+            :param e: mpl on_release event
+            :return:
+            """
+            print("Button Release Event caught by LEEM_rectangular_selection.")
+
+        def parse_selection(w):
+            """
+
+            :param w: window
+            :return:
+            """
+            print("Parsing user selection ...")
+            w.close()
+
+        # Create new window and setup layout
+        self.new_window_leem = QtGui.QWidget()
+        self.new_window_leem.setTitle("Select Rectangular Area")
+        self.new_window_leem.setMinimumHeight(0.35 * self.max_height)
+        self.new_window_leem.setMinimumWidth(0.45 * self.max_width)
+        self.nfig_leem, self.nplot_ax_leem = plt.subplots(1, 1, figsize=(8, 6), dpi=100)
+        self.ncanvas_leem = FigureCanvas(self.nfig_leem)
+        self.ncanvas_leem.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                      QtGui.QSizePolicy.Expanding)
+        self.cancelbut = QtGui.QPushButton("Cancel")
+        self.okbut = QtGui.QPushButton("Ok")
+
+        # setup color style
+        rect = self.nfig_leem.patch
+        if not self.Style:
+            rect.set_facecolor((189 / 255., 195 / 255., 199 / 255.))
+            self.new_window_leem.setTitle("Select Rectangular Area")
+            self.nplot_ax_leem.set_title("LEEM Image", fontsize=12, color='w')
+            self.nplot_ax_leem.xaxis.label.set_color('w')
+            self.nplot_ax_leem.yaxis.label.set_color('w')
+
+        else:
+            rect.set_facecolor((68 / 255., 67 / 255., 67 / 255.))
+        plt.axis('off')
+        plt.grid(False)
+
+        # set button layout
+        button_hbox = QtGui.QHBoxLayout()
+        button_hbox.addStretch(1)
+        button_hbox.addWidget(self.cancelbut)
+        button_hbox.addStretch(1)
+        button_hbox.addWidget(self.okbut)
+        button_hbox.addStretch(1)
+
+        # set layout for canvas and buttons
+        vbox = QtGui.QVBoxLayout()
+        vbox.addWidget(self.ncanvas_leem)
+        vbox.addLayout(button_hbox)
+        self.new_window_leem.setLayout(vbox)
+
+        self.cancelbut.clicked.connect(self.new_window_leem.close)
+        self.okbut.clicked.connect(lambda: parse_selection(self.new_window_leem))
+
+        img = self.leemdat.dat_3d[0:, 0:, self.leemdat.curimg]
+        self.nplot_ax_leem.imshow(img, cmap=cm.Greys_r)
+        self.ncanvas_leem.draw()
+        self.new_window_leem.show()
+
 
     def plot_derivative(self):
         """
