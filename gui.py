@@ -2681,14 +2681,13 @@ class Viewer(QtGui.QWidget):
             self.x1 is not None and
             self.y0 is not None and
             self.y1 is not None):
-            rect = patches.Rectangle((0,0),1,1)
-            rect.set_width(self.x1 - self.x0)
-            rect.set_height(self.y1 - self.y0)
-            rect.set_xy((self.x0, self.y0))
-            rect.fill = False
-            rect.edgecolor = 'red'
-            rect.linewidth = 5
-            self.nplot_ax_leem.add_patch(rect)
+
+            w = self.x1 - self.x0
+            h = self.y1 - self.y0
+            xy = (self.x0, self.y0)
+
+            self.nplot_ax_leem.add_patch(patches.Rectangle(xy=xy, width=w, height=h,
+                                                          fill=False, linewidth=2, edgecolor='red'))
             self.ncanvas_leem.draw()
 
     @staticmethod
