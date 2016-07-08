@@ -368,7 +368,7 @@ class Viewer(QtGui.QWidget):
         LEEM_Tab_Main_VBox.addWidget(self.LEEM_toolbar)
 
         self.LEEM_Tab.setLayout(LEEM_Tab_Main_VBox)
-        self.LEEM_fig.canvas.mpl_connect('button_release_event', self.leem_click)
+        self.LEEM_click_handler = self.LEEM_fig.canvas.mpl_connect('button_release_event', self.leem_click)
 
     def init_Config_Tab(self):
         """
@@ -2573,7 +2573,6 @@ class Viewer(QtGui.QWidget):
         self.ncanvas_lm.draw()
         self.pop_window_lm.show()
 
-
     def LEEM_rectangular_selection(self):
         """
         User selects two points and a rectangle between them is
@@ -2582,37 +2581,19 @@ class Viewer(QtGui.QWidget):
         The average I(V) of the entire area is calculated
         :return:
         """
+        # self.LEEM_ax.figure.canvas.mpl_disconnect(self.LEEM_click_handler)
+
         if not self.hasdisplayed_leem:
             return
 
-        def LEEM_rect_on_press(e):
-            """
-
-            :param e: mpl on_press event
-            :return:
-            """
-            print("Button Press Event caught by LEEM_rectangular_selection.")
-
-        def LEEM_rect_on_release(e):
-            """
-
-            :param e: mpl on_release event
-            :return:
-            """
-            print("Button Release Event caught by LEEM_rectangular_selection.")
-
-        def parse_selection(w):
-            """
-
-            :param w: window
-            :return:
-            """
-            print("Parsing user selection ...")
-            w.close()
+        self.x0 = None
+        self.x1 = None
+        self.y0 = None
+        self.y1 = None
 
         # Create new window and setup layout
         self.new_window_leem = QtGui.QWidget()
-        self.new_window_leem.setTitle("Select Rectangular Area")
+        self.new_window_leem.setWindowTitle("Select Rectangular Area")
         self.new_window_leem.setMinimumHeight(0.35 * self.max_height)
         self.new_window_leem.setMinimumWidth(0.45 * self.max_width)
         self.nfig_leem, self.nplot_ax_leem = plt.subplots(1, 1, figsize=(8, 6), dpi=100)
@@ -2624,15 +2605,17 @@ class Viewer(QtGui.QWidget):
 
         # setup color style
         rect = self.nfig_leem.patch
-        if not self.Style:
-            rect.set_facecolor((189 / 255., 195 / 255., 199 / 255.))
-            self.new_window_leem.setTitle("Select Rectangular Area")
+        if self.Style:
+            # dark
+            rect.set_facecolor((68 / 255., 67 / 255., 67 / 255.))
             self.nplot_ax_leem.set_title("LEEM Image", fontsize=12, color='w')
             self.nplot_ax_leem.xaxis.label.set_color('w')
             self.nplot_ax_leem.yaxis.label.set_color('w')
 
         else:
-            rect.set_facecolor((68 / 255., 67 / 255., 67 / 255.))
+            # light
+            rect.set_facecolor((189 / 255., 195 / 255., 199 / 255.))
+
         plt.axis('off')
         plt.grid(False)
 
@@ -2650,14 +2633,73 @@ class Viewer(QtGui.QWidget):
         vbox.addLayout(button_hbox)
         self.new_window_leem.setLayout(vbox)
 
+        # setup event connections
+        # buttons
+        """
+        self.cancelbut.clicked.connect(lambda: close(w=self.new_window_leem,
+                                                     hdl=self.LEEM_click_handler,
+                                                     ax=self.LEEM_ax,
+                                                     action=self.leem_click))
+        """
         self.cancelbut.clicked.connect(self.new_window_leem.close)
-        self.okbut.clicked.connect(lambda: parse_selection(self.new_window_leem))
+        self.okbut.clicked.connect(lambda: self.parse_selection(self.new_window_leem))
+        # image axis
+        self.nplot_ax_leem.figure.canvas.mpl_connect('button_press_event', self.rect_on_press)
+        self.nplot_ax_leem.figure.canvas.mpl_connect('button_release_event', self.rect_on_release)
+
+
 
         img = self.leemdat.dat_3d[0:, 0:, self.leemdat.curimg]
         self.nplot_ax_leem.imshow(img, cmap=cm.Greys_r)
         self.ncanvas_leem.draw()
         self.new_window_leem.show()
 
+
+    def rect_on_press(self, e):
+        """
+
+        :param e: mpl on_press event
+        :return:
+        """
+        if e.inaxes == self.nplot_ax_leem:
+            print("Button Press Event caught by LEEM_rectangular_selection.")
+            self.x0 = e.xdata
+            self.y0 = e.ydata
+
+
+    def rect_on_release(self, e):
+        """
+
+        :param e: mpl on_release event
+        :return:
+        """
+        print("Button Release Event caught by LEEM_rectangular_selection.")
+        self.x1 = e.xdata
+        self.y1 = e.ydata
+
+        if (self.x0 is not None and
+            self.x1 is not None and
+            self.y0 is not None and
+            self.y1 is not None):
+            rect = patches.Rectangle((0,0),1,1)
+            rect.set_width(self.x1 - self.x0)
+            rect.set_height(self.y1 - self.y0)
+            rect.set_xy((self.x0, self.y0))
+            rect.fill = False
+            rect.edgecolor = 'red'
+            rect.linewidth = 5
+            self.nplot_ax_leem.add_patch(rect)
+            self.ncanvas_leem.draw()
+
+    @staticmethod
+    def parse_selection(w):
+        """
+
+        :param w: window
+        :return:
+        """
+        print("Parsing user selection ...")
+        w.close()
 
     def plot_derivative(self):
         """
