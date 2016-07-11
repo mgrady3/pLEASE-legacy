@@ -2726,13 +2726,17 @@ class Viewer(QtGui.QWidget):
             self.leem_rect_canvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
                            QtGui.QSizePolicy.Expanding)
 
-            smoothbut = QtGui.QPushButton("Smooth I(V)")
-            # TODO: implement smoothing method for average leem I(V) data
-            # smoothbut.clicked.connect()
+            self.smooth_leem_rect_but = QtGui.QPushButton("Smooth I(V)")
+            self.smooth_leem_rect_but.clicked.connect(self.smooth_leem_rect)
 
             vbox = QtGui.QVBoxLayout()
             vbox.addWidget(self.leem_rect_canvas)
+            vbox.addWidget(self.smooth_leem_rect_but)
             self.leem_rect_plot_window.setLayout(vbox)
+            rect = self.leem_rect_fig.patch
+            if self.Style:
+                # dark
+                rect.set_facecolor((68 / 255., 67 / 255., 67 / 255.))
 
 
             # parse selections
@@ -2749,15 +2753,40 @@ class Viewer(QtGui.QWidget):
                     print(data_slice.shape)
 
             plt.grid(False)
-            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20)
-            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20)
-            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20)
+            # TODO: add if _STYLE options
+            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
+            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
+            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
             self.leem_rect_plot_window.show()
             self.leem_rect_canvas.draw()
 
         else:
             pass
         self.leem_rect_count = 0
+
+    def smooth_leem_rect(self):
+        """
+
+        :return:
+        """
+        if not self.leem_rects:
+            return
+        # there is data to parse, smooth, and plot
+        self.leem_rect_iv_ax.clear()
+        for idx, rect in enumerate(self.leem_rects):
+            w = int(rect.get_width())
+            h = int(rect.get_height())
+            origin_x = int(rect.get_xy()[0])
+            origin_y = int(rect.get_xy()[1])
+            data_slice = self.leemdat.dat_3d[origin_y:origin_y + h + 1,
+                         origin_x:origin_x + w + 1, :]
+            ilist = [img.sum() for img in np.rollaxis(data_slice, 2)]
+            self.leem_rect_iv_ax.plot(self.leemdat.elist, LF.smooth(ilist), color=self.colors[idx + 1])
+        # TODO: add if _STYLE options
+        self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
+        self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
+        self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, colo='w')
+        self.leem_rect_canvas.draw()
 
 
     def plot_derivative(self):

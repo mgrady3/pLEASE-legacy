@@ -49,7 +49,7 @@ For more info see https://github.com/mgrady3/pLEASE or contact the authors via E
     author_email='max.grady@gmail.com',
     url='https://github.com/mgrady3/pLEASE',
     download_url='https://github.com/mgrady3/pLEASE/archive/master.zip',
-    keywords=['LEEM', 'surface science', 'image analysis', 'I(V) spectra'],
+    keywords=['LEEM', 'surface science', 'image analysis', 'I(V) spectra', 'electron microscopy'],
     license='GPLv3',
     platforms='any',
     classifiers=[
