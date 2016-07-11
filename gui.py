@@ -2644,7 +2644,7 @@ class Viewer(QtGui.QWidget):
                                                      action=self.leem_click))
         """
         self.cancelbut.clicked.connect(self.new_window_leem.close)
-        self.okbut.clicked.connect(lambda: self.parse_selection(self.new_window_leem))
+        self.okbut.clicked.connect(self.parse_selection)
         # image axis
         self.nplot_ax_leem.figure.canvas.mpl_connect('button_press_event', self.rect_on_press)
         self.nplot_ax_leem.figure.canvas.mpl_connect('button_release_event', self.rect_on_release)
@@ -2705,21 +2705,37 @@ class Viewer(QtGui.QWidget):
             self.leem_circ.remove()
             self.ncanvas_leem.draw()
 
-    def parse_selection(self, window):
+    def parse_selection(self):
         """
 
         :param w: window
         :return:
         """
-        print("Parsing user selection(s) ...")
+        print("Parsing LEEM user selection(s) ...")
         # do something with self.leem_rect ...
 
         if self.leem_rects:
             # there are rectangular selections to parse
 
-            # New window for plotted
+            # New window for plotted data
 
-            for rect in self.leem_rects:
+            self.leem_rect_plot_window = QtGui.QWidget()
+            self.leem_rect_plot_window.setWindowTitle("User Selection(s): Average I(V) ")
+            self.leem_rect_fig, self.leem_rect_iv_ax = plt.subplots(1, 1, figsize=(8, 6), dpi=100)
+            self.leem_rect_canvas = FigureCanvas(self.leem_rect_fig)
+            self.leem_rect_canvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                           QtGui.QSizePolicy.Expanding)
+
+            smoothbut = QtGui.QPushButton("Smooth I(V)")
+            smoothbut.clicked.connect()
+
+            vbox = QtGui.QVBoxLayout()
+            vbox.addWidget(self.leem_rect_canvas)
+            self.leem_rect_plot_window.setLayout(vbox)
+
+
+            # parse selections
+            for idx, rect in enumerate(self.leem_rects):
                 w = int(rect.get_width())
                 h = int(rect.get_height())
                 origin_x = int(rect.get_xy()[0])
@@ -2727,13 +2743,21 @@ class Viewer(QtGui.QWidget):
                 data_slice = self.leemdat.dat_3d[origin_y:origin_y + h + 1,
                                                  origin_x:origin_x + w + 1, :]
                 ilist = [img.sum() for img in np.rollaxis(data_slice, 2)]
+                self.leem_rect_iv_ax.plot(self.leemdat.elist, ilist, color=self.colors[idx+1])
                 if self._DEBUG:
                     print(data_slice.shape)
+
+            plt.grid(False)
+            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20)
+            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20)
+            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20)
+            self.leem_rect_plot_window.show()
+            self.leem_rect_canvas.draw()
 
         else:
             pass
         self.leem_rect_count = 0
-        window.close()
+
 
     def plot_derivative(self):
         """
