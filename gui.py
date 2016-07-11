@@ -178,6 +178,8 @@ class Viewer(QtGui.QWidget):
         self.hascountedminima = False
 
         self.LEEM_rect_enebaled = False
+        self.leem_rects = []
+        self.leem_rect_count = 0
 
     def init_Plot_Axes(self):
         """
@@ -2654,7 +2656,6 @@ class Viewer(QtGui.QWidget):
         self.ncanvas_leem.draw()
         self.new_window_leem.show()
 
-
     def rect_on_press(self, e):
         """
 
@@ -2662,10 +2663,14 @@ class Viewer(QtGui.QWidget):
         :return:
         """
         if e.inaxes == self.nplot_ax_leem:
-            print("Button Press Event caught by LEEM_rectangular_selection.")
+            if self._DEBUG:
+                print("Button Press Event caught by LEEM_rectangular_selection.")
             self.x0 = e.xdata
             self.y0 = e.ydata
 
+            self.leem_circ = patches.Circle(xy=(self.x0, self.y0), radius=3, fill=True, facecolor='red')
+            self.nplot_ax_leem.add_patch(self.leem_circ)
+            self.ncanvas_leem.draw()
 
     def rect_on_release(self, e):
         """
@@ -2673,7 +2678,14 @@ class Viewer(QtGui.QWidget):
         :param e: mpl on_release event
         :return:
         """
-        print("Button Release Event caught by LEEM_rectangular_selection.")
+        if self.leem_rect_count < len(self.colors):
+            self.leem_rect_count += 1
+        else:
+            # TODO: handle this situation better
+            self.leem_rect_count = 1
+
+        if self._DEBUG:
+            print("Button Release Event caught by LEEM_rectangular_selection.")
         self.x1 = e.xdata
         self.y1 = e.ydata
 
@@ -2686,21 +2698,42 @@ class Viewer(QtGui.QWidget):
             h = self.y1 - self.y0
             xy = (self.x0, self.y0)
             self.leem_rect = patches.Rectangle(xy=xy, width=w, height=h,
-                                                          fill=False, linewidth=2, edgecolor='red')
+                                               fill=False, linewidth=2,
+                                               edgecolor=self.colors[self.leem_rect_count])
             self.nplot_ax_leem.add_patch(self.leem_rect)
+            self.leem_rects.append(self.leem_rect)
+            self.leem_circ.remove()
             self.ncanvas_leem.draw()
 
-    @staticmethod
-    def parse_selection(w):
+    def parse_selection(self, window):
         """
 
         :param w: window
         :return:
         """
-        print("Parsing user selection ...")
+        print("Parsing user selection(s) ...")
         # do something with self.leem_rect ...
 
-        w.close()
+        if self.leem_rects:
+            # there are rectangular selections to parse
+
+            # New window for plotted
+
+            for rect in self.leem_rects:
+                w = int(rect.get_width())
+                h = int(rect.get_height())
+                origin_x = int(rect.get_xy()[0])
+                origin_y = int(rect.get_xy()[1])
+                data_slice = self.leemdat.dat_3d[origin_y:origin_y + h + 1,
+                                                 origin_x:origin_x + w + 1, :]
+                ilist = [img.sum() for img in np.rollaxis(data_slice, 2)]
+                if self._DEBUG:
+                    print(data_slice.shape)
+
+        else:
+            pass
+        self.leem_rect_count = 0
+        window.close()
 
     def plot_derivative(self):
         """
