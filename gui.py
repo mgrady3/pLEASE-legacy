@@ -2727,7 +2727,8 @@ class Viewer(QtGui.QWidget):
                            QtGui.QSizePolicy.Expanding)
 
             smoothbut = QtGui.QPushButton("Smooth I(V)")
-            smoothbut.clicked.connect()
+            # TODO: implement smoothing method for average leem I(V) data
+            # smoothbut.clicked.connect()
 
             vbox = QtGui.QVBoxLayout()
             vbox.addWidget(self.leem_rect_canvas)
