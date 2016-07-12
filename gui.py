@@ -2753,11 +2753,16 @@ class Viewer(QtGui.QWidget):
                     print(data_slice.shape)
 
             plt.grid(False)
-            # TODO: add if _STYLE options
-            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
-            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
-            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
-            self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
+            if self._Style:
+                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
+                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
+                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
+                self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
+            else:
+                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20)
+                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20)
+                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20)
+                self.leem_rect_iv_ax.tick_params(labelcolor='b', top='off', right='off')
             self.leem_rect_plot_window.show()
             self.leem_rect_canvas.draw()
 
@@ -2783,11 +2788,16 @@ class Viewer(QtGui.QWidget):
                          origin_x:origin_x + w + 1, :]
             ilist = [img.sum() for img in np.rollaxis(data_slice, 2)]
             self.leem_rect_iv_ax.plot(self.leemdat.elist, LF.smooth(ilist), color=self.colors[idx + 1])
-        # TODO: add if _STYLE options
-        self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
-        self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
-        self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
-        self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
+        if self._Style:
+            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
+            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
+            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
+            self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
+        else:
+            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20)
+            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20)
+            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20
+            self.leem_rect_iv_ax.tick_params(labelcolor='b', top='off', right='off')
         self.leem_rect_canvas.draw()
 
 
