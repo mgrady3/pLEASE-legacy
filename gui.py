@@ -2757,6 +2757,7 @@ class Viewer(QtGui.QWidget):
             self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
             self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
             self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
+            self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
             self.leem_rect_plot_window.show()
             self.leem_rect_canvas.draw()
 
@@ -2785,7 +2786,8 @@ class Viewer(QtGui.QWidget):
         # TODO: add if _STYLE options
         self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
         self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
-        self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, colo='w')
+        self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
+        self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
         self.leem_rect_canvas.draw()
 
 
