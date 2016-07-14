@@ -2796,7 +2796,7 @@ class Viewer(QtGui.QWidget):
         else:
             self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20)
             self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20)
-            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20
+            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20)
             self.leem_rect_iv_ax.tick_params(labelcolor='b', top='off', right='off')
         self.leem_rect_canvas.draw()
 
