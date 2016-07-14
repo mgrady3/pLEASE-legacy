@@ -1602,8 +1602,14 @@ class Viewer(QtGui.QWidget):
         self.LEED_IV_ax.plot(self.leeddat.elist, average_int, color=self.colors[-1])
         if self.Style:
             self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves', color='w')
+            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='w')
+            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='w')
+            self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         else:
             self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
+            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
+            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
+            self.LEED_IV_ax.tick_params(labelcolor='b', top='off', right='off')
         print('Plotting Average LEED_I(V) ...')
         self.LEED_IV_canvas.draw()
         return
@@ -1781,6 +1787,10 @@ class Viewer(QtGui.QWidget):
             self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=20,color='white')
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
             self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+        else:
+            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=20)
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
         self.LEED_IV_canvas.draw()
 
     def subtract_background(self):
@@ -2231,8 +2241,7 @@ class Viewer(QtGui.QWidget):
                                           :]
 
             # TODO: Clean up this algorithm. Remind what the variables actually do
-            # TODO: Is there any reason the find_local_max() takes the last image
-            #           in the stack as the image to compute gaussian blur?
+
             # TODO: IN PROGRESS - implementing full beam centering algorithm for each image in stack
 
             maxLoc = LF.find_local_maximum(int_win[:, :, int(int_win.shape[2]/2)])  # (x,y)
