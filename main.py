@@ -37,6 +37,8 @@ def main():
     view.raise_()
 
     if view.Style:
+        # Note:
+        # If qdarkstyle were to drop support for PyQt in future versions this line would break
         app.setStyleSheet(qdarkstyle.load_stylesheet(pyside=False))
     sys.exit(app.exec_())
 
