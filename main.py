@@ -8,7 +8,7 @@ from PyQt4 import QtGui, QtCore
 
 def main():
     """
-
+    Entry point to PLEASE application
     :return:
     """
     app = QtGui.QApplication(sys.argv)
