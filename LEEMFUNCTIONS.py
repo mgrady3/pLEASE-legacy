@@ -10,6 +10,12 @@ DEF_IMWIDTH = 592
 DEF_IMHEAD = 520
 
 
+class ParseError(Exception):
+    def __init__(self, message, errors):
+        super(ParseError, self).__init__(message)
+
+        self.errors = errors
+
 def filenumber_to_energy(el, im):
     """
     Convert filenumber to energy in eV
@@ -327,6 +333,91 @@ def read_img(path):
             print("Error reading image into numpy array")
             print("Max value stored exceeds that of 64 bit integer")
             raise e
+
+
+def parse_tiff_header(img, w, h, byte_depth):
+    """
+    try to find byte order in tiff header info
+    :param img: string path to file to examine
+    :param w: img width
+    :param h: imh height
+    :param byte_depth: number of bits per pixel
+    :return: string corresponding to Experiment YAML settings for byte order: 'L' or 'B' or None if error
+    """
+    with open(img, 'rb') as f:
+        header = len(f.read()) - byte_depth*w*h
+        if header < 0:
+            raise ParseError(message="Incorrect value calcualted for header length; \
+                                      Check for correct Image Width, Height and Bit Depth.")
+            return None
+
+        f.seek(0)
+        header_data = f.read()[0:header+1]
+        f.seek(0)
+        data = f.read()[header:]
+
+    if not header_data:
+        raise ParseError(message="No Header Information Found; Check for correct Image Width, Height and Bit Depth")
+        return None
+    if len(header_data) >= 2:
+        byte_order = header_data[0:2]
+        if byte_order == "MM":
+            return 'B'
+        elif byte_order == "II":
+            return 'L'
+        else:
+            raise ParseError(message="Unknown byte order in first two bytes of TIFF file.")
+            return None
+    else:
+        raise ParseError(message="Header Length too short; Need at least two bytes to read correct byte order.")
+        return None
+
+
+def gen_dat_files(dirname=None, outdirname=None, ext=None,
+                  w=None, h=None, byte_depth=None):
+    """
+    Given a directory with image files, output raw binary files with no header
+    :param dirname: string path to directory containing image files
+    :param outdirname: string path to directory to output raw .dat files
+    :param w: img width
+    :param h: imh height
+    :param byte_depth: number of bits per pixel
+    :param ext:
+    :return:
+    """
+    if dirname is None or outdirname is None or ext is None or w is None or h is None or byte_depth is None:
+        print("Error: required parameters are input directory, output directory, and file extension including . , \
+              image width, image height, and image byte_depth.")
+        return
+
+    files = [name for name in os.listdir(dirname) if name.endswith(ext)]
+
+    if not files:
+        print("Error: no files found with file extension {0}".format(ext))
+        return
+
+    if ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
+        try:
+            byte_order = parse_tiff_header(files[0], w, h, byte_depth)
+        except ParseError as e:
+            print("Failed to parse tiff header; defaulting to little endian bye order")
+            print(e.errors)
+            byte_order = 'L'
+    # swap to numpy syntax
+    if byte_order == 'L':
+        byte_order = '<'
+    elif byte_order == 'B':
+        byte_order = '>'
+
+    for file in files:
+        with open(os.path.join(dirname, file), 'rb') as f:
+            header = len(f.read()) - byte_depth * w * h
+            f.seek(0)
+            fmtstr = byte_order + 'u' + str(byte_depth)
+            data = np.fromstring(f.read()[header:], fmtstr).reshape((h,w))
+            with open(os.path.join(outdirname, file.split('.')[0]+'.dat'), 'wb') as o:
+                data.tofile(o)
+    return
 
 
 def parse_dir(dirname):
