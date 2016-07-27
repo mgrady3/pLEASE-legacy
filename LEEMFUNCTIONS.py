@@ -13,8 +13,9 @@ DEF_IMHEAD = 520
 class ParseError(Exception):
     def __init__(self, message, errors):
         super(ParseError, self).__init__(message)
-
+        # TODO: implement this later ...
         self.errors = errors
+        self.message = message
 
 def filenumber_to_energy(el, im):
     """
@@ -344,33 +345,41 @@ def parse_tiff_header(img, w, h, byte_depth):
     :param byte_depth: number of bits per pixel
     :return: string corresponding to Experiment YAML settings for byte order: 'L' or 'B' or None if error
     """
-    with open(img, 'rb') as f:
-        header = len(f.read()) - byte_depth*w*h
-        if header < 0:
-            raise ParseError(message="Incorrect value calcualted for header length; \
-                                      Check for correct Image Width, Height and Bit Depth.")
-            return None
+    header_data = None
+    header = None
+    try:
+        with open(img, 'rb') as f:
+            header = len(f.read()) - byte_depth*w*h
+            if header < 0:
+                raise ParseError(message="Incorrect value calculated for header length; \
+                                          Check for correct Image Width, Height and Bit Depth.", errors=None)
 
-        f.seek(0)
-        header_data = f.read()[0:header+1]
-        f.seek(0)
-        data = f.read()[header:]
+            f.seek(0)
+            header_data = f.read()[0:header+1]
+            f.seek(0)
+            data = f.read()[header:]
+
+    except FileNotFoundError:
+        print("Error: File {0} not found in current directory.".format(img))
 
     if not header_data:
-        raise ParseError(message="No Header Information Found; Check for correct Image Width, Height and Bit Depth")
-        return None
+        raise ParseError(message="No Header Information Found; Check for correct Image Width, Height and Bit Depth", errors=None)
+    # TODO: the decoding of bytes using UTF-8 could be troublesome in the future ...
     if len(header_data) >= 2:
         byte_order = header_data[0:2]
-        if byte_order == "MM":
+        if byte_order.decode("UTF-8") == "MM":
+            # in py2.7 'MM'.decode("UTF-8") returns u'MM' which compares True to 'MM'
+            # in py3, byte_order will be read as b'MM' which needs to be decoded before comparison
             return 'B'
-        elif byte_order == "II":
+        elif byte_order.decode("UTF-8") == "II":
+            # in py2.7 'II'.decode("UTF-8") returns u'MM' which compares True to 'II'
+            # in py3, byte_order will be read as b'MM' which needs to be decoded before comparison
             return 'L'
         else:
-            raise ParseError(message="Unknown byte order in first two bytes of TIFF file.")
-            return None
+            raise ParseError(message="Unknown byte order in first two bytes of TIFF file.", errors={byte_order: byte_order})
+
     else:
-        raise ParseError(message="Header Length too short; Need at least two bytes to read correct byte order.")
-        return None
+        raise ParseError(message="Header Length too short; Need at least two bytes to read correct byte order.", errors=None)
 
 
 def gen_dat_files(dirname=None, outdirname=None, ext=None,
@@ -389,20 +398,32 @@ def gen_dat_files(dirname=None, outdirname=None, ext=None,
         print("Error: required parameters are input directory, output directory, and file extension including . , \
               image width, image height, and image byte_depth.")
         return
-
+    print('Searching for files in {0} ...'.format(dirname))
     files = [name for name in os.listdir(dirname) if name.endswith(ext)]
 
     if not files:
         print("Error: no files found with file extension {0}".format(ext))
         return
 
+    print('Found {0} files to process ...'.format(len(files)))
+
     if ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
         try:
-            byte_order = parse_tiff_header(files[0], w, h, byte_depth)
+            print('Parsing file {0}'.format(os.path.join(dirname, files[0])))
+            byte_order = parse_tiff_header(os.path.join(dirname, files[0]), w, h, byte_depth)
         except ParseError as e:
-            print("Failed to parse tiff header; defaulting to little endian bye order")
+            print("Failed to parse tiff header; defaulting to big endian bye order")
+            print(e.message)
             print(e.errors)
-            byte_order = 'L'
+            byte_order = 'B'  # default to big endian
+        except FileNotFoundError as ef:
+            print(ef)  # TODO: figure out whats best practice here ...
+            byte_order = 'B'  # default to big endian
+    else:
+        # PNG and JPEG always use Big Endian
+        byte_order = 'B'  # default to big endian
+
+
     # swap to numpy syntax
     if byte_order == 'L':
         byte_order = '<'
@@ -416,7 +437,9 @@ def gen_dat_files(dirname=None, outdirname=None, ext=None,
             fmtstr = byte_order + 'u' + str(byte_depth)
             data = np.fromstring(f.read()[header:], fmtstr).reshape((h,w))
             with open(os.path.join(outdirname, file.split('.')[0]+'.dat'), 'wb') as o:
+
                 data.tofile(o)
+    print("Done outputting dat files ...")
     return
 
 
