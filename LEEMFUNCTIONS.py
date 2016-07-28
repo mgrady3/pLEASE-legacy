@@ -365,6 +365,8 @@ def parse_tiff_header(img, w, h, byte_depth):
     if not header_data:
         raise ParseError(message="No Header Information Found; Check for correct Image Width, Height and Bit Depth", errors=None)
     # TODO: the decoding of bytes using UTF-8 could be troublesome in the future ...
+    # Perhaps its best here to have some sort of User configurable data encoding setting
+    # For now that is beyond the scope of the current development
     if len(header_data) >= 2:
         byte_order = header_data[0:2]
         if byte_order.decode("UTF-8") == "MM":
@@ -423,7 +425,6 @@ def gen_dat_files(dirname=None, outdirname=None, ext=None,
         # PNG and JPEG always use Big Endian
         byte_order = 'B'  # default to big endian
 
-
     # swap to numpy syntax
     if byte_order == 'L':
         byte_order = '<'
@@ -434,11 +435,11 @@ def gen_dat_files(dirname=None, outdirname=None, ext=None,
         with open(os.path.join(dirname, file), 'rb') as f:
             header = len(f.read()) - byte_depth * w * h
             f.seek(0)
+            # generate numpy friendly data format string: ex. '<u2' = little endian, unsigned integer, 2 bytes per pixel
             fmtstr = byte_order + 'u' + str(byte_depth)
-            data = np.fromstring(f.read()[header:], fmtstr).reshape((h,w))
+            data = np.fromstring(f.read()[header:], fmtstr).reshape((h,w))  # strip header information
             with open(os.path.join(outdirname, file.split('.')[0]+'.dat'), 'wb') as o:
-
-                data.tofile(o)
+                data.tofile(o)  # store image data as raw binary file
     print("Done outputting dat files ...")
     return
 
