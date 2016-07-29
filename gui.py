@@ -428,8 +428,14 @@ class Viewer(QtGui.QWidget):
         self.menubar = QtGui.QMenuBar()
         self.menubar.setStyleSheet(self.styles['menu'])
 
+        # TODO: Reorganize all menu shortcuts
         # File Menu
         fileMenu = self.menubar.addMenu('File')
+
+        genDatFileAction = QtGui.QAction('Generate Dat Files', self)
+        genDatFileAction.triggered.connect(self.gen_dat_files_from_images)
+        fileMenu.addAction(genDatFileAction)
+
 
         loadExperimentAction = QtGui.QAction('Load Experiment', self)
         loadExperimentAction.setShortcut('Ctrl+X')
@@ -736,6 +742,82 @@ class Viewer(QtGui.QWidget):
         self.new_widget.setLayout(layout)
         self.new_widget.show()
     """
+
+    def gen_dat_files_from_images(self):
+        """
+        Query user for directory containing image files and a directory to output data to
+        Process each image, strip out header info, and write as raw data to file from numpy array
+        :return:
+        """
+
+        # LEEMFUNCTIONS.gen_dat_files() requires:
+        # input directory, output directory, filetype, image width, image height, image byte depth
+
+        # Query User for directory containing image files
+        infiledir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory Containing \
+                                                                     Image Files to Process"))
+        # Query User for directory to output .dat files to
+        outfiledir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory to Output DAT files to"))
+
+        # Query User for Image Parameters: Ask to parse from YAML or input manually
+        items = ["Manual Entry", "Parse Experiment YAML"]
+        choice, ok = QtGui.QInputDialog.getItem(self, "Select Method to Input Image Parameters",
+                                                "Manual or Parse from YAML", items, current=0, editable=False)
+        if not ok:
+            return
+        print(choice)
+        if choice == "Manual Entry":
+            #
+            width, ok = QtGui.QInputDialog.getInt(self, "Enter Image Width", "Image Width >= 2", value=2, min=2)
+            if not ok:
+                return
+
+            height, ok = QtGui.QInputDialog.getInt(self, "Enter Image Height", "Image Height >= 2", value=2, min=2)
+            if not ok:
+                return
+
+            items = ["1", "2"]
+            depth, ok = QtGui.QInputDialog.getItem(self, "Select Image Byte Depth",
+                                                   "Byte Depth: 1 (8bit) or 2 (16bit)", items, current=1, editable=False)
+            depth = int(depth)  # cast string "1" or "2" to int
+            if not ok:
+                return
+
+        elif choice == "Parse Experiment YAML":
+            # TODO: Implement this later
+            print("Not Yet Implemented")
+            return
+        else:
+            print("Error: Unable to parse user selection")
+            return
+
+
+        # Query User for file type (TIFF, PNG)
+        items = ["TIFF: .tif/.tiff", "PNG: .png"]
+        extension, ok = QtGui.QInputDialog.getItem(self, "Select Image File Type", "Valid File Types:",
+                                                   items, current=0, editable=False)
+        if not ok:
+            return
+
+        if extension is not None:
+            if extension.startswith("TIFF"):
+                # Handle TIFF Files
+                # print("TIFF")
+                extension = '.tif'
+            elif extension.startswith("PNG"):
+                # Handle PNG files
+                # print("PNG")
+                extension = '.png'
+        else:
+            print("Error: invalid extension")
+            return
+
+        # TODO: put this into a separate QThread so as to not block the main UI for 10-30 seconds
+        # call gen_dat_files with user entries
+        LF.gen_dat_files(dirname=infiledir, outdirname=outfiledir, ext=extension,
+                         w=width, h=height, byte_depth=depth)
+
+
 
     ###########################################################################################
     # New Methods for loading Generic Experiments
