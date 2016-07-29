@@ -759,6 +759,26 @@ class Viewer(QtGui.QWidget):
         # Query User for directory to output .dat files to
         outfiledir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory to Output DAT files to"))
 
+        # Query User for file type (TIFF, PNG)
+        items = ["TIFF: .tif/.tiff", "PNG: .png"]
+        extension, ok = QtGui.QInputDialog.getItem(self, "Select Image File Type", "Valid File Types:",
+                                                   items, current=0, editable=False)
+        if not ok:
+            return
+
+        if extension is not None:
+            if extension.startswith("TIFF"):
+                # Handle TIFF Files
+                # print("TIFF")
+                extension = '.tif'
+            elif extension.startswith("PNG"):
+                # Handle PNG files
+                # print("PNG")
+                extension = '.png'
+        else:
+            print("Error: invalid extension")
+            return
+
         # Query User for Image Parameters: Ask to parse from YAML or input manually
         items = ["Manual Entry", "Parse Experiment YAML"]
         choice, ok = QtGui.QInputDialog.getItem(self, "Select Method to Input Image Parameters",
@@ -784,32 +804,41 @@ class Viewer(QtGui.QWidget):
                 return
 
         elif choice == "Parse Experiment YAML":
-            # TODO: Implement this later
-            print("Not Yet Implemented")
+
+            # Query User for directory containing Experiment YAML Config file
+            filedir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment YAML file"))
+            files = [name for name in os.listdir(filedir) if name.endswith('.yaml') or name.endswith('.YAML')]
+            if files:
+                print("Found Experiment YAML file: {0}, Parsing Image Paramters from YAML".format(files[0]))
+                exp = Experiment()
+                exp.fromFile(os.path.join(filedir, files[0]))
+                try:
+                    width = exp.imw
+                    height = exp.imh
+                    bits = exp.bit
+                    if bits == 16:
+                        depth = 2
+                    elif bits == 8:
+                        depth = 1
+                    else:
+                        print("Error: Unknown image bit depth in YAML file {0}".format(os.path.join(filedir, files[0])))
+                        return
+                except AttributeError as e:
+                    print("Error: Loaded Experiment does not contain appropriate Image Parameters ...")
+                    return
+
+                # TODO: put this into a separate QThread so as to not block the main UI for 10-30 seconds
+                # call gen_dat_files with user entries
+                LF.gen_dat_files(dirname=infiledir, outdirname=outfiledir, ext=extension,
+                                 w=width, h=height, byte_depth=depth)
+
+            else:
+                print("No YAML file found in directory: {0}".format(filedir))
+                return
+
             return
         else:
             print("Error: Unable to parse user selection")
-            return
-
-
-        # Query User for file type (TIFF, PNG)
-        items = ["TIFF: .tif/.tiff", "PNG: .png"]
-        extension, ok = QtGui.QInputDialog.getItem(self, "Select Image File Type", "Valid File Types:",
-                                                   items, current=0, editable=False)
-        if not ok:
-            return
-
-        if extension is not None:
-            if extension.startswith("TIFF"):
-                # Handle TIFF Files
-                # print("TIFF")
-                extension = '.tif'
-            elif extension.startswith("PNG"):
-                # Handle PNG files
-                # print("PNG")
-                extension = '.png'
-        else:
-            print("Error: invalid extension")
             return
 
         # TODO: put this into a separate QThread so as to not block the main UI for 10-30 seconds
