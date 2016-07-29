@@ -33,7 +33,7 @@ from matplotlib import colors as clrs
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt4 import QtGui, QtCore
-from scipy.stats import linregress as lreg
+from scipy.stats import linregress as lreg  # this should likely be in another file and not part of GUI
 
 
 class Viewer(QtGui.QWidget):
