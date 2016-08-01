@@ -5,7 +5,7 @@
 **Maxwell Grady** University of New Hampshire Department of Physics Doctoral Candidate
 
 ## What is it?
-**PLEASE** is a software package built for analysis of Low Energy Electron Microscopy data sets with specific emphasis on anlysis of electron reflectivity data sets known as LEEM/LEED-IV. The software is written in python using the PyQt4 python bindings for the C/C++ graphics framework Qt. All of my source code is freely available to view, use, modify, and distribute subject to the GPLv3 license included with the source.
+**PLEASE** is a software package built for analysis of Low Energy Electron Microscopy data sets with specific emphasis on analysis of electron reflectivity data sets known as LEEM/LEED-IV. The software is written in python using the PyQt4 python bindings for the C/C++ graphics framework Qt. All of my source code is freely available to view, use, modify, and distribute subject to the GPLv3 license included with the source.
 
 ## Why is it?
 After working on a LEEM experiment I had some time before my next experiment was going to begin while waiting for some new hardware to arrive. I had collected a large amount of LEEM data but when returning to my research facility had no software able to easily read and analyze the data. Thus I set out to create my own as a way to teach myself about scientific software development and data analysis. The data analysis performed with this software will play a role in my doctoral thesis.
