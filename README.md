@@ -28,7 +28,7 @@ Data sets can be loaded for analysis from raw data binary (.dat), as well as fro
 	* Step Energy
 
 Generally when loading a data set, the user is queried for the above settings, however, 
-a *convienient* method for loading data sets as an experiment with saved parameters is implemented using YAML config files.
+a convienient method for loading data sets as an experiment with saved parameters is implemented using YAML config files.
 
 The user can store experimental parameters in a .yaml file as human readable structured text using the format given in the template file provided with the source code. This makes anlayzig many sets of data easier as you do not need to remember which parameters to enter for each separate data set.
 
