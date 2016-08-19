@@ -49,6 +49,8 @@ class WorkerThread(QtCore.QThread):
                 self.quit()
                 self.exit()
 
+    # TODO: better method to implement thread tasks instead of overloading run()
+    # Work has been started in git branch dev_updateThreading
     def run(self):
         """
         # Overload the QThread run() method to do specific tasks
@@ -212,9 +214,6 @@ class WorkerThread(QtCore.QThread):
 
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), data)
 
-
-
-
     def output_to_Text(self):
         """
 
@@ -230,8 +229,6 @@ class WorkerThread(QtCore.QThread):
 
             for index, item in enumerate(elist):
                 f.write(str(item) + '\t' + str(ilist[index]) + '\n')
-
-
 
     def count_Minima(self):
         """

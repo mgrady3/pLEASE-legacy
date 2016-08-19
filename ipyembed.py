@@ -3,9 +3,6 @@ Simple hack to embed the ipython kernel / REPL
 into a QT Widget
 
 Updated to use a RichJupyterWidget
-May Still give warning about deprecated call to IPython.qt ...
-
-Need to find a way to instantiate the kernel_manager from the qtconsole module
 """
 
 from PyQt4 import QtGui
