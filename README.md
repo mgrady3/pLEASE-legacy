@@ -5,7 +5,7 @@
 **Maxwell Grady** University of New Hampshire Department of Physics Doctoral Candidate
 
 ## What is it?
-**PLEASE** is a software package built for analysis of Low Energy Electron Microscopy data sets with specific emphasis on anlysis of IV data sets. The software is written in python using the PyQt4 python bindings for the C/C++ graphics framework Qt. All of my source code is freely available to view, modify and distribute.
+**PLEASE** is a software package built for analysis of Low Energy Electron Microscopy data sets with specific emphasis on analysis of electron reflectivity data sets known as LEEM/LEED-IV. The software is written in python using the PyQt4 python bindings for the C/C++ graphics framework Qt. All of my source code is freely available to view, use, modify, and distribute subject to the GPLv3 license included with the source.
 
 ## Why is it?
 After working on a LEEM experiment I had some time before my next experiment was going to begin while waiting for some new hardware to arrive. I had collected a large amount of LEEM data but when returning to my research facility had no software able to easily read and analyze the data. Thus I set out to create my own as a way to teach myself about scientific software development and data analysis. The data analysis performed with this software will play a role in my doctoral thesis.
@@ -15,7 +15,7 @@ LEEM is a powerful surface science tool for analysis of real space and reciproca
 ## What can it do?
 PLEASE is specifically built to analyze LEEM-IV and LEED-IV data sets but can also be used as a simple image viewer for LEEM/LEED data which is not organized by energy. 
 
-Data sets can be loaded for analysis from raw data binary (.dat), as well as from TIFF, PNG, and JPG. Loading raw data has the least amount of overhead and is prefered however the aforementioned image types are supported and flattened to gray scale automatically. Image color depths of 8bit and 16 bit are supported with future hopes to extend this to alternate image configurations.
+Data sets can be loaded for analysis from raw data binary (.dat), as well as from TIFF and PNG. Loading raw data has the least amount of overhead and is prefered however the aforementioned image types are supported and flattened to gray scale automatically. Image color depths of 8 bit and 16 bit are supported with future hopes to extend this to alternate image configurations. For convienience, a data pre-processing routine is included to process TIFF/PNG images and output the image data to a raw DAT file stripping away all header information. These files can then be opened with PLEASE with minimal processing overhead.
 
 ####The necessary info for loading a data set is as follows:
 * Image parameters:
@@ -28,11 +28,11 @@ Data sets can be loaded for analysis from raw data binary (.dat), as well as fro
 	* Step Energy
 
 Generally when loading a data set, the user is queried for the above settings, however, 
-a *convienient* method for loading data sets as an experiment with saved parameters is implemented using YAML config files.
+a convienient method for loading data sets as an experiment with saved parameters is implemented using YAML config files.
 
-The user can store experimental parameters in a .yaml file as human readable structured text using the format given in the template file provided with the source code. This makes anlayzig many sets of data easier as you do not need to remember which parameters to enter for each separate data set
+The user can store experimental parameters in a .yaml file as human readable structured text using the format given in the template file provided with the source code. This makes anlayzig many sets of data easier as you do not need to remember which parameters to enter for each separate data set.
 
-When data is loaded, PLEASE makes it easy to extract IV curves using a simple point and click method. Multiple curves can be extraced and plotted simultaneously with color coding displaying where on the image the dat was extracted from - This feature is shown for a LEEM data set in **Figure 1** with unsmoothed IV data from 50 micrometer FOV LEEM real space image of Graphene grown on Ruthenium(0001):
+When data is loaded, PLEASE makes it easy to extract IV curves using a simple point and click method. Multiple curves can be extraced and plotted simultaneously with color coding displaying where on the image the data was extracted from - This feature is shown for a LEEM data set in **Figure 1** with unsmoothed IV data from 50 micrometer FOV LEEM real space image of Graphene grown on Ruthenium(0001):
 
 ![Figure 1](./img/example1.png)
 
@@ -42,7 +42,7 @@ IV curves can be averaged together. Curves can be popped out of the main window 
 
 Curves can be saved to tab delimited text files which can then be plotted in another program such as gnuplot.
 
-For LEEM data, IV curves are generated from single pixels in an image stack. For LEED data, IV curves are generated from an adjustable size square integration window. Basic background subtraction is provided for LEED data by subtracting out the perimeter sum of the integration window on each energy step.
+For LEEM data, IV curves are generated from single pixels in an image stack, however a function exists to extract LEEM-IV curves from an arbitrarily sized user selected rectanglular integration window. For LEED data, IV curves are generated from an adjustable size square integration window. Basic background subtraction is provided for LEED data by subtracting out the perimeter sum of the integration window on each energy step.
 
 An example of LEED-IV data is shown in **Figure 2** with unsmoothed IV data from MoS2:
 ![Figure 2](./img/example2.png)
