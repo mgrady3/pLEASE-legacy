@@ -1953,7 +1953,7 @@ class Viewer(QtGui.QWidget):
                 total_int = img.sum()
                 per_sum = (img[0, :] + img[0:, -1] + img[-1, :] + img[:, 0]).sum()  # sum edges
                 per_sum -= (img[0, 0] + img[0, -1] + img[-1, -1] + img[-1, 0])  # subtract corners for double counting
-                per_sum  = (per_sum / float(4*self.leeddat.box_rad - 4))*self.leeddat.box_rad**2
+                per_sum  = (per_sum / float(8*self.leeddat.box_rad - 4))*(2*self.leeddat.box_rad)**2
 
                 corrected_int = total_int - per_sum
                 bkgnd.append(per_sum)
