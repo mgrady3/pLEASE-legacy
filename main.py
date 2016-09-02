@@ -1,6 +1,29 @@
+# Attempt to set QT_API version through sip before loading any PyQt modules
+import sys
+if sys.version.startswith('2.7'):
+    try:
+        import sip
+        sip.setapi('QString', 2)
+        sip.setapi('QVariant', 2)
+    except ImportError:
+        print("Error: Failed to import sip; this is required by PyQt; Exiting ...")
+        sys.exit(1)
+elif sys.version.startswith('3'):
+    try:
+        import sip
+        sip.setapi('QString', 2)  # redundant in Py3
+        sip.setapi('QVariant', 2)  # redundant in Py3
+    except ImportError:
+        print("Error: Failed to import sip; this is required by PyQt; Exiting ...")
+        sys.exit(1)
+else:
+    print("Error: Unsupported python version; PLEASE supports only python >= 2.7; Exiting ...")
+    sys.exit(1)
+
+
 import gui
 import os
-import sys
+#  import sys
 import time
 import qdarkstyle
 from PyQt4 import QtGui, QtCore
