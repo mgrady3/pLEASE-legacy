@@ -29,16 +29,18 @@
 '''
 **setup.py** - module for installing PLEASE package using either easy_install or pip
 '''
-from distutils.core import setup
+# from distutils.core import setup
+from setuptools import setup
 
 setup(
-    name='please',
-    packages=['.'],
-    requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole', 
-              'opencv_python', 'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
+    name='PLEASE',
+    packages=['PLEASE'],
+    package_data={'PLEASE':['*.png', './icons/*.png']},
+   # requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole', 
+   #           'opencv_python', 'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
     install_requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole',
                       'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
-    version='0.0',
+    version='0.1.7',
     description='Software for the analysis of Low Energy Electron Microscopy data',
     long_description= """
 PLEASE is a software package built for analysis of Low Energy Electron Microscopy data sets with specific emphasis on analysis of IV data sets.
