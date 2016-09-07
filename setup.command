@@ -102,7 +102,7 @@ echo "Activating environment for please installation ..."
 
 source activate please
 
-conda install -c https://conda.binstar.org/menpo opencv3
+conda install -c menpo opencv3
 sleep 2
 echo
 echo "Environemnt created successfully and conda packages installed."
