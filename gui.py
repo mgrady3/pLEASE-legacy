@@ -187,7 +187,6 @@ class Viewer(QtGui.QWidget):
         :return none:
         """
         # Format LEED IV Axis
-        self.LEED_img_ax.set_title("LEED Image", fontsize=20)
         self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
         self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
         self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
@@ -238,8 +237,8 @@ class Viewer(QtGui.QWidget):
         self.LEED_img_ax.get_xaxis().set_visible(False)
         self.LEED_img_ax.get_yaxis().set_visible(False)
         if not self.Style:
-            self.LEED_img_ax.set_title('LEED Image', fontsize=20)
-        else: self.LEED_img_ax.set_title('LEED Image', fontsize=20, color='white')
+            self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=20)
+        else: self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=20, color='white')
 
         # Format LEEM Image Axis
         if not self.Style:
@@ -320,9 +319,28 @@ class Viewer(QtGui.QWidget):
 
         LEED_Tab_Layout_V1 = QtGui.QVBoxLayout()
         LEED_Tab_Layout_H1 = QtGui.QHBoxLayout()
+        LEED_Tab_Slider_HBox = QtGui.QHBoxLayout()
+
+        # Slider Layout
+        self.LEED_slider = QtGui.QSlider(QtCore.Qt.Horizontal, self.LEED_Tab)
+        self.LEED_slider.setMaximumHeight(200)
+        self.LEED_slider.setTickInterval(1)
+        self.LEED_slider.setTickPosition(QtGui.QSlider.TicksAbove)
+
+        self.LEED_slider_label = QtGui.QLabel(self)
+        self.LEED_slider_label.setText("Electron Energy [eV]")
+
+        self.LEED_slider_value = QtGui.QLabel(self)
+        self.LEED_slider_value.setText("0 eV")
+
+        LEED_Tab_Slider_HBox.addWidget(self.LEED_slider_label)
+        LEED_Tab_Slider_HBox.addWidget(self.LEED_slider)
+        LEED_Tab_Slider_HBox.addWidget(self.LEED_slider_value)
+
 
         LEED_Tab_Layout_V1.addWidget(self.LEED_IV_canvas)
         # LEED_Tab_Layout_V1.addStretch(1)
+        LEED_Tab_Layout_V1.addLayout(LEED_Tab_Slider_HBox)
         LEED_Tab_Layout_V1.addWidget(self.LEED_IV_toolbar)
 
         self.LEED_Tab.setLayout(LEED_Tab_Layout_V1)
@@ -1389,6 +1407,13 @@ class Viewer(QtGui.QWidget):
             print('Image index out of bounds - displaying last image in stack ...')
             self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
 
+        if not self.Style:
+            self.LEED_img_ax.set_title('LEED Image: E= {} eV'.format(LF.filenumber_to_energy(self.leeddat.elist, index)),
+                                   fontsize=20)
+        else:
+            self.LEED_img_ax.set_title('LEED Image: E= {} eV'.format(LF.filenumber_to_energy(self.leeddat.elist, index)),
+                                   fontsize=20, color='white')
+
         self.LEED_IV_canvas.draw()
         self.has_loaded_data = True
         self.hasdisplayed_leed = True
@@ -1416,7 +1441,7 @@ class Viewer(QtGui.QWidget):
         """
         entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Image Number",
                                               "Enter an integer between {0} and {1}".format(self.leeddat.elist[0], self.leeddat.elist[-1]),
-                                              value=len(self.leeddat.elist)/2,
+                                              value=int(len(self.leeddat.elist)/2),
                                               min=0,
                                               max=self.leeddat.elist[-1])
         if ok:
