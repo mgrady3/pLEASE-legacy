@@ -24,8 +24,13 @@ def filenumber_to_energy(el, im):
     :argument im: integer image file number in range 0 to self.LEEM_numfiles
     :return el[im]: energy value in single decimal format corresponding to file number im
     """
-    return el[im]
-
+    try:
+        return el[im]
+    except IndexError as e:
+        print("Error getting energy from file number ...")
+        print(e)
+        print("Returning 0 by default")
+        return 0
 
 def energy_to_filenumber(el, val):
     """

@@ -326,6 +326,7 @@ class Viewer(QtGui.QWidget):
         self.LEED_slider.setMaximumHeight(200)
         self.LEED_slider.setTickInterval(1)
         self.LEED_slider.setTickPosition(QtGui.QSlider.TicksAbove)
+        self.LEED_slider.valueChanged[int].connect(self.update_LEED_slider)
 
         self.LEED_slider_label = QtGui.QLabel(self)
         self.LEED_slider_label.setText("Electron Energy [eV]")
@@ -1260,6 +1261,8 @@ class Viewer(QtGui.QWidget):
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
             self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
+        # Ensure LEED Slider is updated to fit self.leeddat.dat3d
+        self.format_LEED_slider()
 
     ###########################################################################################
     # Core Functionality:
@@ -1388,11 +1391,34 @@ class Viewer(QtGui.QWidget):
         self.current_leed_index = self.leeddat.dat_3d.shape[2]-1
         return
 
+    def update_LEED_slider(self, value):
+        """
+        When LEED Slider is changed
+        Place call to update_LEED_img()
+        """
+        if not self.hasdisplayed_leed:
+            return
+
+        # DEBUG
+        # print(len(self.leeddat.elist))
+        # print(value)
+        self.LEED_slider_value.setText(str(LF.filenumber_to_energy(self.leeddat.elist, value)) + " eV")
+        # set slider to value
+        self.LEED_slider.setValue(value)
+        self.update_LEED_img(value)
+
+    def format_LEED_slider(self):
+        """
+        Reset the bounds on the LEEM image slider
+        :return none
+        """
+        self.LEED_slider.setRange(0, self.leeddat.dat_3d.shape[2] - 1)
+
     def update_LEED_img(self, index=0):
         """
         Display LEED image by filenumber index
         :param index:
-            int pointing to position along third axis in self.leeddat.dat3d numpyndarray
+            int pointing to position along third axis in self.leeddat.dat3d numpy ndarray
         :return:
         """
 
@@ -1406,6 +1432,9 @@ class Viewer(QtGui.QWidget):
         else:
             print('Image index out of bounds - displaying last image in stack ...')
             self.LEED_img_ax.imshow(self.leeddat.dat_3d[:, :, -1], cmap=cm.Greys_r)
+
+        # format LEED_slider so that its values match with the third axis of self.leeddat.dat_3d
+        self.format_LEED_slider()
 
         if not self.Style:
             self.LEED_img_ax.set_title('LEED Image: E= {} eV'.format(LF.filenumber_to_energy(self.leeddat.elist, index)),
@@ -2534,7 +2563,8 @@ class Viewer(QtGui.QWidget):
             int value from slider representing filenumber
         :return none:
         """
-
+        if not self.hasdisplayed_leem:
+            return
         self.image_slider_value_label.setText(str(
                                     LF.filenumber_to_energy(
                                                             self.leemdat.elist,
