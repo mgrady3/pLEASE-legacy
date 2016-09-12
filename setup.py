@@ -40,7 +40,7 @@ setup(
    #           'opencv_python', 'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
     install_requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole',
                       'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
-    version='0.1.7',
+    version='0.2.0',
     description='Software for the analysis of Low Energy Electron Microscopy data',
     long_description= """
 PLEASE is a software package built for analysis of Low Energy Electron Microscopy data sets with specific emphasis on analysis of IV data sets.
