@@ -128,58 +128,8 @@ class Viewer(QtGui.QWidget):
         Setup plotting flags
         :return none:
         """
-        self.exp = None
-        self.leeddat = data.LeedData()
-        self.leemdat = data.LeemData()
-        self.has_loaded_data = False
-        self.hasplotted_leem = False
-        self.hasplotted_leed = False
-        self.hasdisplayed_leed = False
-        self.hasdisplayed_leem = False
-        self.border_color = (58/255., 83/255., 155/255.)  # unused
 
-        self.current_leed_index = 0  # index of third axis for self.leeddat.dat3d
-        self.rect_count = 0
-        self.max_leed_click = 10
-        self.rects = []
-        self.rect_coords = []
-        self.shifted_rects = []
-        self.shifted_rect_coords = []
-        self.current_selections = []
-        self.smoothed_selections = []  # staging for smoothed data
-        self.current_plotted_data = []  # store only curves currently displayed
-        self.cor_data = None  # placeholder for corrected data to be output as text
-        self.ex_back = None  # placeholder for extracted background to output as text
-        self.raw_selections = None  # placeholder for raw data to output as text
-        self.avg_back = None  # placeholder for average background curve to output as text
 
-        self.colors = sns.color_palette("Set2", 10)
-        self.smooth_colors = sns.color_palette("Set2", 10)
-
-        self.smooth_leed_plot = False
-        self.smooth_leem_plot = False
-        self.smooth_window_type = 'hanning'  # default value
-        self.smooth_window_len = 8  # default value
-        self.smooth_file_output = False
-
-        self.background = []
-        self.background_curves = []
-        self.use_avg = False
-        self.last_avg = []
-
-        self.circs = []
-        self.leem_IV_list = []
-        self.leem_IV_mask = []
-        self.click_count = 0
-        self.max_leem_click = 7  # Should be kept less than or equal to number of colors minus 1
-        self.count_energy_range = ''  # string of energy range used in plot labels
-
-        self.num_one_min = 0
-        self.hascountedminima = False
-
-        self.LEEM_rect_enebaled = False
-        self.leem_rects = []
-        self.leem_rect_count = 0
 
     def init_Plot_Axes(self):
         """
