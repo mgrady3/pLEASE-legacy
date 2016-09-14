@@ -54,7 +54,7 @@ class Viewer(QtGui.QWidget):
         :return none:
         """
         super(Viewer, self).__init__(parent)
-        self.setWindowTitle("LEED/LEEM Image Analysis in python with Qt")
+        self.setWindowTitle("PLEASE: Python Low-energy Electron Analysis SuitE")
         resolution = QtGui.QDesktopWidget().screenGeometry()
         self.max_width = resolution.width()
         self.max_height = resolution.height()
