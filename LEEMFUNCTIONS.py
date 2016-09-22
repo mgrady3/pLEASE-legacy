@@ -1,18 +1,21 @@
 import os
-import sys
 import numpy as np
 import cv2
 import multiprocessing as mp
-from math import pi, log
 from PIL import Image
-from scipy import fft, ifft
-from scipy.optimize import curve_fit
 
-
+# deprecated
 DEF_IMHEIGHT = 600
 DEF_IMWIDTH = 592
 DEF_IMHEAD = 520
 
+
+class ParseError(Exception):
+    def __init__(self, message, errors):
+        super(ParseError, self).__init__(message)
+        # TODO: implement this later ...
+        self.errors = errors
+        self.message = message
 
 def filenumber_to_energy(el, im):
     """
@@ -21,8 +24,13 @@ def filenumber_to_energy(el, im):
     :argument im: integer image file number in range 0 to self.LEEM_numfiles
     :return el[im]: energy value in single decimal format corresponding to file number im
     """
-    return el[im]
-
+    try:
+        return el[im]
+    except IndexError as e:
+        print("Error getting energy from file number ...")
+        print(e)
+        print("Returning 0 by default")
+        return 0
 
 def energy_to_filenumber(el, val):
     """
@@ -34,7 +42,7 @@ def energy_to_filenumber(el, val):
     return el.index(val)
 
 
-def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
+def process_LEEM_Data(dirname, ht=0, wd=0, bits=None, byte='L'):
     """
     read in all .dat files in current data directory
     process each .dat file into a numpy array
@@ -44,15 +52,19 @@ def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
     :argument dirname: string path to current data directory
     :param ht: integer pixel height of image
     :param wd: integer pixel width of image
+    :param bits: integer representing bit depth of image, default is 16 bit
+    :param byte: string representing byte order, 'L' for Little-Endian (Intel), 'B' for Big-Endian (Motorola)
     :return dat_arr: 3d numpy array
     """
     print('Processing Data ...')
     # progress = pb.ProgressBar(fd=sys.stdout)
     arr_list = []
-    files = [name for name in os.listdir(dirname) if name.endswith('.dat')]
+    flag = True
+    # add filter on file names to exclude hidden files beginning with a leading period
+    files = [name for name in os.listdir(dirname) if name.endswith('.dat') and not name.startswith(".")]
     files.sort()
     print('First file is {}.'.format(files[0]))
-    flag = True
+
     for fl in files:
         with open(os.path.join(dirname, fl), 'rb') as f:
             # dynamically calculate file header length
@@ -60,7 +72,7 @@ def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
                 hdln = DEF_IMHEAD
                 ht = DEF_IMHEIGHT
                 wd = DEF_IMWIDTH
-            else: hdln = len(f.read()) - (2*ht*wd)
+            else: hdln = len(f.read()) - (int(bits/8)*ht*wd)  # multiply by number of bytes per pixel
 
             if flag:
                 print('Calculated Header Length of First File: {}'.format(hdln))
@@ -69,11 +81,15 @@ def process_LEEM_Data(dirname, ht=0, wd=0, bits=None):
             f.seek(0)
 
             # Generate format string given a bit size read from YAML config file
-            if bits == 8:
-                formatstring = '<u1'  # 1 byte (8bits) per pixel
+            if bits == 8 and byte == 'L':
+                formatstring = '<u1'  # 1 byte (8 bits) per pixel
+            elif bits == 8 and byte == 'B':
+                formatstring = '>u1'
 
-            elif bits == 16:
-                formatstring = '<u2'  # 2 bytes (16 btis) per pixel
+            elif bits == 16 and byte == 'L':
+                formatstring = '<u2'  # 2 bytes (16 bits) per pixel
+            elif bits == 16 and byte == 'B':
+                formatstring = '>u2'
 
             elif bits is None:
                 formatstring = '<u2'  # default to 16 bit images
@@ -239,11 +255,12 @@ def crop_images(data, indices):
                 indices[0][1]:indices[1][1]+1]
 
 
-def get_img_array(path, ext=None):
+def get_img_array(path, ext=None, swap=False):
     """
     Generate a 3d numpy array of gray-scale image files
     :param path: path to image files
     :param ext: file extension, default None for raw (.dat) data (not yet implemented)
+    :param swap: boolean to swap the byte order of the array; default False
     :return dat_3d: 3d numpy array (height, width, image number)
     """
     if ext is None:
@@ -275,7 +292,10 @@ def get_img_array(path, ext=None):
         arr_list = []
         for fl in files:
             arr_list.append(read_img(os.path.join(path, fl)))
-        return np.dstack(arr_list)
+        if swap:
+            return np.dstack(arr_list).byteswap()
+        else:
+            return np.dstack(arr_list)
 
 
 def read_img(path):
@@ -287,14 +307,146 @@ def read_img(path):
         :return:
         """
         # print 'opening image %s' % path
+
         im = Image.open(path)
+
+        # Use the greyscale transformation as defined in the Python Image Library
+        # When converting from a colour image to black and white, the library uses the
+        # ITU - R 601 - 2 luma transform:
+        # L = R * 299 / 1000 + G * 587 / 1000 + B * 114 / 1000
+
         im = im.convert('L')
 
         pixels = list(im.getdata())
         w, h = im.size
         # generate list of lists of pixel values then convert to numpy array
         pixels = [pixels[i*w:(i+1)*w] for i in range(h)]
-        return np.array(pixels)
+
+        # try to determine optimal numpy data type
+        m = max(max(pixels))
+        if 0 < m <= 255:
+            typ = np.uint8
+        elif 255 < m <= 65535:
+            typ = np.uint16
+        elif 65535 < m <= 4294967295:
+            typ = np.uint32
+        else:
+            typ = np.uint64
+
+        try:
+            return np.array(pixels).astype(typ)
+        except TypeError as e:
+            print("Error reading image into numpy array")
+            print("Max value stored exceeds that of 64 bit integer")
+            raise e
+
+
+def parse_tiff_header(img, w, h, byte_depth):
+    """
+    try to find byte order in tiff header info
+    :param img: string path to file to examine
+    :param w: img width
+    :param h: imh height
+    :param byte_depth: number of bits per pixel
+    :return: string corresponding to Experiment YAML settings for byte order: 'L' or 'B' or None if error
+    """
+    header_data = None
+    header = None
+    try:
+        with open(img, 'rb') as f:
+            header = len(f.read()) - byte_depth*w*h
+            if header < 0:
+                raise ParseError(message="Incorrect value calculated for header length; \
+                                          Check for correct Image Width, Height and Bit Depth.", errors=None)
+
+            f.seek(0)
+            header_data = f.read()[0:header+1]
+            f.seek(0)
+            data = f.read()[header:]
+
+    except FileNotFoundError:
+        print("Error: File {0} not found in current directory.".format(img))
+
+    if not header_data:
+        raise ParseError(message="No Header Information Found; Check for correct Image Width, Height and Bit Depth", errors=None)
+    # TODO: the decoding of bytes using UTF-8 could be troublesome in the future ...
+    # Perhaps its best here to have some sort of User configurable data encoding setting
+    # For now that is beyond the scope of the current development
+    if len(header_data) >= 2:
+        byte_order = header_data[0:2]
+        if byte_order.decode("UTF-8") == "MM":
+            # in py2.7 'MM'.decode("UTF-8") returns u'MM' which compares True to 'MM'
+            # in py3, byte_order will be read as b'MM' which needs to be decoded before comparison
+            return 'B'
+        elif byte_order.decode("UTF-8") == "II":
+            # in py2.7 'II'.decode("UTF-8") returns u'MM' which compares True to 'II'
+            # in py3, byte_order will be read as b'MM' which needs to be decoded before comparison
+            return 'L'
+        else:
+            raise ParseError(message="Unknown byte order in first two bytes of TIFF file.", errors={byte_order: byte_order})
+
+    else:
+        raise ParseError(message="Header Length too short; Need at least two bytes to read correct byte order.", errors=None)
+
+
+def gen_dat_files(dirname=None, outdirname=None, ext=None,
+                  w=None, h=None, byte_depth=None):
+    """
+    Given a directory with image files, output raw binary files with no header
+    :param dirname: string path to directory containing image files
+    :param outdirname: string path to directory to output raw .dat files
+    :param w: img width
+    :param h: imh height
+    :param byte_depth: number of bits per pixel
+    :param ext:
+    :return:
+    """
+    if dirname is None or outdirname is None or ext is None or w is None or h is None or byte_depth is None:
+        print("Error: required parameters are input directory, output directory, and file extension including . , \
+              image width, image height, and image byte_depth.")
+        return
+    print('Searching for files in {0} ...'.format(dirname))
+    files = [name for name in os.listdir(dirname) if name.endswith(ext)]
+
+    if not files:
+        print("Error: no files found with file extension {0}".format(ext))
+        return
+
+    print('Found {0} files to process ...'.format(len(files)))
+
+    if ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
+        try:
+            print('Parsing file {0}'.format(os.path.join(dirname, files[0])))
+            byte_order = parse_tiff_header(os.path.join(dirname, files[0]), w, h, byte_depth)
+        except ParseError as e:
+            print("Failed to parse tiff header; defaulting to big endian bye order")
+            print(e.message)
+            print(e.errors)
+            byte_order = 'B'  # default to big endian
+        except FileNotFoundError as ef:
+            print(ef)  # TODO: figure out whats best practice here ...
+            byte_order = 'B'  # default to big endian
+    else:
+        # PNG and JPEG always use Big Endian
+        byte_order = 'B'  # default to big endian
+
+    # swap to numpy syntax
+    if byte_order == 'L':
+        byte_order = '<'
+    elif byte_order == 'B':
+        byte_order = '>'
+
+    for file in files:
+        with open(os.path.join(dirname, file), 'rb') as f:
+            header = len(f.read()) - byte_depth * w * h
+            f.seek(0)
+            # generate numpy friendly data format string: ex. '<u2' = little endian, unsigned integer, 2 bytes per pixel
+            fmtstr = byte_order + 'u' + str(byte_depth)
+            data = np.fromstring(f.read()[header:], fmtstr).reshape((h,w))  # strip header information
+            with open(os.path.join(outdirname, file.split('.')[0]+'.dat'), 'wb') as o:
+                data.tofile(o)  # store image data as raw binary file
+    print("Done outputting dat files ...")
+    return
 
 
 def parse_dir(dirname):
@@ -354,6 +506,9 @@ def find_local_maximum(window, radius=25):
 
 def count_layers_new(data, ecut):
         '''
+        Currently set to use multiprocessing.
+        Note this will not work well with the PyQt Gui
+        Alternate methods need to be used to parallelize this code for use in the main GUI
 
         :param data: 3d numpy array of smooth data cut to specific data range
         :param ecut: 1d list of energy values cut to specific data range

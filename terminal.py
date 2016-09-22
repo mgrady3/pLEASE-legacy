@@ -9,7 +9,6 @@ the Terminal or Python Interpreter.
 Maxwell Grady 2015
 """
 import sys
-
 # start testing PyQt5
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -69,17 +68,17 @@ class ErrorConsole(QtWidgets.QWidget):
             # light style
             self.setStyleSheet('background-color: rgba(253, 246, 227, 200)')
             self.textEdit.setStyleSheet("QTextEdit {color: black}")
-        
+
         # connect custom signal to pre-defined slot self.set_message
         self.stream = CustomStream()
         self.stream.message.connect(self.set_message)
-        
+
         # re-route sys.stdout and sys.stderr
-        
+
         sys.stdout = self.stream
         sys.stderr = self.stream
         self.show()
-        
+
     def closeEvent(self, event):
         """
         Override closeEvent to ensure sys.stdout and sys.stderr
@@ -103,5 +102,5 @@ class ErrorConsole(QtWidgets.QWidget):
         :return none:
         """
         # display received message in plaintext at bottom of widget
-        self.textEdit.moveCursor(QtWidgets.QTextCursor.End)
+        self.textEdit.moveCursor(QtGui.QTextCursor.End)
         self.textEdit.insertPlainText(message)
