@@ -39,6 +39,11 @@ if QtCore.QT_VERSION >= 0x50501:
     old_excepthook = sys.excepthook
     sys.excepthook = custom_excepthook
 
+# Not working ...
+# Mac MenuBar Workaround
+# if sys.platform == 'darwin':
+#   QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_DontUseNativeMenuBar, on=True)
+
 
 def main():
     """

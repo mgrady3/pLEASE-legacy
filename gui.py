@@ -39,7 +39,7 @@ from matplotlib import colors as clrs
 from scipy.stats import linregress as lreg
 
 # Start intial testing of updating to pyqt5
-from PyQt5 import QtWidgets, QtCore, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
@@ -451,12 +451,15 @@ class Viewer(QtWidgets.QWidget):
         :return none:
         """
         # Removed for PyQt5
-        """
-        if sys.platform == 'darwin':
-            QtWidgets.qt_mac_set_native_menubar(False)
-        """
+        # if sys.platform == 'darwin':
+        #    QtGui.qt_mac_set_native_menubar(False)
 
-        self.menubar = QtWidgets.QMenuBar()
+        self.menubar = QtWidgets.QMenuBar(parent=None)
+
+        #  This makes the menu bar disappear; not the desired result
+        # if sys.platform == 'darwin':
+        #    self.menubar.setNativeMenuBar(False)
+
         self.menubar.setStyleSheet(self.styles['menu'])
 
         # TODO: Reorganize all menu shortcuts
