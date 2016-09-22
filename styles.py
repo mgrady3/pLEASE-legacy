@@ -69,8 +69,21 @@ class PyLeemStyles(object):
         }
 
         """
-        keys = ['tab', 'can', 'group', 'menu', 'but']
-        values = [tab_style, can_style, group_style, menu_style, but_style]
+        widget_style = """
+            QWidget {
+            color: #eff0f1;
+            background-color: #242323;
+            selection-background-color:#3daee9;
+            selection-color: #eff0f1;
+            background-clip: border;
+            border-image: none;
+            border: 0px transparent black;
+            outline: 0;
+        }
+        """
+
+        keys = ['tab', 'can', 'group', 'menu', 'but', 'widget']
+        values = [tab_style, can_style, group_style, menu_style, but_style, widget_style]
 
         self.css_dict = dict(zip(keys, values))
 

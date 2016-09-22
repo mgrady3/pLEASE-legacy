@@ -79,6 +79,7 @@ class Viewer(QtGui.QWidget):
             self.init_Console()
 
         # final action
+        self.setStyleSheet(self.styles['widget'])
         self.show()
 
     # Setup Class Property Accessor/Setter Methods:
@@ -181,47 +182,52 @@ class Viewer(QtGui.QWidget):
         self.leem_rects = []
         self.leem_rect_count = 0
 
-
-
-
     def init_Plot_Axes(self):
         """
         Setup embedded matplotlib plotting axes
         :return none:
         """
         # Format LEED IV Axis
-        self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-        self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
-        self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
+        self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18)
+        self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
+        self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18)
         if self.Style:
-            self.LEED_img_ax.set_title("LEED Image", fontsize=20, color='white')
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_img_ax.set_title("LEED Image", fontsize=18, color='white')
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18, color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         rect = self.LEED_IV_fig.patch
         if not self.Style:
             rect.set_facecolor((189/255., 195/255., 199/255.))
-        else: rect.set_facecolor((68/255., 67/255., 67/255.))
+        else:
+            # Old 
+            # rect.set_facecolor((68/255., 67/255., 67/255.))
+            # New Darker
+            rect.set_facecolor((36/255., 35/255., 35/255.))
+
 
         # Format LEEM IV Axis
         if not self.Style:
-            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20)
-            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
-            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=18)
+            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=18)
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=18)
             self.LEEM_IV_ax.tick_params(labelcolor='b', top='off', right='off')
         else:
-            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20, color='white')
-            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='white')
-            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='white')
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=18, color='white')
+            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='white')
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=18, color='white')
             self.LEEM_IV_ax.tick_params(labelcolor='w', top='off', right='off')
 
         rect = self.LEEM_fig.patch
         # 228, 241, 254
         if not self.style:
             rect.set_facecolor((189/255., 195/255., 199/255.))
-        else: rect.set_facecolor((68/255., 67/255., 67/255.))
-        # rect.set_facecolor((236/255., 236/255., 236/255.))  # alter the background color
+        else: 
+            # Old 
+            # rect.set_facecolor((68/255., 67/255., 67/255.))
+            # New Darker
+            rect.set_facecolor((36/255., 35/255., 35/255.))
 
         plt.style.use('fivethirtyeight')
 
@@ -240,13 +246,13 @@ class Viewer(QtGui.QWidget):
         self.LEED_img_ax.get_xaxis().set_visible(False)
         self.LEED_img_ax.get_yaxis().set_visible(False)
         if not self.Style:
-            self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=20)
-        else: self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=20, color='white')
+            self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=18)
+        else: self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=18, color='white')
 
         # Format LEEM Image Axis
         if not self.Style:
-            self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=20)
-        else: self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=20, color='white')
+            self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=18)
+        else: self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=18, color='white')
 
         [self.LEEM_ax.spines[k].set_visible(True) for k in ['top', 'bottom', 'left', 'right']]
         self.LEEM_ax.get_xaxis().set_visible(False)
@@ -293,8 +299,11 @@ class Viewer(QtGui.QWidget):
         One Tab for Settings/Config
         :return:
         """
+
         self.tabs = QtGui.QTabWidget()
         self.tabs.setStyleSheet(self.styles['tab'])
+        # self.configTabs = QtGui.QTabWidget()
+        # self.configTabs.setStyleSheet(self.styles['tab'])
 
         self.LEED_Tab = QtGui.QWidget()
         self.LEEM_Tab = QtGui.QWidget()
@@ -302,6 +311,10 @@ class Viewer(QtGui.QWidget):
         self.tabs.addTab(self.LEED_Tab, "LEED-IV")
         self.tabs.addTab(self.LEEM_Tab, "LEEM-IV")
         self.tabs.addTab(self.Config_Tab, "CONFIG")
+
+        # self.tabBarHBox.addWidget(self.tabs)
+        # self.tabBarHBox.addStretch()
+        # self.tabBarHBox.addWidget(self.configTabs)
 
         # call third-level init functions for each tab individually
         self.init_LEED_Tab()
@@ -355,7 +368,7 @@ class Viewer(QtGui.QWidget):
         Setup GUI items for LEEM analysis
         :return none:
         """
-        self.LEEM_fig, (self.LEEM_ax, self.LEEM_IV_ax) = plt.subplots(1, 2, figsize=(6,6))
+        self.LEEM_fig, (self.LEEM_ax, self.LEEM_IV_ax) = plt.subplots(1, 2, figsize=(6,6), dpi=100)
         self.LEEM_canvas = FigureCanvas(self.LEEM_fig)
         self.LEEM_canvas.setSizePolicy(QtGui.QSizePolicy.Expanding,
                                        QtGui.QSizePolicy.Expanding)
@@ -429,7 +442,7 @@ class Viewer(QtGui.QWidget):
         for b in buts:
             config_Tab_group_button_box.addWidget(b)
             config_Tab_group_button_box.addStretch(1)
-        config_Tab_groupbox.setStyleSheet(self.styles['group'])
+        # config_Tab_groupbox.setStyleSheet(self.styles['group'])
         config_Tab_groupbox.setLayout(config_Tab_group_button_box)
 
         config_Tab_Vbox.addWidget(config_Tab_groupbox)
@@ -643,6 +656,7 @@ class Viewer(QtGui.QWidget):
         vbox1 = QtGui.QVBoxLayout()
         vbox1.addWidget(self.menubar)
         vbox1.addWidget(self.tabs)
+        # vbox1.addLayout(self.tabBarHBox)
         self.setLayout(vbox1)
 
     def closeEvent(self, *args):
@@ -695,7 +709,7 @@ class Viewer(QtGui.QWidget):
         Called once on app open
         :return none:
         """
-        print("Welcome to python Low-energy Electron Analyis SuitE: pLEASE")
+        print("Welcome to Python Low-energy Electron Analyis SuitE: PLEASE")
         print("Begin by loading a LEED or LEEM data set")
         return
 
@@ -1077,14 +1091,30 @@ class Viewer(QtGui.QWidget):
         # The user may select a directory they know to contain a .yaml file but no files are shown
         # one possible work around may be to use options=QtGui.QFileDialog.DontUseNativeDialog
         # but this changes the entire look and feel of the window. Thus is not an ideal solution
-        new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment Config File"))
-        if new_dir == '':
-                        print('Loading Canceled ...')
-                        return
+
+        # Old way:
+        # new_dir = str(QtGui.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment Config File"))
+        # if new_dir == '':
+        #                print('Loading Canceled ...')
+        #                return
         # get .yaml file from selected dir
-        files = [name for name in os.listdir(new_dir) if (name.endswith('.yaml') or name.endswith('.yml'))]
-        if files:
-            config = files[0]
+        # files = [name for name in os.listdir(new_dir) if (name.endswith('.yaml') or name.endswith('.yml'))]
+        # if files:
+        #    config = files[0]
+        # else:
+        #    print('No Config file found. Please Select a directory with a .yaml file')
+        #    print('Loading Canceled ...')
+        #    return
+
+        # New way:
+        yamlFilter = "YAML (*.yaml);;YML (*.yml);;All Files (*)"
+        homeDir = os.getenv("HOME")
+        fileName = QtGui.QFileDialog.getOpenFileName(parent=None,
+                                                    caption="Select YAML Experiment Config File",
+                                                    directory=homeDir,
+                                                    filter=yamlFilter)
+        if fileName:
+            config = fileName  # string path to .yaml or .yml config file
         else:
             print('No Config file found. Please Select a directory with a .yaml file')
             print('Loading Canceled ...')
@@ -1095,8 +1125,8 @@ class Viewer(QtGui.QWidget):
             self.prev_exp = self.exp
 
         self.exp = Experiment()
-        path_to_config = os.path.join(new_dir, config)
-        self.exp.fromFile(path_to_config)
+        # path_to_config = os.path.join(new_dir, config)
+        self.exp.fromFile(config)
         print("New Data Path loaded from file: {}".format(self.exp.path))
         print("Loaded the following settings:")
         yaml.dump(self.exp.loaded_settings, stream=self.message_console.stream)
@@ -1127,17 +1157,17 @@ class Viewer(QtGui.QWidget):
         self.LEEM_IV_ax.clear()
         # Make sure labels are correctly redrawn
         if self.Style:
-            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20, color='white')
-            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='white')
-            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='white')
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=18, color='white')
+            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='white')
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=18, color='white')
             self.LEEM_IV_ax.tick_params(labelcolor='w', top='off', right='off')
-            self.LEEM_ax.set_title("LEEM Image", fontsize=20, color='white')
+            self.LEEM_ax.set_title("LEEM Image", fontsize=18, color='white')
         else:
-            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20)
-            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
-            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=18)
+            self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=18)
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=18)
             self.LEEM_IV_ax.tick_params(top='off', right='off')
-            self.LEEM_ax.set_title("LEEM Image", fontsize=20)
+            self.LEEM_ax.set_title("LEEM Image", fontsize=18)
 
 
         self.leemdat.data_dir = str(self.exp.path)  # manually cast from QString to String
@@ -1254,15 +1284,15 @@ class Viewer(QtGui.QWidget):
                 print('Required parameters: data path and data extension.')
                 print('Valid data extenstions: \'.tif\', \'.png\', \'.jpg\'')
         # Ensure labels are redrawn correctly
-        self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-        self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
-        self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
-        self.LEED_img_ax.set_title("LEED Image", fontsize=20)
+        self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18)
+        self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
+        self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18)
+        self.LEED_img_ax.set_title("LEED Image", fontsize=18)
         if self.Style:
-            self.LEED_img_ax.set_title("LEED Image", fontsize=20, color='white')
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_img_ax.set_title("LEED Image", fontsize=18, color='white')
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18, color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         # Ensure LEED Slider is updated to fit self.leeddat.dat3d
         self.format_LEED_slider()
@@ -1441,10 +1471,10 @@ class Viewer(QtGui.QWidget):
 
         if not self.Style:
             self.LEED_img_ax.set_title('LEED Image: E= {} eV'.format(LF.filenumber_to_energy(self.leeddat.elist, index)),
-                                   fontsize=20)
+                                   fontsize=18)
         else:
             self.LEED_img_ax.set_title('LEED Image: E= {} eV'.format(LF.filenumber_to_energy(self.leeddat.elist, index)),
-                                   fontsize=20, color='white')
+                                   fontsize=18, color='white')
 
         self.LEED_IV_canvas.draw()
         self.has_loaded_data = True
@@ -1660,14 +1690,14 @@ class Viewer(QtGui.QWidget):
         self.hasplotted_leed = False
 
         if self.Style:
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18, color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         else:
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18)
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
 
         self.LEED_IV_canvas.draw()
@@ -1682,14 +1712,14 @@ class Viewer(QtGui.QWidget):
         print('Clearing Plots ...')
         self.LEED_IV_ax.clear()
         if self.Style:
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18, color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         else:
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18)
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         self.LEED_IV_canvas.draw()
 
@@ -1770,13 +1800,13 @@ class Viewer(QtGui.QWidget):
         self.LEED_IV_ax.plot(self.leeddat.elist, average_int, color=self.colors[-1])
         if self.Style:
             self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves', color='w')
-            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='w')
-            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='w')
+            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='w')
+            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=18, color='w')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         else:
             self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
-            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
-            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
+            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=18)
+            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=18)
             self.LEED_IV_ax.tick_params(labelcolor='b', top='off', right='off')
         print('Plotting Average LEED_I(V) ...')
         self.LEED_IV_canvas.draw()
@@ -1915,9 +1945,9 @@ class Viewer(QtGui.QWidget):
         rect = self.bfig.patch
         if self.Style:
             rect.set_facecolor((68 / 255., 67 / 255., 67 / 255.))
-            self.bplot_ax.set_title("Average Background I(V)", fontsize=20, color='w')
-            self.bplot_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.bplot_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.bplot_ax.set_title("Average Background I(V)", fontsize=18, color='w')
+            self.bplot_ax.set_ylabel('Intensity [arb. units]', fontsize=18, color='white')
+            self.bplot_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
             self.bplot_ax.xaxis.label.set_color('w')
             self.bplot_ax.yaxis.label.set_color('w')
         self.bplot_ax.plot(self.leeddat.elist, self.manual_background)
@@ -1952,13 +1982,13 @@ class Viewer(QtGui.QWidget):
                 self.LEED_IV_ax.plot(self.leeddat.elist, curve[0], color=curve[1])
 
         if self.Style:
-            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=20,color='white')
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=18,color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
         else:
-            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=20)
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=18)
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
         self.LEED_IV_canvas.draw()
 
     def subtract_background(self):
@@ -2595,10 +2625,10 @@ class Viewer(QtGui.QWidget):
         self.leem_IV_mask = []
         if not self.Style:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist,
-                                                                                   self.leemdat.curimg)), fontsize=16)
+                                                                                   self.leemdat.curimg)), fontsize=18)
         else:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist,
-                                                                                   self.leemdat.curimg)), fontsize=16, color='white')
+                                                                                   self.leemdat.curimg)), fontsize=18, color='white')
         self.LEEM_canvas.draw()
 
     def show_LEEM_Data(self, data, imgnum):
@@ -2614,9 +2644,9 @@ class Viewer(QtGui.QWidget):
         img = data[0:, 0:, self.leemdat.curimg]
 
         if self.Style:
-            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16, color='white')
+            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=18, color='white')
         else:
-            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16)
+            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=18)
 
         self.LEEM_ax.imshow(img, cmap=cm.Greys_r)
         self.LEEM_canvas.draw()
@@ -2932,14 +2962,14 @@ class Viewer(QtGui.QWidget):
 
             plt.grid(False)
             if self._Style:
-                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
-                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
-                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
+                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=18, color='w')
+                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=18, color='w')
+                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='w')
                 self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
             else:
-                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20)
-                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20)
-                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20)
+                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=18)
+                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=18)
+                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=18)
                 self.leem_rect_iv_ax.tick_params(labelcolor='b', top='off', right='off')
             self.leem_rect_plot_window.show()
             self.leem_rect_canvas.draw()
@@ -2967,14 +2997,14 @@ class Viewer(QtGui.QWidget):
             ilist = [img.sum() for img in np.rollaxis(data_slice, 2)]
             self.leem_rect_iv_ax.plot(self.leemdat.elist, LF.smooth(ilist), color=self.colors[idx + 1])
         if self._Style:
-            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
-            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
-            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
+            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=18, color='w')
+            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=18, color='w')
+            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='w')
             self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
         else:
-            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20)
-            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20)
-            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20)
+            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=18)
+            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=18)
+            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=18)
             self.leem_rect_iv_ax.tick_params(labelcolor='b', top='off', right='off')
         self.leem_rect_canvas.draw()
 
@@ -3068,13 +3098,13 @@ class Viewer(QtGui.QWidget):
         for idx, tup in enumerate(self.leem_IV_list):
             ax.plot(tup[0], LF.smooth(tup[1], self.smooth_window_len, self.smooth_window_type), color=self.colors[tup[4]])
         if self.Style:
-            ax.set_title("LEEM I(V)-Smoothed", fontsize=16, color='w')
-            ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='w')
-            ax.set_xlabel("Energy (eV)", fontsize=16, color='w')
+            ax.set_title("LEEM I(V)-Smoothed", fontsize=18, color='w')
+            ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='w')
+            ax.set_xlabel("Energy (eV)", fontsize=18, color='w')
         else:
-            ax.set_title("LEEM I(V)-Smoothed", fontsize=16)
-            ax.set_ylabel("Intensity (arb. units)", fontsize=16)
-            ax.set_xlabel("Energy (eV)", fontsize=16)
+            ax.set_title("LEEM I(V)-Smoothed", fontsize=18)
+            ax.set_ylabel("Intensity (arb. units)", fontsize=18)
+            ax.set_xlabel("Energy (eV)", fontsize=18)
         can.draw()
 
     def count_layers_old(self):

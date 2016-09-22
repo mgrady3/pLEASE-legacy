@@ -63,6 +63,7 @@ def main():
         # Note:
         # If qdarkstyle were to drop support for PyQt in future versions this line would break
         app.setStyleSheet(qdarkstyle.load_stylesheet(pyside=False))
+        pass
     sys.exit(app.exec_())
 
 
