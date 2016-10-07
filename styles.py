@@ -69,10 +69,11 @@ class PyLeemStyles(object):
         }
 
         """
+        # color: #eff0f1;
         widget_style = """
             QWidget {
             color: #eff0f1;
-            background-color: #242323;
+            background-color: #2b2b2b;
             selection-background-color:#3daee9;
             selection-color: #eff0f1;
             background-clip: border;

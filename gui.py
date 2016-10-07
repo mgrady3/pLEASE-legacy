@@ -187,6 +187,10 @@ class Viewer(QtGui.QWidget):
         Setup embedded matplotlib plotting axes
         :return none:
         """
+        # colors
+        darker_grey = (43/255., 43/255., 43/255.)  # main widget backgorund color
+        lighter_grey = (55/255., 55/255., 55/255.)  # Plot background color
+
         # Format LEED IV Axis
         self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18)
         self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
@@ -204,7 +208,8 @@ class Viewer(QtGui.QWidget):
             # Old 
             # rect.set_facecolor((68/255., 67/255., 67/255.))
             # New Darker
-            rect.set_facecolor((36/255., 35/255., 35/255.))
+            # rect.set_facecolor((36/255., 35/255., 35/255.))
+            rect.set_facecolor(lighter_grey)
 
 
         # Format LEEM IV Axis
@@ -227,7 +232,8 @@ class Viewer(QtGui.QWidget):
             # Old 
             # rect.set_facecolor((68/255., 67/255., 67/255.))
             # New Darker
-            rect.set_facecolor((36/255., 35/255., 35/255.))
+            # rect.set_facecolor((36/255., 35/255., 35/255.))
+            rect.set_facecolor(lighter_grey)
 
         plt.style.use('fivethirtyeight')
 
@@ -709,8 +715,14 @@ class Viewer(QtGui.QWidget):
         Called once on app open
         :return none:
         """
-        print("Welcome to Python Low-energy Electron Analyis SuitE: PLEASE")
+        print("Welcome to the Python Low-energy Electron Analyis SuitE: PLEASE")
+        print("Author: Maxwell Grady - University of New Hampshire")
+        print("Licensed under GPLv3")
+        print("Visit http://www.github.com/mgrady3/pLEASE/ for more details.")
+        print("#" * 63)
+        print()
         print("Begin by loading a LEED or LEEM data set")
+
         return
 
     @staticmethod

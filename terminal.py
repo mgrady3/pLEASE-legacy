@@ -58,6 +58,13 @@ class ErrorConsole(QtGui.QWidget):
         self.setLayout(vbox)
 
         # style formatting
+
+        font = QtGui.QFont()
+        font.setFamily('Menlo')
+        font.setFixedPitch(True)
+        font.setPointSize(16)
+        self.textEdit.setFont(font)
+
         if not self._light:
             # dark style
             # use rgba for the QWidget background. This allows setting alpha channel transparency
