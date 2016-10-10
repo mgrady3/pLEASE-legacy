@@ -9,6 +9,7 @@ import data
 import terminal
 import LEEMFUNCTIONS as LF
 import styles as pls
+from config_widget import ConfigWidget
 from experiment import Experiment
 from ipyembed import embed_ipy
 from qthreads import WorkerThread
@@ -901,6 +902,13 @@ class Viewer(QtGui.QWidget):
     # All Necessary Parameters are loaded from YAML configuration file
     # Merged into master: 4/19/16
     ###########################################################################################
+
+    def gen_config_file(self):
+        """
+
+        :return:
+        """
+
 
     def generate_config(self):
         """
