@@ -122,6 +122,13 @@ class ConfigWidget(QtGui.QWidget):
         self.im_hbox.addWidget(self.im_bits_menu)
         self.im_hbox.addWidget(self.im_bits_label)
 
+        self.im_byte_order_menu = QtGui.QComboBox()
+        self.im_byte_order_menu.addItem("Little-Endian (Intel)")
+        self.im_byte_order_menu.addItem("Big-Endian (Motorola)")
+        self.im_byte_order_label = QtGui.QLabel("Select Byte-Order for raw data")
+        self.im_hbox.addWidget(self.im_byte_order_menu)
+        self.im_hbox.addWidget(self.im_byte_order_label)
+
         self.main_vbox.addLayout(self.im_hbox)
 
         # Energy Params
@@ -185,9 +192,11 @@ class ConfigWidget(QtGui.QWidget):
         if str(self.data_type_menu.currentText()) == 'Image':
             self.image_type_menu.setEnabled(True)
             self.im_bits_menu.setEnabled(False)
+            self.im_byte_order_menu.setEnabled(False)
         else:
             self.image_type_menu.setEnabled(False)
             self.im_bits_menu.setEnabled(True)
+            self.im_byte_order_menu.setEnabled(True)
 
     def validate(self):
         """
@@ -206,6 +215,11 @@ class ConfigWidget(QtGui.QWidget):
         else:
             # add file extension
             output_name += '.yaml'
+
+        output_dir = str(self.output_dir)
+        if output_dir == '':
+            print("Error: Invalid Output Dir selected ...")
+            return
 
         # Exp type validation:
         exp_type = str(self.exp_type_menu.currentText())
@@ -263,8 +277,15 @@ class ConfigWidget(QtGui.QWidget):
             if im_bits not in [8, 16]:
                 print("Error: Invalid image bit depth. Only 8-bit and 16-bit images supported")
                 return
+
+            im_byte_order = str(self.im_byte_order_menu.currentText())
+            if im_byte_order not in ["Little-Endian (Intel)", "Big-Endian (Motorola)"]:
+                # shouldn't be possible
+                print("Error: Invalid Byte Order Specified")
+                return
         else:
             im_bits = None
+            im_byte_order = None
 
         # Energy Param validation:
         start_e = str(self.min_energy_field.text())
@@ -303,6 +324,7 @@ class ConfigWidget(QtGui.QWidget):
             return
 
         output_params = {"Output File Name": output_name,
+                         "Output Dir": output_dir,
                          "Data Dir": data_dir,
                          "Exp Type": exp_type,
                          "Data Type": data_type,
@@ -310,10 +332,11 @@ class ConfigWidget(QtGui.QWidget):
                          "Width": im_width,
                          "Height": im_height,
                          "Bits": im_bits,
+                         "Byte Order": im_byte_order,
                          "Min Energy": start_e,
                          "Max Energy": end_e,
                          "Step Energy": step_e}
-        print("emitting Output Params as SIGNAL ...")
+        # print("emitting Output Params as SIGNAL ...")
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), output_params)
         self.do_output = True
         self.close_widget()

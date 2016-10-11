@@ -918,8 +918,67 @@ class Viewer(QtGui.QWidget):
 
     def output_config(self):
         if self.config_settings:
-            print("Outputting config settings ...")
-            print(self.config_settings)
+            print("Outputting config settings to file  ...")
+
+            tab = "    "  # translate '\t' = 4 spaces
+
+            # Required params
+            ddir = self.config_settings["Data Dir"]
+            out_dir = self.config_settings["Output Dir"]
+            file_name = self.config_settings["Output File Name"]
+            exp_type = self.config_settings["Exp Type"]
+            data_type = self.config_settings["Data Type"]
+            im_wd = self.config_settings["Width"]
+            im_ht = self.config_settings["Height"]
+            min_energy = self.config_settings["Min Energy"]
+            max_energy = self.config_settings["Max Energy"]
+            step_energy = self.config_settings["Step Energy"]
+
+            # Additional params
+            if data_type == 'Image':
+                image_type = self.config_settings["Image Type"]
+                if image_type == 'TIFF':
+                    file_ext = '.tiff'
+                elif image_type == 'PNG':
+                    file_ext = '.png'
+                else:
+                    print("Error: Unknown Image Type - Can't set file extension")
+                    return
+            elif data_type == 'Raw':
+                file_ext = '.dat'
+                bit_size = self.config_settings["Bits"]
+                byte_order = self.config_settings["Byte Order"]
+                if byte_order == "Big-Endian (Motorola)":
+                    byte_order = 'B'
+                else:
+                    byte_order = 'L'
+
+            else:
+                print("Error: Unknown Data Type - Can't set file extension")
+                return
+
+            with open(os.path.join(out_dir, file_name), 'w') as f:
+                f.write("Experiment:\n")
+                f.write("# Required Parameters\n")
+                f.write(tab + "Type:  {0}\n".format("\"" + exp_type + "\""))
+                f.write(tab + "Name:  {0}\n".format("\"" + file_name + "\""))
+                f.write(tab + "Data Type:  {0}\n".format("\"" + data_type + "\""))
+                f.write(tab + "File Format:  {0}\n".format("\"" + file_ext + "\""))
+                f.write(tab + "Image Parameters:\n")
+                f.write(tab + tab + "Height:  {0}\n".format(str(im_ht)))
+                f.write(tab + tab + "Width:  {0}\n".format(str(im_wd)))
+                f.write(tab + "Energy Parameters:\n")
+                f.write(tab + tab + "Min:  {0}\n".format(str(min_energy)))
+                f.write(tab + tab + "Max:  {0}\n".format(str(max_energy)))
+                f.write(tab + tab + "Step:  {0}\n".format(str(step_energy)))
+                f.write(tab + "Data Path:  \"{0}\"\n".format(str(ddir)))
+                f.write("\n")
+                f.write("# Additional Parameters\n")
+                if data_type == "Raw":
+                    f.write(tab + "Bit Size:  {0}\n".format(str(bit_size)))
+                    f.write(tab + "Byte Order:  {0}".format(str(byte_order)))
+            print("Experiment YAML config file written to {0}".format(str(os.path.join(ddir, file_name))))
+
 
     def generate_config(self):
         """
@@ -1005,7 +1064,7 @@ class Viewer(QtGui.QWidget):
         entry = id.intValue()
 
         if not ok:
-            print("Loading Raw Data Canceled ...")
+            print("Generation of Config File canceled ...")
             return
         else:
             im_ht = entry
@@ -1021,7 +1080,7 @@ class Viewer(QtGui.QWidget):
         entry = id.intValue()
 
         if not ok:
-            print("Loading Raw Data Canceled ...")
+            print("Generation of Config File canceled ...")
             return
         else:
             im_wd = entry
@@ -1031,7 +1090,7 @@ class Viewer(QtGui.QWidget):
                                                      "Enter a decimal for Starting Energy in eV",
                                                      value=20.5, min=-500, max=5000)
         if not ok:
-            print('New Energy settings canceled ...')
+            print("Generation of Config File canceled ...")
             return
         min_energy = float(entry)
 
@@ -1040,7 +1099,7 @@ class Viewer(QtGui.QWidget):
                                                  "Enter a decimal for Final Energy > Start Energy",
                                                  value=150, min=-500, max=5000)
         if not ok:
-            print('New Energy settings canceled ...')
+            print("Generation of Config File canceled ...")
             return
 
         max_energy = float(entry)
