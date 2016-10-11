@@ -496,7 +496,7 @@ class Viewer(QtGui.QWidget):
         fileMenu.addAction(outputLEEDAction)
 
         genConfigAction = QtGui.QAction("Generate Experiment Config File", self)
-        genConfigAction.triggered.connect(self.generate_config)
+        genConfigAction.triggered.connect(self.gen_config_file)
         fileMenu.addAction(genConfigAction)
 
         exitAction = QtGui.QAction('Quit', self)
@@ -908,7 +908,18 @@ class Viewer(QtGui.QWidget):
 
         :return:
         """
+        self.cw = ConfigWidget()
+        self.connect(self.cw, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_config_settings)
+        self.connect(self.cw, QtCore.SIGNAL('close'), self.output_config)
 
+
+    def retrieve_config_settings(self, settings):
+        self.config_settings = settings
+
+    def output_config(self):
+        if self.config_settings:
+            print("Outputting config settings ...")
+            print(self.config_settings)
 
     def generate_config(self):
         """

@@ -6,6 +6,7 @@ class ConfigWidget(QtGui.QWidget):
     def __init__(self, parent=None):
         super(QtGui.QWidget, self).__init__(parent)
 
+        self.do_output = False
         self.data_dir = ''
 
         self.setWindowTitle("Enter settings for Experiment YAML File")
@@ -314,6 +315,12 @@ class ConfigWidget(QtGui.QWidget):
                          "Step Energy": step_e}
         print("emitting Output Params as SIGNAL ...")
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), output_params)
+        self.do_output = True
+        self.close_widget()
+
+    def close_widget(self):
+        if self.do_output:
+            self.emit(QtCore.SIGNAL('close'))
         self.close()
 
 
