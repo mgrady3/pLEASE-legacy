@@ -445,11 +445,11 @@ class Viewer(QtGui.QWidget):
         buts = [self.set_energy__leem_but, self.set_energy__leed_but, self.toggle_debug,
                 self.swap_byte_order_LEED, self.swap_byte_order_LEEM]
 
-        config_Tab_group_button_box.addStretch(1)
+        config_Tab_group_button_box.addStretch()
         for b in buts:
             config_Tab_group_button_box.addWidget(b)
-            config_Tab_group_button_box.addStretch(1)
-        # config_Tab_groupbox.setStyleSheet(self.styles['group'])
+            config_Tab_group_button_box.addStretch()
+        config_Tab_groupbox.setStyleSheet(self.styles['group'])
         config_Tab_groupbox.setLayout(config_Tab_group_button_box)
 
         config_Tab_Vbox.addWidget(config_Tab_groupbox)
