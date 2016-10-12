@@ -86,12 +86,14 @@ class TestApp(QtGui.QWidget):
         print("Test Message ...")
 
     @QtCore.pyqtSlot(str)
-    def retrieve_message(self, m):
+    @staticmethod
+    def retrieve_message(m):
         print('Retrieving message ...')
         print(str(m))
 
     @QtCore.pyqtSlot()
-    def end(self):
+    @staticmethod
+    def end():
         print("Execution Complete ...")
 
     def task(self, *args, **kwargs):
