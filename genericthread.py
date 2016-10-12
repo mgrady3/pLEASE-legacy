@@ -63,7 +63,7 @@ class TestApp(QtGui.QWidget):
 
     def __init__(self, parent=None):
         super(QtGui.QWidget, self).__init__(parent)
-        self.setGeometry(300, 300, 280, 600)
+        self.setGeometry(300, 300, 300, 300)
         self.setWindowTitle("Thread Testing")
 
         self.print_but = QtGui.QPushButton("Print", self)
