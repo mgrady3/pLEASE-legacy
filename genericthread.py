@@ -38,7 +38,7 @@ class GenericThread(QtCore.QThread):
 
 
 # Test Purposes
-class testApp(QtGui.QWidget):
+class TestApp(QtGui.QWidget):
     """
     This class provides a minimal working example for usage of
     the GenericThread object.
@@ -138,7 +138,7 @@ class testApp(QtGui.QWidget):
 
 def main():
     app = QtGui.QApplication(sys.argv)
-    ta = testApp()
+    ta = TestApp()
     ta.show()
     sys.exit(app.exec_())
 
