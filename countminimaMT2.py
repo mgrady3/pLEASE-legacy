@@ -32,7 +32,7 @@ class MinimaCounterMT(QtCore.QObject):
 
         while self.currentThreadCount < self.maxThreadCount:
             self.workers.append(TaskWorker(queue=self.data_to_process,
-                                           task=self.count_mins))
+                                           task=self.test_count_mins))
             self.currentThreadCount += 1
 
         # Threads have been instantiated
@@ -50,7 +50,7 @@ class MinimaCounterMT(QtCore.QObject):
                         working = False
         self.finish(start)
 
-    def count_mins(self, data_point):
+    def test_count_mins(self, data_point):
         r = data_point[0]
         c = data_point[1]
         self.output_mask[r, c] = -1
@@ -97,7 +97,7 @@ class TaskWorker(QtCore.QThread):
 def main():
 
     # max threads
-    num_threads = 8
+    num_threads = 12
 
     app = QtGui.QApplication(sys.argv)
     data = np.zeros((5, 5, 5))  # 25 total data points to process
