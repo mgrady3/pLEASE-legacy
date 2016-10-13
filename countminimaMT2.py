@@ -1,7 +1,7 @@
 import sys
 import time
 import numpy as np
-from genericthread import GenericThread
+# from genericthread import GenericThread
 from PyQt4 import QtCore, QtGui
 from queue import Queue
 
@@ -31,17 +31,16 @@ class MinimaCounterMT(QtCore.QObject):
             self.data_to_process.put(coord)
 
         while self.currentThreadCount < self.maxThreadCount:
-            self.workers.append(TaskWorker(queue=self.data_to_process, task=self.count_mins))
+            self.workers.append(TaskWorker(queue=self.data_to_process,
+                                           task=self.count_mins))
             self.currentThreadCount += 1
 
         # Threads have been instantiated
-        # Connect signal for thread finished indicating no work left to do
-        # Then begin work
+        # begin work
         for thread in self.workers:
-            # thread.done_signal.connect(self.decrement_thread_count)
             thread.start()
-        working = True     
-        
+        working = True
+        # wait for work to finish
         while working:
             for thread in self.workers:
                 if thread.isFinished():
@@ -49,8 +48,6 @@ class MinimaCounterMT(QtCore.QObject):
                     self.currentThreadCount -= 1
                     if self.currentThreadCount == 0:
                         working = False
-            
-        
         self.finish(start)
 
     def count_mins(self, data_point):
@@ -74,7 +71,6 @@ class MinimaCounterMT(QtCore.QObject):
         sys.exit(0)
 
 
-
 class TaskWorker(QtCore.QThread):
 
     # done_signal = QtCore.pyqtSignal(str)
@@ -83,7 +79,7 @@ class TaskWorker(QtCore.QThread):
         super(TaskWorker, self).__init__(parent=None)
         self.work_queue = queue
         self.running = True
-        self.task=task
+        self.task = task
 
     def run(self):
         while self.running:
@@ -96,12 +92,6 @@ class TaskWorker(QtCore.QThread):
                 # no work to do
                 # print("Work complete - exiting Thread ...")
                 self.running = False
-        # Work has been completed. OK to exit Thread execution
-        # self.done_signal.emit("done")
-        # self.quit() # this should, in the background, result in a finished() signal emission
-        
-
-
 
 
 def main():
@@ -110,7 +100,7 @@ def main():
     num_threads = 8
 
     app = QtGui.QApplication(sys.argv)
-    data = np.zeros((5, 5, 5))  # 25 total data points to process 
+    data = np.zeros((5, 5, 5))  # 25 total data points to process
     cm = MinimaCounterMT(data, num_threads)
     cm.start()
     sys.exit(app.exec_())
