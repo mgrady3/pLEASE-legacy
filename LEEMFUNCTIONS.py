@@ -241,7 +241,7 @@ def smooth(inpt, window_len=10, window_type='flat'):
     otpt = np.convolve(w/w.sum(), s, mode='valid')
 
     # format otpt to be same size as inpt and return
-    return otpt[(window_len/2-1):-(window_len/2)]
+    return otpt[int(window_len/2-1):-int(window_len/2)]
 
 
 def crop_images(data, indices):

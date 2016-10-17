@@ -38,7 +38,7 @@ class GenericThread(QtCore.QThread):
 
 
 # Test Purposes
-class testApp(QtGui.QWidget):
+class TestApp(QtGui.QWidget):
     """
     This class provides a minimal working example for usage of
     the GenericThread object.
@@ -63,7 +63,7 @@ class testApp(QtGui.QWidget):
 
     def __init__(self, parent=None):
         super(QtGui.QWidget, self).__init__(parent)
-        self.setGeometry(300, 300, 280, 600)
+        self.setGeometry(300, 300, 300, 300)
         self.setWindowTitle("Thread Testing")
 
         self.print_but = QtGui.QPushButton("Print", self)
@@ -86,12 +86,14 @@ class testApp(QtGui.QWidget):
         print("Test Message ...")
 
     @QtCore.pyqtSlot(str)
-    def retrieve_message(self, m):
+    @staticmethod
+    def retrieve_message(m):
         print('Retrieving message ...')
         print(str(m))
 
     @QtCore.pyqtSlot()
-    def end(self):
+    @staticmethod
+    def end():
         print("Execution Complete ...")
 
     def task(self, *args, **kwargs):
@@ -138,7 +140,7 @@ class testApp(QtGui.QWidget):
 
 def main():
     app = QtGui.QApplication(sys.argv)
-    ta = testApp()
+    ta = TestApp()
     ta.show()
     sys.exit(app.exec_())
 
