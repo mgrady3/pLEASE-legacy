@@ -15,6 +15,7 @@ Common tasks for the worker thread will be:
 
 import LEEMFUNCTIONS as LF
 import numpy as np
+from detect_peaks import detect_peaks as dp
 from PyQt4 import QtGui, QtCore
 
 
@@ -90,6 +91,11 @@ class WorkerThread(QtCore.QThread):
             self.count_Minima()
             self.quit()
             self.exit()  # restrict action to one task
+
+        elif self.task == 'SMOOTH':
+            self.smooth()
+            self.quit()
+            self.exit()
 
         else:
             print('Terminating: Unknown task ...')
@@ -232,8 +238,43 @@ class WorkerThread(QtCore.QThread):
 
     def count_Minima(self):
         """
+        Count number of minima in each I(V) curve
+        Store number of minima from curve at data[r,c, :] in image mask[r,c]
+        emit image_mask as pyqtSignal to return the result to main GUI Thread
 
         :return:
         """
-        # requires params: data, elist
-        pass
+        # requires params: data
+        # :param data: 3D numpy array containing I(V) data cut to specified energy window
+        if 'data' not in self.params.keys():
+            print('Terminating - ERROR: incorrect parameters for COUNT_MINIMA task')
+            print('Required Parameters: data - 3d numpy array')
+            return
+        top_image = self.params['data'][:, :, 0]
+        it = np.nditer(top_image, flags=['multi_index'])
+        mask = np.zeros((self.params['data'].shape[0],
+                         self.params['data'].shape[1]))
+
+        print("Minima Counting:")
+        print("    input_data shape: {}".format(self.params['data'].shape))
+        print("    input_data type:  {}".format(self.params['data'].dtype))
+        print("    number of curves to process:  {}".format(top_image.size))
+        # first = True
+        while not it.finished:
+            r = it.multi_index[0]
+            c = it.multi_index[1]
+
+            # mask[r, c] = LF.count_extrema(self.params['data'][r, c, :], mins=True, verbose=first)
+            mask[r, c] = len(dp(self.params['data'][r, c, :], valley=True, mpd=10))
+            # first = False
+            it.iternext()
+        self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), mask)
+
+    def smooth(self):
+
+        if 'data' not in self.params.keys():
+            print('Terminating - ERROR: incorrect parameters for smooth task')
+            print('Required Parameters: data - 3d numpy array')
+            return
+        smth = np.apply_along_axis(LF.smooth, 2, self.params['data'], window_len=10, window_type='flat')
+        self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), smth)

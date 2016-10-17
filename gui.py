@@ -614,7 +614,7 @@ class Viewer(QtGui.QWidget):
 
         countAction = QtGui.QAction('Count Layers', self)
         countAction.setShortcut('Meta+L')
-        countAction.triggered.connect(self.count_helper)
+        countAction.triggered.connect(self.count_extrema_optimized)
         LEEMMenu.addAction(countAction)
 
         rectAction = QtGui.QAction("Select Rectangle", self)
@@ -3386,6 +3386,59 @@ class Viewer(QtGui.QWidget):
         outs = np.array(outs).reshape((data.shape[0], data.shape[1]))
         self.discrete_imshow(outs)
         return
+
+    def count_extrema_optimized(self):
+        if not self.hasdisplayed_leem:
+            return
+        print("Beginning calculation of I(V) minima - WARNING: this may take a few moments ...")
+        self.ts = time.time()
+        self.smooth_data_for_count(data=self.leemdat.dat_3d, elist=self.leemdat.elist)
+
+    def retrieve_smoothed_data(self, data):
+        print("Done computing smoothed I(V) data")
+        self.smoothed_data = data
+
+    def smooth_data_for_count(self, data, elist):
+        e_min = 0.0
+        e_max = 5.1
+        min_index = elist.index(e_min)
+        max_index = elist.index(e_max)
+        self.smoothed_data = None
+        self.thread = WorkerThread(task='SMOOTH', data=data[:, :, min_index:max_index])
+        try:
+            self.thread.disconnect()
+        except:
+            pass
+        self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_smoothed_data)
+        self.connect(self.thread, QtCore.SIGNAL('finished()'), self.count_extrema)
+        print("Starting Thread to compute smoothed I(V) data ...")
+        self.thread.start()
+
+    def retrieve_image_mask(self, mask):
+        self.image_mask = mask
+
+    def count_extrema(self):
+        if self.smoothed_data is None:
+            print("ERROR: Data has not yet been smoothed - possibly thread has not finished")
+            return
+        self.image_mask = None
+        self.thread = WorkerThread(task='COUNT_MINIMA', data=self.smoothed_data)
+        try:
+            self.thread.disconnect()
+        except:
+            pass
+        self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_image_mask)
+        self.connect(self.thread, QtCore.SIGNAL('finished()'), self.finished_counting)
+        print("Starting thread to count  minima in I(V) data ...")
+        self.thread.start()
+
+    def finished_counting(self):
+        print("Done counting minima in LEEM-I(V) ...")
+        print("Elapsed time: {} seconds.".format(time.time() - self.ts))
+        if self.image_mask is None:
+            print("Error: image mask data not received from thread ...")
+            return
+        self.discrete_imshow(data=self.image_mask)
 
     def discrete_imshow(self, data, clrmp=cm.Spectral):
         '''
