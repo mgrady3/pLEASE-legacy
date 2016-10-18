@@ -612,10 +612,15 @@ class Viewer(QtGui.QWidget):
         leemdIdVAction.triggered.connect(self.plot_derivative)
         derivativeMenu.addAction(leemdIdVAction)
 
+        extremaMenu = LEEMMenu.addMenu("Count Minima")
         countAction = QtGui.QAction('Count Layers', self)
         countAction.setShortcut('Meta+L')
         countAction.triggered.connect(self.count_extrema_optimized)
-        LEEMMenu.addAction(countAction)
+        extremaMenu.addAction(countAction)
+
+        countCurrentAction = QtGui.QAction("Count Layers - Current Curves", self)
+        countCurrentAction.triggered.connect(self.count_current_curves)
+        extremaMenu.addAction(countCurrentAction)
 
         rectAction = QtGui.QAction("Select Rectangle", self)
         rectAction.setShortcut('Meta+R')
@@ -3442,14 +3447,41 @@ class Viewer(QtGui.QWidget):
             return
         self.discrete_imshow(data=self.image_mask)
 
+    def count_current_curves(self):
+        if not self.hasplotted_leem:
+            return
+        if not self.circs:
+            return
+
+        # TODO: query user for energy window
+        # TODO: adapt detect_peaks._plot() to show minima locations on I(V) curves
+        print("Starting I(V) minima analysis for current LEEM-I(V) curves ...")
+        self.ts = time.time()
+        current_curves = []
+        mins = []
+        for circ in self.circs:
+            r = int(circ.center[1])
+            c = int(circ.center[0])
+            iv = self.leemdat.dat_3d[r, c, :]
+            if self.smooth_window_len and self.smooth_window_type:
+                siv = LF.smooth(iv, window_len=self.smooth_window_len, window_type=self.smooth_window_type)
+            else:
+                siv = LF.smooth(iv)
+            current_curves.append(siv)
+            minima = LF.count_extrema(siv, mins=True, locs=True)
+            mins.append(minima)
+        self.tf = time.time()
+        fmt = divmod(self.tf - self.ts, 60)
+        print("Done Analyzing I(V) Minima: Elapsed {0} minutes and {1} seconds".format(fmt[0], fmt[1]))
+
     def discrete_imshow(self, data, clrmp=cm.Spectral):
-        '''
+        """
         :param data:
             2d numpy array to be plotted
         :param clrmp:
             mpl color map
         :return none:
-        '''
+        """
 
         max_val = np.max(data)
         min_val = np.min(data)
@@ -3474,9 +3506,13 @@ class Viewer(QtGui.QWidget):
         self.count_window.setLayout(cvbox)
 
         self.cplot_ax.imshow(data, interpolation='none', cmap=cmap)
+        self.cplot_ax.set_title("Surface Image false-colored to # minima in LEEM-I(V)")
         ax2 = self.cfig.add_axes([0.95, 0.1, 0.03, 0.8])
         cb = colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,
-        spacing='proportional', ticks=bounds, boundaries=bounds, format='%1i')
+                                   spacing='proportional', ticks=bounds,
+                                   boundaries=bounds, format='%1i')
+        cb.set_label("# minima")
+        plt.grid(False)
 
         self.count_window.show()
 

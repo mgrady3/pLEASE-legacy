@@ -584,13 +584,15 @@ def count_mins(data):
         return (num,  -1,  -1)
 
 
-def count_extrema(x, mins=False, both=False, verbose=False):
+def count_extrema(x, mins=False, both=False, verbose=False, locs=False):
     """
     Count num extrema in a 1D signal
     Use vectorized numpy operations where possibel for most speed
     :param x: input signal, array-like, (should be smoothed a priori)
     :param mins: bool if True, return num mins, else return num max
     :param both: bool, if True return num mins + num max
+    :param locs: also output the indicies of the extrema
+    :param verbose: bool flag for additional printing info
     :return: int num_ex
     """
     x = np.atleast_1d(x).astype('float64')
@@ -599,16 +601,30 @@ def count_extrema(x, mins=False, both=False, verbose=False):
         print("First I(V):")
         print("    {}".format(dx.shape))
         print("    {}".format(dx.dtype))
-    if mins and not both:
-        dx = np.diff(-x)
-        minima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
-        return len(minima)
-    elif both:
-        maxima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
-        dx = np.diff(-x)
-        minima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
-        return len(minima) + len(maxima)
+    if locs:
+        if mins and not both:
+            dx = np.diff(-x)
+            minima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
+            return (len(minima), minima)
+        elif both:
+            maxima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
+            dx = np.diff(-x)
+            minima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
+            return (len(minima), minima, len(maxima), maxima)
+        else:
+            maxima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
+            return (len(maxima), maxima)
     else:
-        maxima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
-        return len(maxima)
+        if mins and not both:
+            dx = np.diff(-x)
+            minima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
+            return len(minima)
+        elif both:
+            maxima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
+            dx = np.diff(-x)
+            minima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
+            return len(minima) + len(maxima)
+        else:
+            maxima = np.where((np.hstack((dx, 0)) < 0) & np.hstack((0, dx)) > 0)[0]
+            return len(maxima)
 
