@@ -3434,7 +3434,9 @@ class Viewer(QtGui.QWidget):
 
     def finished_counting(self):
         print("Done counting minima in LEEM-I(V) ...")
-        print("Elapsed time: {} seconds.".format(time.time() - self.ts))
+        self.tf = time.time() - self.ts
+        fmt = divmod(self.tf, 60)  # Decompose time into minutes and seconds
+        print("Elapsed time: {0} minutes and {1} seconds.".format(fmt[0], fmt[1]))
         if self.image_mask is None:
             print("Error: image mask data not received from thread ...")
             return
