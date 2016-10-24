@@ -37,6 +37,8 @@ from PyQt4 import QtGui, QtCore
 from scipy.stats import linregress as lreg  # this should likely be in another file and not part of GUI
 
 
+# TODO: serach code for '= []' and look for areas where this code could be modified to use iterators/generators
+
 class Viewer(QtGui.QWidget):
     """
     Main GUI construct
@@ -2135,7 +2137,7 @@ class Viewer(QtGui.QWidget):
                 total_int = img.sum()
                 per_sum = (img[0, :] + img[0:, -1] + img[-1, :] + img[:, 0]).sum()  # sum edges
                 per_sum -= (img[0, 0] + img[0, -1] + img[-1, -1] + img[-1, 0])  # subtract corners for double counting
-                per_sum  = (per_sum / float(8*self.leeddat.box_rad - 4))*(2*self.leeddat.box_rad)**2
+                per_sum = (per_sum / float(8*self.leeddat.box_rad - 4))*(2*self.leeddat.box_rad)**2
 
                 corrected_int = total_int - per_sum
                 bkgnd.append(per_sum)
