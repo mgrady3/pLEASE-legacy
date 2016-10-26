@@ -1755,6 +1755,7 @@ class Viewer(QtGui.QWidget):
                                                 height=2*self.leeddat.box_rad,
                                                 fill=False))
             # self.LEED_img_ax.add_patch(test)
+            # bug fixed for double plotting data Oct. 26 2016
             # append data as list so bool flag can be altered later when data is plotted
             self.rect_coords.append([event.ydata, event.xdata, False])  # store location of central pixel + plot flag
 
