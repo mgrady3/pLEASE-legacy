@@ -1755,7 +1755,8 @@ class Viewer(QtGui.QWidget):
                                                 height=2*self.leeddat.box_rad,
                                                 fill=False))
             # self.LEED_img_ax.add_patch(test)
-            self.rect_coords.append((event.ydata, event.xdata))  # store location of central pixel in (r,c) format
+            # append data as list so bool flag can be altered later when data is plotted
+            self.rect_coords.append([event.ydata, event.xdata, False])  # store location of central pixel + plot flag
 
             self.LEED_img_ax.add_artist(self.rects[-1])
             self.rects[-1].set_lw(1)
@@ -1839,27 +1840,33 @@ class Viewer(QtGui.QWidget):
             print("Can not plot data due to mismatch ...")
             return
         tot_pix = (2*self.leeddat.box_rad)**2
-        for idx, tup in enumerate(self.rect_coords):
-            # generate 3d slice of main data array
-            # this represents the integration window projected along the third array axis
-            int_win = self.leeddat.dat_3d[int(tup[0]-self.leeddat.box_rad):int(tup[0]+self.leeddat.box_rad),
-                                          int(tup[1]-self.leeddat.box_rad):int(tup[1]+self.leeddat.box_rad),
-                                          :]
-            # plot unaveraged intensity 3/30/2016
-            # ilist = [img.sum()/tot_pix for img in np.rollaxis(int_win, 2)]
+        for idx, lst in enumerate(self.rect_coords):
 
-            ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
+            if lst[2] == False:
+                # Data has not been plotted
 
-            if self.smooth_leed_plot:
-                print('Plotting and Storing Smoothed Data ...')
-                self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
-                self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type),
-                                     color=self.smooth_colors[idx])
+                # generate 3d slice of main data array
+                # this represents the integration window projected along the third array axis
+                int_win = self.leeddat.dat_3d[int(lst[0]-self.leeddat.box_rad):int(lst[0]+self.leeddat.box_rad),
+                                              int(lst[1]-self.leeddat.box_rad):int(lst[1]+self.leeddat.box_rad),
+                                              :]
+                # plot unaveraged intensity 3/30/2016
+                # ilist = [img.sum()/tot_pix for img in np.rollaxis(int_win, 2)]
 
-            else:
-                print('Plotting and Storing Raw Data ...')
-                self.current_selections.append((ilist, self.colors[idx]))
-                self.LEED_IV_ax.plot(self.leeddat.elist, ilist, color=self.colors[idx])
+                ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
+
+                if self.smooth_leed_plot:
+                    print('Plotting and Storing Smoothed Data ...')
+                    self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
+                    self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type),
+                                         color=self.smooth_colors[idx])
+
+                else:
+                    print('Plotting and Storing Raw Data ...')
+                    self.current_selections.append((ilist, self.colors[idx]))
+                    self.LEED_IV_ax.plot(self.leeddat.elist, ilist, color=self.colors[idx])
+
+                lst[2] = True  # set plot flag to True
 
         self.LEED_IV_canvas.draw()
         return
@@ -1874,9 +1881,9 @@ class Viewer(QtGui.QWidget):
             print('Not Data Selected to Plot')
             return
         current_curves = []
-        for idx, tup in enumerate(self.rect_coords):
-            int_win = self.leeddat.dat_3d[tup[0] - self.leeddat.box_rad:tup[0] + self.leeddat.box_rad,
-                                          tup[1] - self.leeddat.box_rad:tup[1] + self.leeddat.box_rad,
+        for idx, lst in enumerate(self.rect_coords):
+            int_win = self.leeddat.dat_3d[lst[0] - self.leeddat.box_rad:lst[0] + self.leeddat.box_rad,
+                                          lst[1] - self.leeddat.box_rad:lst[1] + self.leeddat.box_rad,
                                           :]
             current_curves.append([img.sum() for img in np.rollaxis(int_win, 2)])
 
