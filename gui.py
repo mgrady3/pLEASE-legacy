@@ -37,7 +37,7 @@ from PyQt4 import QtGui, QtCore
 from scipy.stats import linregress as lreg  # this should likely be in another file and not part of GUI
 
 
-# TODO: serach code for '= []' and look for areas where this code could be modified to use iterators/generators
+# TODO: search code for '= []' and look for areas where this code could be modified to use iterators/generators
 
 class Viewer(QtGui.QWidget):
     """
