@@ -30,17 +30,15 @@
 **setup.py** - module for installing PLEASE package using either easy_install or pip
 '''
 # from distutils.core import setup
-from setuptools import setup
+from setuptools import setup  # for building wheels
 
 setup(
     name='PLEASE',
     packages=['PLEASE'],
     package_data={'PLEASE':['*.png', './icons/*.png']},
-   # requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole', 
-   #           'opencv_python', 'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
-    install_requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole',
-                      'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
-    version='0.2.2',
+    requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole',
+              'opencv_python', 'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
+    version='0.5.1',
     description='Software for the analysis of Low Energy Electron Microscopy data',
     long_description= """
 PLEASE is a software package built for analysis of Low Energy Electron Microscopy data sets with specific emphasis on analysis of IV data sets.
@@ -51,11 +49,11 @@ For more info see https://github.com/mgrady3/pLEASE or contact the authors via E
     author_email='max.grady@gmail.com',
     url='https://github.com/mgrady3/pLEASE',
     download_url='https://github.com/mgrady3/pLEASE/archive/master.zip',
-    keywords=['LEEM', 'surface science', 'image analysis', 'I(V) spectra', 'electron microscopy'],
+    keywords=['LEEM', 'surface science', 'image analysis', 'I(V) spectra'],
     license='GPLv3',
     platforms='any',
     classifiers=[
-     'Development Status :: 2 - Pre-Alpha',
+     'Development Status :: 3 - Alpha',
      'Environment :: X11 Applications :: Qt',
      'Intended Audience :: Science/Research',
      'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
