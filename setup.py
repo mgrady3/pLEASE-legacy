@@ -38,7 +38,7 @@ setup(
     package_data={'PLEASE':['*.png', './icons/*.png']},
     requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole',
               'opencv_python', 'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
-    version='0.5.1',
+    version='0.5.2',
     description='Software for the analysis of Low Energy Electron Microscopy data',
     long_description= """
 PLEASE is a software package built for analysis of Low Energy Electron Microscopy data sets with specific emphasis on analysis of IV data sets.
