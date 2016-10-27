@@ -1604,7 +1604,8 @@ class Viewer(QtGui.QWidget):
                                               min=0,
                                               max=self.leeddat.elist[-1])
         if ok:
-            self.update_LEED_img(index=LF.energy_to_filenumber(self.leeddat.elist, entry))
+            # self.update_LEED_img(index=LF.energy_to_filenumber(self.leeddat.elist, entry))  # old method didn't change Slider value
+            self.update_LEED_slider(value=LF.energy_to_filenumber(self.leeddat.elist, entry))
         return
 
     def set_energy_parameters(self, dat=None):
