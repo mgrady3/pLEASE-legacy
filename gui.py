@@ -2881,6 +2881,9 @@ class Viewer(QtGui.QWidget):
 
             # get list of numpy coordinates along the line between the two points
             # these coordiantes are in (r,c) format, which is equivalent to (y,x)
+            # This could be replaced with numpy interpolation if needed in the future
+            # Currently unclear which method would be more performant
+
             points = b_line(self.line[0][0], self.line[0][1], self.line[1][0], self.line[1][1])
             self.num_line_clicks = 0
             xd = [pt[0] for pt in points]
