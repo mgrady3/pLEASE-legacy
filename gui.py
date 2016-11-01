@@ -25,6 +25,7 @@ from operator import add, sub
 # 3rd-party/scientific stack module imports
 import yaml
 import matplotlib.cm as cm
+import matplotlib.lines as mlines
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import multiprocessing as mp  # this may be removed as a dependency
@@ -629,6 +630,10 @@ class Viewer(QtGui.QWidget):
         rectAction.setShortcut('Meta+R')
         rectAction.triggered.connect(self.LEEM_rectangular_selection)
         LEEMMenu.addAction(rectAction)
+
+        lineProfileAction = QtGui.QAction("Line Profile", self)
+        lineProfileAction.triggered.connect(self.LEEM_LineProfile)
+        LEEMMenu.addAction(lineProfileAction)
 
         # Settings Menu
         settingsMenu = self.menubar.addMenu('Settings')
@@ -2873,8 +2878,17 @@ class Viewer(QtGui.QWidget):
             self.line.append((int(event.xdata), int(event.ydata)))
             idx = LF.energy_to_filenumber(self.leemdat.elist, self.current_LEEM_eV)
             points = b_line(self.line[0][0], self.line[0][1], self.line[1][0], self.line[1][1])
-
-
+            self.num_line_clicks = 0
+            xd = [pt[0] for pt in points]
+            yd = [pt[1] for pt in points]
+            # reverse x,y to mpl coordinates
+            line = mlines.Line2D(yd, xd, linewidth=3, color='r')
+            self.LEEM_ax.add_line(line)
+            self.LEEM_canvas.draw()
+            # reset click handler to normal leem click
+            self.LEEM_fig.canvas.mpl_disconnect(self.LineProfile_cid)
+            self.LEEM_fig.canvas.mpl_connect("button_release_event", self.leem_click)
+            return
 
     def popout_LEEM_IV(self):
         """
