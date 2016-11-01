@@ -9,6 +9,7 @@ import data
 import terminal
 import LEEMFUNCTIONS as LF
 import styles as pls
+from blines import b_line
 from config_widget import ConfigWidget
 from experiment import Experiment
 from ipyembed import embed_ipy
@@ -310,7 +311,7 @@ class Viewer(QtGui.QWidget):
         """
 
         self.tabs = QtGui.QTabWidget()
-        self.tabs.setStyleSheet(self.styles['tab'])
+        # self.tabs.setStyleSheet(self.styles['tab'])
         # self.configTabs = QtGui.QTabWidget()
         # self.configTabs.setStyleSheet(self.styles['tab'])
 
@@ -370,7 +371,7 @@ class Viewer(QtGui.QWidget):
         LEED_Tab_Layout_V1.addWidget(self.LEED_IV_toolbar)
 
         self.LEED_Tab.setLayout(LEED_Tab_Layout_V1)
-        self.LEED_IV_fig.canvas.mpl_connect('button_release_event', self.LEED_click)
+        self.LEED_cid = self.LEED_IV_fig.canvas.mpl_connect('button_release_event', self.LEED_click)
 
     def init_LEEM_Tab(self):
         """
@@ -2748,6 +2749,7 @@ class Viewer(QtGui.QWidget):
         """
         self.leemdat.curimg = imgnum
         img = data[0:, 0:, self.leemdat.curimg]
+        self.current_LEEM_eV = LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)
 
         if self.Style:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=18, color='white')
@@ -2839,6 +2841,40 @@ class Viewer(QtGui.QWidget):
         self.leem_IV_mask.append(0)
         self.init_Plot_Axes()
         self.LEEM_canvas.draw()
+
+    def LEEM_LineProfile(self):
+        """
+        triggered from LEEM_Menu
+        :return:
+        """
+        self.LEEM_fig.canvas.mpl_disconnect(self.LEEM_click_handler)
+        self.num_line_clicks = 0
+        self.line = []
+        self.LineProfile_cid = self.LEEM_fig.canvas.mpl_connect("button_release_event", self.LEEM_create_LineProfile)
+
+    def LEEM_create_LineProfile(self, event):
+        """
+        called on click
+        :param event:
+        :return:
+        """
+        if not self.hasdisplayed_leem:
+            return
+
+        if not event.inaxes == self.LEEM_ax:
+            return
+
+        self.num_line_clicks += 1
+
+        if self.num_line_clicks == 1:
+            self.line = [(int(event.xdata), int(event.ydata))]  # inital coords for line
+            return
+        elif self.num_line_clicks == 2:
+            self.line.append((int(event.xdata), int(event.ydata)))
+            idx = LF.energy_to_filenumber(self.leemdat.elist, self.current_LEEM_eV)
+            points = b_line(self.line[0][0], self.line[0][1], self.line[1][0], self.line[1][1])
+
+
 
     def popout_LEEM_IV(self):
         """
