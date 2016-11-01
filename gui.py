@@ -1591,6 +1591,8 @@ class Viewer(QtGui.QWidget):
         Display slice from self.leeddat.dat3d according to integer index input by User
         :return none:
         """
+        if not self.hasdisplayed_leed:
+            return
         entry, ok = QtGui.QInputDialog.getInt(self, "Enter Image Number",
                                               "Enter an integer between 0 and {}".format(self.leeddat.dat_3d.shape[2]-1),
                                               value=self.leeddat.dat_3d.shape[2]-1,
@@ -1605,6 +1607,8 @@ class Viewer(QtGui.QWidget):
         Display slice from self.leeddat.dat3d according to an energy value input by User in eV
         :return none:
         """
+        if not self.hasdisplayed_leed:
+            return
         entry, ok = QtGui.QInputDialog.getDouble(self, "Enter Image Number",
                                               "Enter an integer between {0} and {1}".format(self.leeddat.elist[0], self.leeddat.elist[-1]),
                                               value=int(len(self.leeddat.elist)/2),
@@ -2891,6 +2895,7 @@ class Viewer(QtGui.QWidget):
 
             # reverse coordinate order to transform from (r,c) to mpl coordinates
             line = mlines.Line2D(yd, xd, linewidth=2, color='r')
+
             self.LEEM_ax.add_line(line)
             self.LEEM_canvas.draw()
 
@@ -2909,8 +2914,8 @@ class Viewer(QtGui.QWidget):
 
             # reset click handler to normal leem click
             self.LEEM_fig.canvas.mpl_disconnect(self.LineProfile_cid)
-            self.LEEM_fig.canvas.mpl_connect("button_release_event", self.leem_click)
-
+            self.LEEM_click_handler = self.LEEM_fig.canvas.mpl_connect("button_release_event", self.leem_click)
+            self.num_line_clicks = 0
             return
 
     def popout_LEEM_IV(self):
