@@ -13,6 +13,9 @@ import numpy as np
 
 def b_line(x0, y0, xf, yf):
     """ Implementation of Bresenham Algorithm - Adapted from Java
+    Based on algorithm listed here: http://tech-algorithm.com/articles/drawing-line-using-bresenham-algorithm/
+    Translated to Python by Maxwell Grady
+
     :param x0: int initial x location of line segment
     :param y0: int initial y location of line segment
     :param xf: int final x location of line segment

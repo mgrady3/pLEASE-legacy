@@ -12,6 +12,7 @@ import styles as pls
 from blines import b_line
 from config_widget import ConfigWidget
 from experiment import Experiment
+from externalwindow import ExternalWindow
 from ipyembed import embed_ipy
 from qthreads import WorkerThread
 
@@ -2877,17 +2878,36 @@ class Viewer(QtGui.QWidget):
         elif self.num_line_clicks == 2:
             self.line.append((int(event.xdata), int(event.ydata)))
             idx = LF.energy_to_filenumber(self.leemdat.elist, self.current_LEEM_eV)
+
+            # get list of numpy coordinates along the line between the two points
+            # these coordiantes are in (r,c) format, which is equivalent to (y,x)
             points = b_line(self.line[0][0], self.line[0][1], self.line[1][0], self.line[1][1])
             self.num_line_clicks = 0
             xd = [pt[0] for pt in points]
             yd = [pt[1] for pt in points]
-            # reverse x,y to mpl coordinates
-            line = mlines.Line2D(yd, xd, linewidth=3, color='r')
+
+            # reverse coordinate order to transform from (r,c) to mpl coordinates
+            line = mlines.Line2D(yd, xd, linewidth=2, color='r')
             self.LEEM_ax.add_line(line)
             self.LEEM_canvas.draw()
+
+            # create new window with line profile plot data
+            lpdata = [self.leemdat.dat_3d[pt[1], pt[0], idx] for pt in points]
+            self.lpwindow = ExternalWindow(size=(0.45*self.max_width, 0.45*self.max_height),
+                                           num_plots=1,
+                                           canvas=self.LEEM_canvas,
+                                           line=line)
+            self.lpwindow.pltax.plot(range(len(lpdata)),
+                           LF.smooth(lpdata, window_len=int(0.1*len(lpdata)), window_type='flat'),
+                           color='k')
+            self.lpwindow.pltax.set_xlabel('Position along LineProfile')
+            self.lpwindow.pltax.set_ylabel('Intensity [arb. units]')
+            self.lpwindow.show()
+
             # reset click handler to normal leem click
             self.LEEM_fig.canvas.mpl_disconnect(self.LineProfile_cid)
             self.LEEM_fig.canvas.mpl_connect("button_release_event", self.leem_click)
+
             return
 
     def popout_LEEM_IV(self):
