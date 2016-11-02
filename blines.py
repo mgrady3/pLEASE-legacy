@@ -76,7 +76,7 @@ def b_line(x0, y0, xf, yf):
             y += dy2
     return points
 
-
+"""
 def main():
     print("Testing b_line algorithm ...")
     test = np.arange(25).reshape((5, 5))
@@ -86,3 +86,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+"""
