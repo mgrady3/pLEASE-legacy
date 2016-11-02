@@ -3434,6 +3434,12 @@ class Viewer(QtGui.QWidget):
             return mins[0]
 
     def count_helper(self):
+        """
+        Called from LEEM Menu
+        Queries User for Energy Window then places call to count_layers_new()
+        to perform minima counting in the selected energy regime.
+        :return none:
+        """
         def_min_e = 0
         def_max_e = 5.1
 
@@ -3451,7 +3457,6 @@ class Viewer(QtGui.QWidget):
 
         min_index = self.leemdat.elist.index(min_e)
         max_index = self.leemdat.elist.index(max_e)
-
 
         self.count_layers_new(data=self.leemdat.dat_3d[:, :, min_index:max_index],
                               ecut=self.leemdat.elist[min_index:max_index])
