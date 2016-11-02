@@ -259,14 +259,13 @@ class WorkerThread(QtCore.QThread):
         print("    input_data shape: {}".format(self.params['data'].shape))
         print("    input_data type:  {}".format(self.params['data'].dtype))
         print("    number of curves to process:  {}".format(top_image.size))
-        # first = True
         while not it.finished:
             r = it.multi_index[0]
             c = it.multi_index[1]
-
-            # mask[r, c] = LF.count_extrema(self.params['data'][r, c, :], mins=True, verbose=first)
+            # dp() method returns coordinates of extrema found
+            # dp( valley=True) returns only the minima
+            # len(dp()) then gives the number of minima
             mask[r, c] = len(dp(self.params['data'][r, c, :], valley=True, mpd=10))
-            # first = False
             it.iternext()
         self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), mask)
 

@@ -3298,6 +3298,7 @@ class Viewer(QtGui.QWidget):
 
     def count_layers_old(self):
         """
+        DEPRECATED
         Attempt to count the number of minima for each I(V) curve by iterating over all
         pixels in the topmost image in the most efficient way using np.nditer()
         This method iterates over the 3d numpy array in stored memory order
@@ -3389,6 +3390,7 @@ class Viewer(QtGui.QWidget):
 
     def check_flat_old(self, xd, yd):
         """
+        DEPRECATED
         NOTE: Consider moving this function to data.py in the LeemData class
         :param xd:
             array-like set of x values
@@ -3415,6 +3417,7 @@ class Viewer(QtGui.QWidget):
 
     def check_flat(self, data, thresh=5):
         '''
+        DEPRECATED
         :param data:
             1d numpy array containing smoothed dI/dE data
         :param thresh:
@@ -3435,6 +3438,7 @@ class Viewer(QtGui.QWidget):
 
     def count_helper(self):
         """
+        DEPRECATED
         Called from LEEM Menu
         Queries User for Energy Window then places call to count_layers_new()
         to perform minima counting in the selected energy regime.
@@ -3463,6 +3467,7 @@ class Viewer(QtGui.QWidget):
 
     def count_layers_new(self, data, ecut):
         '''
+        DEPRECATED
         Method for counting the number of minima in a LEEM-I(V) curve
         :param data:
             3d numpy array of smooth data cut to specific data range
@@ -3492,23 +3497,57 @@ class Viewer(QtGui.QWidget):
         return
 
     def count_extrema_optimized(self):
+        """
+        Called from LEEM Menu
+        :return none:
+        """
         if not self.hasdisplayed_leem:
             return
+
+        def_min_e = 0
+        def_max_e = 5.1
+
+        # query user to set minimum energy
+        min_e, ok = QtGui.QInputDialog.getDouble(self, "Set Minimum Energy",
+                                                 "Input a float value for Min Energy greater or equal to 0.",
+                                                 0, 0, 10, 1)
+        if not ok:
+            min_e = def_min_e  # use default if input was canceled
+
+        # query and set max energy
+        max_e, ok = QtGui.QInputDialog.getDouble(self, "Set Maximum Energy",
+                                                 "Input a float value for Max Energy less than or equal to 15.",
+                                                 0, 0, 10, 1)
+        if not ok:
+            max_e = def_max_e  # use default if input was canceled
+
+        min_index = self.leemdat.elist.index(min_e)
+        max_index = self.leemdat.elist.index(max_e)
+
+
         print("Beginning calculation of I(V) minima - WARNING: this may take a few moments ...")
         self.ts = time.time()
-        self.smooth_data_for_count(data=self.leemdat.dat_3d, elist=self.leemdat.elist)
+        self.smooth_data_for_count(data=self.leemdat.dat_3d[:, :, min_index:max_index],
+                                   elist=self.leemdat.elist[min_index:max_index])
 
     def retrieve_smoothed_data(self, data):
+        """
+        PYQT SLOT
+        :param data: output from separate thread stored to local vairable in GUI thread
+        :return none:
+        """
         print("Done computing smoothed I(V) data")
         self.smoothed_data = data
 
     def smooth_data_for_count(self, data, elist):
-        e_min = 0.0
-        e_max = 5.1
-        min_index = elist.index(e_min)
-        max_index = elist.index(e_max)
+        """
+        Called from count_extrema_optimized
+        :param data: slice of main data set through user selected energy window
+        :param elist: slice of main energy list to user selected points
+        :return none:
+        """
         self.smoothed_data = None
-        self.thread = WorkerThread(task='SMOOTH', data=data[:, :, min_index:max_index])
+        self.thread = WorkerThread(task='SMOOTH', data=data)
         try:
             self.thread.disconnect()
         except:
@@ -3519,9 +3558,20 @@ class Viewer(QtGui.QWidget):
         self.thread.start()
 
     def retrieve_image_mask(self, mask):
+        """
+        PYQT SLOT
+        :param mask: output from separate thread stored to local variable in GUI thread
+        :return none:
+        """
         self.image_mask = mask
 
     def count_extrema(self):
+        """
+        Use a separate thread to process the smoothed I(V) data cut to a user selected energy window
+        Make an image map of the surface that is color coded to the number of minima counted in
+        the I(V) curve extracted from each pixel
+        :return:
+        """
         if self.smoothed_data is None:
             print("ERROR: Data has not yet been smoothed - possibly thread has not finished")
             return
@@ -3537,6 +3587,10 @@ class Viewer(QtGui.QWidget):
         self.thread.start()
 
     def finished_counting(self):
+        """
+        PYQT SLOT
+        :return none:
+        """
         print("Done counting minima in LEEM-I(V) ...")
         self.tf = time.time() - self.ts
         fmt = divmod(self.tf, 60)  # Decompose time into minutes and seconds
