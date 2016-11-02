@@ -2888,10 +2888,10 @@ class Viewer(QtGui.QWidget):
             # This could be replaced with numpy interpolation if needed in the future
             # Currently unclear which method would be more performant
 
-            points = b_line(self.line[0][0], self.line[0][1], self.line[1][0], self.line[1][1])
+            points = b_line(self.line[0][0], self.line[0][1], self.line[1][0], self.line[1][1])  # (r, c)
             self.num_line_clicks = 0
-            xd = [pt[0] for pt in points]
-            yd = [pt[1] for pt in points]
+            xd = [pt[0] for pt in points]  # column coordinates
+            yd = [pt[1] for pt in points]  # row coordinates
 
             # reverse coordinate order to transform from (r,c) to mpl coordinates
             line = mlines.Line2D(yd, xd, linewidth=2, color='r')
@@ -2900,7 +2900,7 @@ class Viewer(QtGui.QWidget):
             self.LEEM_canvas.draw()
 
             # create new window with line profile plot data
-            lpdata = [self.leemdat.dat_3d[pt[1], pt[0], idx] for pt in points]
+            lpdata = [self.leemdat.dat_3d[pt[0], pt[1], idx] for pt in points]
             self.lpwindow = ExternalWindow(size=(0.45*self.max_width, 0.45*self.max_height),
                                            num_plots=1,
                                            canvas=self.LEEM_canvas,
