@@ -2892,13 +2892,17 @@ class Viewer(QtGui.QWidget):
             self.LEEM_canvas.draw()
 
             # create new window with line profile plot data
-            lpdata = [self.leemdat.dat_3d[pt[1], pt[0], idx] for pt in points]
+            lpdata = [self.leemdat.dat_3d[pt[0], pt[1], idx] for pt in points]
             self.lpwindow = ExternalWindow(size=(0.45*self.max_width, 0.45*self.max_height),
                                            num_plots=1,
                                            canvas=self.LEEM_canvas,
                                            line=line)
+            # ensure window length is an even integer
+            wl = int(0.1*len(lpdata))
+            if not wl % 2 == 0:
+                wl += 1
             self.lpwindow.pltax.plot(range(len(lpdata)),
-                           LF.smooth(lpdata, window_len=int(0.1*len(lpdata)), window_type='flat'),
+                           LF.smooth(lpdata, window_len=wl, window_type='flat'),
                            color='k')
             self.lpwindow.pltax.set_xlabel('Position along LineProfile')
             self.lpwindow.pltax.set_ylabel('Intensity [arb. units]')
