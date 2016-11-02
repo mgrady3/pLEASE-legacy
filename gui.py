@@ -2880,11 +2880,12 @@ class Viewer(QtGui.QWidget):
             self.line = [(int(event.xdata), int(event.ydata))]  # inital coords for line
             return
         elif self.num_line_clicks == 2:
+            print("Creating Line Profile ...")
             self.line.append((int(event.xdata), int(event.ydata)))
             idx = LF.energy_to_filenumber(self.leemdat.elist, self.current_LEEM_eV)
 
             # get list of numpy coordinates along the line between the two points
-            # these coordiantes are in (r,c) format, which is equivalent to (y,x)
+            # these coordinates are in (r,c) format, which is equivalent to (y,x)
             # This could be replaced with numpy interpolation if needed in the future
             # Currently unclear which method would be more performant
 
@@ -2905,8 +2906,12 @@ class Viewer(QtGui.QWidget):
                                            num_plots=1,
                                            canvas=self.LEEM_canvas,
                                            line=line)
+            # ensure window length for smoothing algorithm is even
+            wl = int(0.1*len(lpdata))
+            if not wl % 2 == 0:
+                wl += 1
             self.lpwindow.pltax.plot(range(len(lpdata)),
-                           LF.smooth(lpdata, window_len=int(0.1*len(lpdata)), window_type='flat'),
+                           LF.smooth(lpdata, window_len=wl, window_type='flat'),
                            color='k')
             self.lpwindow.pltax.set_xlabel('Position along LineProfile')
             self.lpwindow.pltax.set_ylabel('Intensity [arb. units]')
