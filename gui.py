@@ -781,31 +781,6 @@ class Viewer(QtGui.QWidget):
         print('File output successfully')
         return
 
-
-    """
-    def test_buttons(self):
-
-        self.new_widget= QtGui.QWidget()
-        self.new_widget.setWindowTitle("Select Data Type")
-        layout = QtGui.QVBoxLayout()
-        option1 = QtGui.QCheckBox("Raw Data", self)
-        option2 = QtGui.QCheckBox("Image Data", self)
-        okbutton = QtGui.QPushButton("Ok", self)
-        oklayout = QtGui.QHBoxLayout()
-        oklayout.addStretch(1)
-        oklayout.addWidget(okbutton)
-        okbutton.clicked.connect(self.new_widget.close)
-
-        layout.addWidget(option1)
-        layout.addWidget(option2)
-        layout.addLayout(oklayout)
-
-        option1.stateChanged.connect(lambda: print("Option1 state changed to {}".format(option1.checkState())))
-        option2.stateChanged.connect(lambda: print("Option2 state changed to {}".format(option2.checkState())))
-        self.new_widget.setLayout(layout)
-        self.new_widget.show()
-    """
-
     def gen_dat_files_from_images(self):
         """
         Query user for directory containing image files and a directory to output data to
