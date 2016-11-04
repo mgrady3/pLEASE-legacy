@@ -781,6 +781,9 @@ class Viewer(QtGui.QWidget):
         print('File output successfully')
         return
 
+    def gen_dat_files_from_images_new(self):
+        pass
+
     def gen_dat_files_from_images(self):
         """
         Query user for directory containing image files and a directory to output data to
