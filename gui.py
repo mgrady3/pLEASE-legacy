@@ -13,6 +13,7 @@ from blines import b_line
 from config_widget import ConfigWidget
 from experiment import Experiment
 from externalwindow import ExternalWindow
+from gendatwidget import GenDatWindow
 from ipyembed import embed_ipy
 from qthreads import WorkerThread
 
@@ -480,7 +481,7 @@ class Viewer(QtGui.QWidget):
         fileMenu = self.menubar.addMenu('File')
 
         genDatFileAction = QtGui.QAction('Generate Dat Files', self)
-        genDatFileAction.triggered.connect(self.gen_dat_files_from_images)
+        genDatFileAction.triggered.connect(self.gen_dat_files_from_images_new)
         fileMenu.addAction(genDatFileAction)
 
 
@@ -782,7 +783,8 @@ class Viewer(QtGui.QWidget):
         return
 
     def gen_dat_files_from_images_new(self):
-        pass
+        window = GenDatWindow()
+        return
 
     def gen_dat_files_from_images(self):
         """
