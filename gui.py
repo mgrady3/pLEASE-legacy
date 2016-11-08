@@ -2670,11 +2670,13 @@ class Viewer(QtGui.QWidget):
         self.set_energy_parameters(dat='LEEM')
         self.format_slider()
         self.hasdisplayed_leem = True
+        self.has_loaded_data = True
+        self.update_image_slider(self.leemdat.dat_3d.shape[2]-1)
 
-        if not self.has_loaded_data:
-            self.update_image_slider(self.leemdat.dat_3d.shape[2]-1)
-            self.has_loaded_data = True
-            return
+        # if not self.has_loaded_data:
+        #    self.update_image_slider(self.leemdat.dat_3d.shape[2]-1)
+        #    self.has_loaded_data = True
+        #    return
         # self.update_image_slider(0)
         return
 
