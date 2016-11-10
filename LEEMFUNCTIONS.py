@@ -504,6 +504,7 @@ def find_local_maximum(window, radius=25):
     return maxLoc
 
 
+# DEPRECATED - MultiProcessing is troublesome to use with Qt
 def count_layers_new(data, ecut):
         '''
         Currently set to use multiprocessing.
@@ -538,6 +539,7 @@ def count_layers_new(data, ecut):
         return outs
 
 
+# DEPRECATED
 def check_flat_and_count(data, thresh=5):
         '''
 
