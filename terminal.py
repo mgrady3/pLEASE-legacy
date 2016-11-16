@@ -52,7 +52,7 @@ class ErrorConsole(QtWidgets.QWidget):
         # pass None to parent in QWidget.__init__()
         # this is a top-level widget
         super(ErrorConsole, self).__init__(parent)
-        print("Finished call to Widget.__init__ in ErrorConsole().__init__() ...")
+        # print("Finished call to Widget.__init__ in ErrorConsole().__init__() ...")
         # widget to receive and display messages from custom_stream ie. std_out
         self.textEdit = QtWidgets.QTextEdit()
         vbox = QtWidgets.QVBoxLayout()
@@ -72,7 +72,7 @@ class ErrorConsole(QtWidgets.QWidget):
 
         # connect custom signal to pre-defined slot self.set_message
         self.stream = CustomStream()
-        print("Finished instantiation of CustomStream() ...")
+        # print("Finished instantiation of CustomStream() ...")
         self.stream.message.connect(self.set_message)
 
         # re-route sys.stdout and sys.stderr

@@ -55,7 +55,7 @@ class Viewer(QtWidgets.QWidget):
     """
     # Config Flags - controlled via class properties
     _Style = True
-    _DEBUG = False
+    _DEBUG = True
     _ERROR = True
 
     def __init__(self, parent=None):
@@ -1222,12 +1222,18 @@ class Viewer(QtWidgets.QWidget):
         #                                            caption="Select YAML Experiment Config File",
         #                                            directory=homeDir,
         #                                            filter=yamlFilter)
+        if self.DEBUG:
+            print("Querying User for CONFIG file ...")
         fileName = QtWidgets.QFileDialog.getOpenFileName(parent=None,
                                                     caption="Select YAML Experiment Config File",
                                                     directory=homeDir)
         if isinstance(fileName, tuple):
             #PyQt5 changes QFileDialog.getOpenFilName to return a tuple (filename, filter)
             fileName = fileName[0]
+
+        if self.DEBUG:
+            print("File Selected: {}".format(fileName))
+
         if fileName:
             config = fileName  # string path to .yaml or .yml config file
         else:
@@ -1241,6 +1247,8 @@ class Viewer(QtWidgets.QWidget):
 
         self.exp = Experiment()
         # path_to_config = os.path.join(new_dir, config)
+        if self.DEBUG:
+            print("Placing call to Experiment.fromFile() ...")
         self.exp.fromFile(config)
         print("New Data Path loaded from file: {}".format(self.exp.path))
         print("Loaded the following settings:")
@@ -1251,6 +1259,8 @@ class Viewer(QtWidgets.QWidget):
         # self.pp.pprint(exp.loaded_settings)
 
         if self.exp.exp_type == 'LEEM':
+            if self.DEBUG:
+                print("Placing call to load_LEEM_experiment() ...")
             self.load_LEEM_experiment()
 
         elif self.exp.exp_type == 'LEED':
@@ -1300,7 +1310,8 @@ class Viewer(QtWidgets.QWidget):
 
         # if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
         if self.exp.data_type.lower() == 'raw':
-
+            if self.DEBUG:
+                print("Beginning Thread for Loading of Raw LEEM Data")
             try:
                 self.thread = WorkerThread(task='LOAD_LEEM',
                                            path=self.leemdat.data_dir,
@@ -1314,7 +1325,7 @@ class Viewer(QtWidgets.QWidget):
                 # self.disconnect(self.thread, QtCore.SIGNAL('finished()'), self.update_LEEM_img)
                 # New way:
                 try:
-                    self.thead.disconnect()
+                    self.thread.disconnect()
                 except TypeError:
                     # self.thread has no signals to disconnect
                     # It is ok to proceed with connecting signals
@@ -1334,6 +1345,8 @@ class Viewer(QtWidgets.QWidget):
 
         # elif self.exp.data_type == 'Image' or self.exp.data_type == 'image' or self.exp.data_type == 'IMAGE':
         elif self.exp.data_type.lower() == 'image':
+            if self.DEBUG:
+                print("Beginning Thread for Loading of LEEM Data from images")
             try:
                 self.thread = WorkerThread(task='LOAD_LEEM_IMAGES',
                                            path=self.exp.path,
