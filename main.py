@@ -33,11 +33,11 @@ import time
 import qdarkstyle
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-if QtCore.QT_VERSION >= 0x50501:
-    def custom_excepthook(type_, value, traceback_):
-        traceback.print_exception(type_, value, traceback_)
-    old_excepthook = sys.excepthook
-    sys.excepthook = custom_excepthook
+# if QtCore.QT_VERSION >= 0x50501:
+#    def custom_excepthook(type_, value, traceback_):
+#        traceback.print_exception(type_, value, traceback_)
+#    old_excepthook = sys.excepthook
+#    sys.excepthook = custom_excepthook
 
 # Not working ...
 # Mac MenuBar Workaround
@@ -66,6 +66,8 @@ def main():
 
     # Start UI
     view = gui.Viewer()
+    if view.DEBUG:
+        print("Instantiated Viewer object")
     splash.finish(view)
     max_ht = view.max_height
     max_wd = view.max_width

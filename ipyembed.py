@@ -22,7 +22,7 @@ def embed_ipy(parent, passthrough=None):
     kernel_manager = QtInProcessKernelManager()
     kernel_manager.start_kernel()
     kernel = kernel_manager.kernel
-    kernel.gui = 'qt4'
+    kernel.gui = 'qt5'
 
     kernel_client = kernel_manager.client()
     kernel_client.start_channels()

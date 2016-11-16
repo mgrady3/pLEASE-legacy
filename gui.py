@@ -14,7 +14,11 @@ import data
 import terminal
 import LEEMFUNCTIONS as LF
 import styles as pls
+from blines import b_line
+from config_widget import ConfigWidget
 from experiment import Experiment
+from externalwindow import ExternalWindow
+from gendatwidget import GenDatWindow
 from ipyembed import embed_ipy
 from qthreads import WorkerThread
 
@@ -28,6 +32,7 @@ from operator import add, sub
 # 3rd-party/scientific stack module imports
 import yaml
 import matplotlib.cm as cm
+import matplotlib.lines as mlines
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import multiprocessing as mp  # this may be removed as a dependency
@@ -39,10 +44,9 @@ from matplotlib import colors as clrs
 from scipy.stats import linregress as lreg
 
 # Start intial testing of updating to pyqt5
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-
 
 
 class Viewer(QtWidgets.QWidget):
@@ -63,6 +67,8 @@ class Viewer(QtWidgets.QWidget):
         :return none:
         """
         super(Viewer, self).__init__(parent)
+        if self.DEBUG:
+            print("Inside Viewer.__init__(); finished QWidget.__init__()")
         self.setWindowTitle("PLEASE: Python Low-energy Electron Analysis SuitE")
         resolution = QtWidgets.QDesktopWidget().screenGeometry()
         self.max_width = resolution.width()
@@ -75,19 +81,36 @@ class Viewer(QtWidgets.QWidget):
         self.move((resolution.width() / 2) - (self.frameSize().width() / 2),
                   (resolution.height() / 2) - (self.frameSize().height() / 2))
 
+        # in case console not created, can check if this variable is None
+        # before tying to acces console attributes/methods
+        self.message_console = None
         self.already_catching_output = False  # flag for re-routing sys.stdout
 
         # begin GUI setup
+        if self.DEBUG:
+            print("Starting top level ui/data init calls ...")
         self.init_Data()
+        if self.DEBUG:
+            print("Finished Data init")
         self.init_UI()
+        if self.DEBUG:
+            print("Finished UI init")
         self.init_Plot_Axes()
+        if self.DEBUG:
+            print("Finished Plot Axes init")
         self.init_Img_Axes()
-
+        if self.DEBUG:
+            print("Finished Img Axes init")
         if self.Error:
             # re-route sys.stdout to console window
             self.init_Console()
+            if self.DEBUG:
+                print("Finished Console init")
 
         # final action
+        self.setStyleSheet(self.styles['widget'])
+        if self.DEBUG:
+            print("placing call to main UI widget show() method")
         self.show()
 
     # Setup Class Property Accessor/Setter Methods:
@@ -100,11 +123,11 @@ class Viewer(QtWidgets.QWidget):
         self._Style = value
 
     @property
-    def Debug(self):
+    def DEBUG(self):
         return self._DEBUG
 
-    @Debug.setter
-    def Debug(self, value):
+    @DEBUG.setter
+    def DEBUG(self, value):
         self._DEBUG = value
 
     @property
@@ -195,39 +218,52 @@ class Viewer(QtWidgets.QWidget):
         Setup embedded matplotlib plotting axes
         :return none:
         """
+        # colors
+        darker_grey = (43/255., 43/255., 43/255.)  # main widget backgorund color
+        lighter_grey = (55/255., 55/255., 55/255.)  # Plot background color
         # Format LEED IV Axis
-        self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-        self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
-        self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
+        self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18)
+        self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
+        self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18)
         if self.Style:
-            self.LEED_img_ax.set_title("LEED Image", fontsize=20, color='white')
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
+            self.LEED_img_ax.set_title("LEED Image", fontsize=18, color='white')
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18, color='white')
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         rect = self.LEED_IV_fig.patch
         if not self.Style:
             rect.set_facecolor((189/255., 195/255., 199/255.))
-        else: rect.set_facecolor((68/255., 67/255., 67/255.))
+        else:
+            # Old
+            # rect.set_facecolor((68/255., 67/255., 67/255.))
+            # New Darker
+            # rect.set_facecolor((36/255., 35/255., 35/255.))
+            rect.set_facecolor(lighter_grey)
+
 
         # Format LEEM IV Axis
         if not self.Style:
-            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20)
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=18)
             self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
-            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=18)
             self.LEEM_IV_ax.tick_params(labelcolor='b', top='off', right='off')
         else:
-            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20, color='white')
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=18, color='white')
             self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='white')
-            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='white')
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=18, color='white')
             self.LEEM_IV_ax.tick_params(labelcolor='w', top='off', right='off')
 
         rect = self.LEEM_fig.patch
         # 228, 241, 254
         if not self.style:
             rect.set_facecolor((189/255., 195/255., 199/255.))
-        else: rect.set_facecolor((68/255., 67/255., 67/255.))
-        # rect.set_facecolor((236/255., 236/255., 236/255.))  # alter the background color
+        else:
+            # Old
+            # rect.set_facecolor((68/255., 67/255., 67/255.))
+            # New Darker
+            # rect.set_facecolor((36/255., 35/255., 35/255.))
+            rect.set_facecolor(lighter_grey)
 
         plt.style.use('fivethirtyeight')
 
@@ -246,13 +282,13 @@ class Viewer(QtWidgets.QWidget):
         self.LEED_img_ax.get_xaxis().set_visible(False)
         self.LEED_img_ax.get_yaxis().set_visible(False)
         if not self.Style:
-            self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=20)
-        else: self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=20, color='white')
+            self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=18)
+        else: self.LEED_img_ax.set_title('LEED Image: E= 0 eV', fontsize=18, color='white')
 
         # Format LEEM Image Axis
         if not self.Style:
-            self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=20)
-        else: self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=20, color='white')
+            self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=18)
+        else: self.LEEM_ax.set_title('LEEM Image: E= 0 eV', fontsize=18, color='white')
 
         [self.LEEM_ax.spines[k].set_visible(True) for k in ['top', 'bottom', 'left', 'right']]
         self.LEEM_ax.get_xaxis().set_visible(False)
@@ -266,6 +302,8 @@ class Viewer(QtWidgets.QWidget):
         if self.already_catching_output:
             return
         self.message_console = terminal.ErrorConsole()
+        if self.DEBUG:
+            print("Finished init of ErrorConsole ...")
         self.message_console.setWindowTitle('Message Console')
         self.message_console.setMinimumWidth(self.max_width/3)
         self.message_console.setMinimumHeight(self.max_height/3)
@@ -354,14 +392,14 @@ class Viewer(QtWidgets.QWidget):
         LEED_Tab_Layout_V1.addWidget(self.LEED_IV_toolbar)
 
         self.LEED_Tab.setLayout(LEED_Tab_Layout_V1)
-        self.LEED_IV_fig.canvas.mpl_connect('button_release_event', self.LEED_click)
+        self.LEED_cid = self.LEED_IV_fig.canvas.mpl_connect('button_release_event', self.LEED_click)
 
     def init_LEEM_Tab(self):
         """
         Setup GUI items for LEEM analysis
         :return none:
         """
-        self.LEEM_fig, (self.LEEM_ax, self.LEEM_IV_ax) = plt.subplots(1, 2, figsize=(6,6))
+        self.LEEM_fig, (self.LEEM_ax, self.LEEM_IV_ax) = plt.subplots(1, 2, figsize=(6,6), dpi=100)
         self.LEEM_canvas = FigureCanvas(self.LEEM_fig)
         self.LEEM_canvas.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                        QtWidgets.QSizePolicy.Expanding)
@@ -431,16 +469,16 @@ class Viewer(QtWidgets.QWidget):
         buts = [self.set_energy__leem_but, self.set_energy__leed_but, self.toggle_debug,
                 self.swap_byte_order_LEED, self.swap_byte_order_LEEM]
 
-        config_Tab_group_button_box.addStretch(1)
+        config_Tab_group_button_box.addStretch()
         for b in buts:
             config_Tab_group_button_box.addWidget(b)
-            config_Tab_group_button_box.addStretch(1)
+            config_Tab_group_button_box.addStretch()
         config_Tab_groupbox.setStyleSheet(self.styles['group'])
         config_Tab_groupbox.setLayout(config_Tab_group_button_box)
 
         config_Tab_Vbox.addWidget(config_Tab_groupbox)
-        config_Tab_Vbox.addStretch(1)
-        config_Tab_bottom_button_Hbox.addStretch(1)
+        config_Tab_Vbox.addStretch()
+        config_Tab_bottom_button_Hbox.addStretch()
         config_Tab_bottom_button_Hbox.addWidget(self.quitbut)
         config_Tab_Vbox.addLayout(config_Tab_bottom_button_Hbox)
         self.Config_Tab.setLayout(config_Tab_Vbox)
@@ -452,7 +490,7 @@ class Viewer(QtWidgets.QWidget):
         """
         # Removed for PyQt5
         # if sys.platform == 'darwin':
-        #    QtGui.qt_mac_set_native_menubar(False)
+        #    QtWidgets.qt_mac_set_native_menubar(False)
 
         self.menubar = QtWidgets.QMenuBar(parent=None)
 
@@ -467,7 +505,7 @@ class Viewer(QtWidgets.QWidget):
         fileMenu = self.menubar.addMenu('File')
 
         genDatFileAction = QtWidgets.QAction('Generate Dat Files', self)
-        genDatFileAction.triggered.connect(self.gen_dat_files_from_images)
+        genDatFileAction.triggered.connect(self.gen_dat_files_from_images_new)
         fileMenu.addAction(genDatFileAction)
 
 
@@ -488,7 +526,7 @@ class Viewer(QtWidgets.QWidget):
         fileMenu.addAction(outputLEEDAction)
 
         genConfigAction = QtWidgets.QAction("Generate Experiment Config File", self)
-        genConfigAction.triggered.connect(self.generate_config)
+        genConfigAction.triggered.connect(self.gen_config_file)
         fileMenu.addAction(genConfigAction)
 
         exitAction = QtWidgets.QAction('Quit', self)
@@ -604,15 +642,24 @@ class Viewer(QtWidgets.QWidget):
         leemdIdVAction.triggered.connect(self.plot_derivative)
         derivativeMenu.addAction(leemdIdVAction)
 
+        extremaMenu = LEEMMenu.addMenu("Count Minima")
         countAction = QtWidgets.QAction('Count Layers', self)
         countAction.setShortcut('Meta+L')
-        countAction.triggered.connect(self.count_helper)
-        LEEMMenu.addAction(countAction)
+        countAction.triggered.connect(self.count_extrema_optimized)
+        extremaMenu.addAction(countAction)
+
+        countCurrentAction = QtWidgets.QAction("Count Layers - Current Curves", self)
+        countCurrentAction.triggered.connect(self.count_current_curves)
+        extremaMenu.addAction(countCurrentAction)
 
         rectAction = QtWidgets.QAction("Select Rectangle", self)
         rectAction.setShortcut('Meta+R')
         rectAction.triggered.connect(self.LEEM_rectangular_selection)
         LEEMMenu.addAction(rectAction)
+
+        lineProfileAction = QtWidgets.QAction("Line Profile", self)
+        lineProfileAction.triggered.connect(self.LEEM_LineProfile)
+        LEEMMenu.addAction(lineProfileAction)
 
         # Settings Menu
         settingsMenu = self.menubar.addMenu('Settings')
@@ -707,7 +754,12 @@ class Viewer(QtWidgets.QWidget):
         Called once on app open
         :return none:
         """
-        print("Welcome to python Low-energy Electron Analyis SuitE: pLEASE")
+        print("Welcome to the Python Low-energy Electron Analyis SuitE: PLEASE")
+        print("Author: Maxwell Grady - University of New Hampshire")
+        print("Licensed under GPLv3")
+        print("Visit http://www.github.com/mgrady3/pLEASE/ for more details.")
+        print("#" * 63)
+        print()
         print("Begin by loading a LEED or LEEM data set")
         return
 
@@ -753,31 +805,11 @@ class Viewer(QtWidgets.QWidget):
         print('File output successfully')
         return
 
+    def gen_dat_files_from_images_new(self):
+        window = GenDatWindow()
+        return
 
-    """
-    def test_buttons(self):
-
-        self.new_widget= QtWidgets.QWidget()
-        self.new_widget.setWindowTitle("Select Data Type")
-        layout = QtWidgets.QVBoxLayout()
-        option1 = QtWidgets.QCheckBox("Raw Data", self)
-        option2 = QtWidgets.QCheckBox("Image Data", self)
-        okbutton = QtWidgets.QPushButton("Ok", self)
-        oklayout = QtWidgets.QHBoxLayout()
-        oklayout.addStretch(1)
-        oklayout.addWidget(okbutton)
-        okbutton.clicked.connect(self.new_widget.close)
-
-        layout.addWidget(option1)
-        layout.addWidget(option2)
-        layout.addLayout(oklayout)
-
-        option1.stateChanged.connect(lambda: print("Option1 state changed to {}".format(option1.checkState())))
-        option2.stateChanged.connect(lambda: print("Option2 state changed to {}".format(option2.checkState())))
-        self.new_widget.setLayout(layout)
-        self.new_widget.show()
-    """
-
+    # DEPRECATED: replaced with new method and separate GUI window  +multithreaded execution
     def gen_dat_files_from_images(self):
         """
         Query user for directory containing image files and a directory to output data to
@@ -876,9 +908,6 @@ class Viewer(QtWidgets.QWidget):
             print("Error: Unable to parse user selection")
             return
 
-        # TODO: HIGH PRIORITY
-        # TODO: put this into a separate QThread so as to not block the main UI for 10-30 seconds
-        # call gen_dat_files with user entries
         LF.gen_dat_files(dirname=infiledir, outdirname=outfiledir, ext=extension,
                          w=width, h=height, byte_depth=depth)
 
@@ -890,6 +919,83 @@ class Viewer(QtWidgets.QWidget):
     # Merged into master: 4/19/16
     ###########################################################################################
 
+    def gen_config_file(self):
+        """
+
+        :return:
+        """
+        self.cw = ConfigWidget()
+        self.connect(self.cw, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_config_settings)
+        self.connect(self.cw, QtCore.SIGNAL('close'), self.output_config)
+
+
+    def retrieve_config_settings(self, settings):
+        self.config_settings = settings
+
+    def output_config(self):
+        if self.config_settings:
+            print("Outputting config settings to file  ...")
+
+            tab = "    "  # translate '\t' = 4 spaces
+
+            # Required params
+            ddir = self.config_settings["Data Dir"]
+            out_dir = self.config_settings["Output Dir"]
+            file_name = self.config_settings["Output File Name"]
+            exp_type = self.config_settings["Exp Type"]
+            data_type = self.config_settings["Data Type"]
+            im_wd = self.config_settings["Width"]
+            im_ht = self.config_settings["Height"]
+            min_energy = self.config_settings["Min Energy"]
+            max_energy = self.config_settings["Max Energy"]
+            step_energy = self.config_settings["Step Energy"]
+
+            # Additional params
+            if data_type == 'Image':
+                image_type = self.config_settings["Image Type"]
+                if image_type == 'TIFF':
+                    file_ext = '.tiff'
+                elif image_type == 'PNG':
+                    file_ext = '.png'
+                else:
+                    print("Error: Unknown Image Type - Can't set file extension")
+                    return
+            elif data_type == 'Raw':
+                file_ext = '.dat'
+                bit_size = self.config_settings["Bits"]
+                byte_order = self.config_settings["Byte Order"]
+                if byte_order == "Big-Endian (Motorola)":
+                    byte_order = 'B'
+                else:
+                    byte_order = 'L'
+
+            else:
+                print("Error: Unknown Data Type - Can't set file extension")
+                return
+
+            with open(os.path.join(out_dir, file_name), 'w') as f:
+                f.write("Experiment:\n")
+                f.write("# Required Parameters\n")
+                f.write(tab + "Type:  {0}\n".format("\"" + exp_type + "\""))
+                f.write(tab + "Name:  {0}\n".format("\"" + file_name + "\""))
+                f.write(tab + "Data Type:  {0}\n".format("\"" + data_type + "\""))
+                f.write(tab + "File Format:  {0}\n".format("\"" + file_ext + "\""))
+                f.write(tab + "Image Parameters:\n")
+                f.write(tab + tab + "Height:  {0}\n".format(str(im_ht)))
+                f.write(tab + tab + "Width:  {0}\n".format(str(im_wd)))
+                f.write(tab + "Energy Parameters:\n")
+                f.write(tab + tab + "Min:  {0}\n".format(str(min_energy)))
+                f.write(tab + tab + "Max:  {0}\n".format(str(max_energy)))
+                f.write(tab + tab + "Step:  {0}\n".format(str(step_energy)))
+                f.write(tab + "Data Path:  \"{0}\"\n".format(str(ddir)))
+                f.write("\n")
+                f.write("# Additional Parameters\n")
+                if data_type == "Raw":
+                    f.write(tab + "Bit Size:  {0}\n".format(str(bit_size)))
+                    f.write(tab + "Byte Order:  {0}".format(str(byte_order)))
+            print("Experiment YAML config file written to {0}".format(str(os.path.join(ddir, file_name))))
+
+    # DEPRECATED: REplaced with new emthod and separate GUI window
     def generate_config(self):
         """
         Query User for experiment settings
@@ -1083,6 +1189,8 @@ class Viewer(QtWidgets.QWidget):
                 f.write(tab+"Byte Order:  {0}".format(str(byte_order)))
         print("Experiment YAML config file written to {0}".format(str(os.path.join(ddir, file_name))))
 
+    # NOTE: Multithreaded code now has new way of handling SIGNALS/SLOTS
+    # PyQt5 requires new method
     def load_experiment(self):
         """
         :return none
@@ -1091,14 +1199,37 @@ class Viewer(QtWidgets.QWidget):
         # The user may select a directory they know to contain a .yaml file but no files are shown
         # one possible work around may be to use options=QtWidgets.QFileDialog.DontUseNativeDialog
         # but this changes the entire look and feel of the window. Thus is not an ideal solution
-        new_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment Config File"))
-        if new_dir == '':
-                        print('Loading Canceled ...')
-                        return
+
+        # Old way:
+        # new_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select directory containing Experiment Config File"))
+        # if new_dir == '':
+        #                 print('Loading Canceled ...')
+        #                 return
         # get .yaml file from selected dir
-        files = [name for name in os.listdir(new_dir) if (name.endswith('.yaml') or name.endswith('.yml'))]
-        if files:
-            config = files[0]
+        # files = [name for name in os.listdir(new_dir) if (name.endswith('.yaml') or name.endswith('.yml'))]
+        # if files:
+        #     config = files[0]
+        # else:
+        #     print('No Config file found. Please Select a directory with a .yaml file')
+        #     print('Loading Canceled ...')
+        #     return
+
+
+        # New way:
+        # yamlFilter = "YAML (*.yaml);;YML (*.yml);;All Files (*)"
+        homeDir = os.getenv("HOME")
+        #fileName = QtWidgets.QFileDialog.getOpenFileName(parent=None,
+        #                                            caption="Select YAML Experiment Config File",
+        #                                            directory=homeDir,
+        #                                            filter=yamlFilter)
+        fileName = QtWidgets.QFileDialog.getOpenFileName(parent=None,
+                                                    caption="Select YAML Experiment Config File",
+                                                    directory=homeDir)
+        if isinstance(fileName, tuple):
+            #PyQt5 changes QFileDialog.getOpenFilName to return a tuple (filename, filter)
+            fileName = fileName[0]
+        if fileName:
+            config = fileName  # string path to .yaml or .yml config file
         else:
             print('No Config file found. Please Select a directory with a .yaml file')
             print('Loading Canceled ...')
@@ -1109,11 +1240,14 @@ class Viewer(QtWidgets.QWidget):
             self.prev_exp = self.exp
 
         self.exp = Experiment()
-        path_to_config = os.path.join(new_dir, config)
-        self.exp.fromFile(path_to_config)
+        # path_to_config = os.path.join(new_dir, config)
+        self.exp.fromFile(config)
         print("New Data Path loaded from file: {}".format(self.exp.path))
         print("Loaded the following settings:")
-        yaml.dump(self.exp.loaded_settings, stream=self.message_console.stream)
+        if self.message_console is not None:
+            yaml.dump(self.exp.loaded_settings, stream=self.message_console.stream)
+        else:
+            yaml.dump(self.exp.loaded_settings)
         # self.pp.pprint(exp.loaded_settings)
 
         if self.exp.exp_type == 'LEEM':
@@ -1141,17 +1275,17 @@ class Viewer(QtWidgets.QWidget):
         self.LEEM_IV_ax.clear()
         # Make sure labels are correctly redrawn
         if self.Style:
-            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20, color='white')
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=18, color='white')
             self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='white')
-            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='white')
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=18, color='white')
             self.LEEM_IV_ax.tick_params(labelcolor='w', top='off', right='off')
-            self.LEEM_ax.set_title("LEEM Image", fontsize=20, color='white')
+            self.LEEM_ax.set_title("LEEM Image", fontsize=18, color='white')
         else:
-            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=20)
+            self.LEEM_IV_ax.set_title("LEEM I(V)", fontsize=18)
             self.LEEM_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
-            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
+            self.LEEM_IV_ax.set_xlabel("Energy (eV)", fontsize=18)
             self.LEEM_IV_ax.tick_params(top='off', right='off')
-            self.LEEM_ax.set_title("LEEM Image", fontsize=20)
+            self.LEEM_ax.set_title("LEEM Image", fontsize=18)
 
 
         self.leemdat.data_dir = str(self.exp.path)  # manually cast from QString to String
@@ -1305,15 +1439,15 @@ class Viewer(QtWidgets.QWidget):
                 print('Required parameters: data path and data extension.')
                 print('Valid data extenstions: \'.tif\', \'.png\', \'.jpg\'')
         # Ensure labels are redrawn correctly
-        self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-        self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
-        self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
-        self.LEED_img_ax.set_title("LEED Image", fontsize=20)
+        self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18)
+        self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
+        self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18)
+        self.LEED_img_ax.set_title("LEED Image", fontsize=18)
         if self.Style:
-            self.LEED_img_ax.set_title("LEED Image", fontsize=20, color='white')
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
+            self.LEED_img_ax.set_title("LEED Image", fontsize=18, color='white')
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18, color='white')
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         # Ensure LEED Slider is updated to fit self.leeddat.dat3d
         self.format_LEED_slider()
@@ -1460,7 +1594,7 @@ class Viewer(QtWidgets.QWidget):
 
             return
 
-    @QtCore.pyqtSlot('PyQt_PyObject')
+    @QtCore.pyqtSlot(np.ndarray)
     def retrieve_LEED_data(self, dat):
         """
         Custom Slot to recieve data from a QThread object upon thread exit
@@ -1527,11 +1661,10 @@ class Viewer(QtWidgets.QWidget):
 
         if not self.Style:
             self.LEED_img_ax.set_title('LEED Image: E= {} eV'.format(LF.filenumber_to_energy(self.leeddat.elist, index)),
-                                   fontsize=20)
+                                   fontsize=18)
         else:
             self.LEED_img_ax.set_title('LEED Image: E= {} eV'.format(LF.filenumber_to_energy(self.leeddat.elist, index)),
-                                   fontsize=20, color='white')
-
+                                   fontsize=18, color='white')
         self.LEED_IV_canvas.draw()
         self.has_loaded_data = True
         self.hasdisplayed_leed = True
@@ -1543,6 +1676,8 @@ class Viewer(QtWidgets.QWidget):
         Display slice from self.leeddat.dat3d according to integer index input by User
         :return none:
         """
+        if not self.hasdisplayed_leed:
+            return
         entry, ok = QtWidgets.QInputDialog.getInt(self, "Enter Image Number",
                                               "Enter an integer between 0 and {}".format(self.leeddat.dat_3d.shape[2]-1),
                                               value=self.leeddat.dat_3d.shape[2]-1,
@@ -1557,13 +1692,16 @@ class Viewer(QtWidgets.QWidget):
         Display slice from self.leeddat.dat3d according to an energy value input by User in eV
         :return none:
         """
+        if not self.hasdisplayed_leed:
+            return
         entry, ok = QtWidgets.QInputDialog.getDouble(self, "Enter Image Number",
                                               "Enter an integer between {0} and {1}".format(self.leeddat.elist[0], self.leeddat.elist[-1]),
                                               value=int(len(self.leeddat.elist)/2),
                                               min=0,
                                               max=self.leeddat.elist[-1])
         if ok:
-            self.update_LEED_img(index=LF.energy_to_filenumber(self.leeddat.elist, entry))
+            #self.update_LEED_img(index=LF.energy_to_filenumber(self.leeddat.elist, entry))
+            self.update_LEED_slider(value=LF.energy_to_filenumber(self.leeddat.elist, entry))
         return
 
     def set_energy_parameters(self, dat=None):
@@ -1608,7 +1746,6 @@ class Viewer(QtWidgets.QWidget):
                     while energy_list[-1] != self.prev_exp.maxe:
                         energy_list.append(round(energy_list[-1] + self.prev_exp.stepe, 2))
                     self.leemdat.elist = energy_list
-
             return
 
 
@@ -1688,7 +1825,7 @@ class Viewer(QtWidgets.QWidget):
             return
         if not self.has_loaded_data:
             return
-        if self.Debug:
+        if self.DEBUG:
             print('LEED Click registered ...')
 
         # Handle Edge cases:
@@ -1714,7 +1851,10 @@ class Viewer(QtWidgets.QWidget):
                                                 height=2*self.leeddat.box_rad,
                                                 fill=False))
             # self.LEED_img_ax.add_patch(test)
-            self.rect_coords.append((event.ydata, event.xdata))  # store location of central pixel in (r,c) format
+            # bug fixed for double plotting data Oct. 26 2016
+            # append data as list so bool flag can be altered later when data is plotted
+            # approximate pixel coordinate by truncating to integer
+            self.rect_coords.append([int(event.ydata), int(event.xdata), False])   # store location of central pixel in (r,c) format
 
             self.LEED_img_ax.add_artist(self.rects[-1])
             self.rects[-1].set_lw(1)
@@ -1746,14 +1886,14 @@ class Viewer(QtWidgets.QWidget):
         self.hasplotted_leed = False
 
         if self.Style:
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18, color='white')
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         else:
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18)
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
 
         self.LEED_IV_canvas.draw()
@@ -1768,14 +1908,14 @@ class Viewer(QtWidgets.QWidget):
         print('Clearing Plots ...')
         self.LEED_IV_ax.clear()
         if self.Style:
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20, color='white')
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18, color='white')
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         else:
-            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=20)
+            self.LEED_IV_ax.set_title("LEED I(V)", fontsize=18)
             self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         self.LEED_IV_canvas.draw()
 
@@ -1798,27 +1938,32 @@ class Viewer(QtWidgets.QWidget):
             print("Can not plot data due to mismatch ...")
             return
         tot_pix = (2*self.leeddat.box_rad)**2
-        for idx, tup in enumerate(self.rect_coords):
-            # generate 3d slice of main data array
-            # this represents the integration window projected along the third array axis
-            int_win = self.leeddat.dat_3d[int(tup[0]-self.leeddat.box_rad):int(tup[0]+self.leeddat.box_rad),
-                                          int(tup[1]-self.leeddat.box_rad):int(tup[1]+self.leeddat.box_rad),
-                                          :]
-            # plot unaveraged intensity 3/30/2016
-            # ilist = [img.sum()/tot_pix for img in np.rollaxis(int_win, 2)]
+        for idx, lst in enumerate(self.rect_coords):
+            if lst[2] == False:
+                # Data has not been plotted
 
-            ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
+                # generate 3d slice of main data array
+                # this represents the integration window projected along the third array axis
+                int_win = self.leeddat.dat_3d[int(lst[0]-self.leeddat.box_rad):int(lst[0]+self.leeddat.box_rad),
+                                              int(lst[1]-self.leeddat.box_rad):int(lst[1]+self.leeddat.box_rad),
+                                              :]
+                # plot unaveraged intensity 3/30/2016
+                # ilist = [img.sum()/tot_pix for img in np.rollaxis(int_win, 2)]
 
-            if self.smooth_leed_plot:
-                print('Plotting and Storing Smoothed Data ...')
-                self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
-                self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type),
-                                     color=self.smooth_colors[idx])
+                ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
 
-            else:
-                print('Plotting and Storing Raw Data ...')
-                self.current_selections.append((ilist, self.colors[idx]))
-                self.LEED_IV_ax.plot(self.leeddat.elist, ilist, color=self.colors[idx])
+                if self.smooth_leed_plot:
+                    print('Plotting and Storing Smoothed Data ...')
+                    self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
+                    self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type),
+                                         color=self.smooth_colors[idx])
+
+                else:
+                    print('Plotting and Storing Raw Data ...')
+                    self.current_selections.append((ilist, self.colors[idx]))
+                    self.LEED_IV_ax.plot(self.leeddat.elist, ilist, color=self.colors[idx])
+
+                lst[2] = True  # set plot flag to True
 
         self.LEED_IV_canvas.draw()
         return
@@ -1833,9 +1978,9 @@ class Viewer(QtWidgets.QWidget):
             print('Not Data Selected to Plot')
             return
         current_curves = []
-        for idx, tup in enumerate(self.rect_coords):
-            int_win = self.leeddat.dat_3d[int(tup[0] - self.leeddat.box_rad):int(tup[0] + self.leeddat.box_rad),
-                                          int(tup[1] - self.leeddat.box_rad):int(tup[1] + self.leeddat.box_rad),
+        for idx, lst in enumerate(self.rect_coords):
+            int_win = self.leeddat.dat_3d[lst[0] - self.leeddat.box_rad:lst[0] + self.leeddat.box_rad,
+                                          lst[1] - self.leeddat.box_rad:lst[1] + self.leeddat.box_rad,
                                           :]
             current_curves.append([img.sum() for img in np.rollaxis(int_win, 2)])
 
@@ -1856,13 +2001,13 @@ class Viewer(QtWidgets.QWidget):
         self.LEED_IV_ax.plot(self.leeddat.elist, average_int, color=self.colors[-1])
         if self.Style:
             self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves', color='w')
-            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='w')
-            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=16, color='w')
+            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='w')
+            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=18, color='w')
             self.LEED_IV_ax.tick_params(labelcolor='w', top='off', right='off')
         else:
             self.LEED_IV_ax.set_title('Average I(V) of Currently Selected Curves')
-            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=16)
-            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=16)
+            self.LEED_IV_ax.set_ylabel("Intensity (arb. units)", fontsize=18)
+            self.LEED_IV_ax.set_xlabel("Energy (eV)", fontsize=18)
             self.LEED_IV_ax.tick_params(labelcolor='b', top='off', right='off')
         print('Plotting Average LEED_I(V) ...')
         self.LEED_IV_canvas.draw()
@@ -1873,12 +2018,12 @@ class Viewer(QtWidgets.QWidget):
         Swap settings for Debug property
         :return: none
         """
-        if self.Debug:
+        if self.DEBUG:
             print('Disabling Debug ...')
-            self.Debug = False
+            self.DEBUG = False
         else:
             print('Enabling Debug ...')
-            self.Debug = True
+            self.DEBUG = True
         return
 
     def toggle_smoothing(self):
@@ -2001,8 +2146,8 @@ class Viewer(QtWidgets.QWidget):
         rect = self.bfig.patch
         if self.Style:
             rect.set_facecolor((68 / 255., 67 / 255., 67 / 255.))
-            self.bplot_ax.set_title("Average Background I(V)", fontsize=20, color='w')
-            self.bplot_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
+            self.bplot_ax.set_title("Average Background I(V)", fontsize=18, color='w')
+            self.bplot_ax.set_ylabel('Intensity [arb. units]', fontsize=18, color='white')
             self.bplot_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
             self.bplot_ax.xaxis.label.set_color('w')
             self.bplot_ax.yaxis.label.set_color('w')
@@ -2038,13 +2183,13 @@ class Viewer(QtWidgets.QWidget):
                 self.LEED_IV_ax.plot(self.leeddat.elist, curve[0], color=curve[1])
 
         if self.Style:
-            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=20,color='white')
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16, color='white')
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16, color='white')
+            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=18,color='white')
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18, color='white')
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18, color='white')
         else:
-            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=20)
-            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=16)
-            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=16)
+            self.LEED_IV_ax.set_title("Corrected I(V)", fontsize=18)
+            self.LEED_IV_ax.set_ylabel('Intensity [arb. units]', fontsize=18)
+            self.LEED_IV_ax.set_xlabel('Energy [eV]', fontsize=18)
         self.LEED_IV_canvas.draw()
 
     def subtract_background(self):
@@ -2064,9 +2209,10 @@ class Viewer(QtWidgets.QWidget):
 
         self.background_curves = []
         print('Starting Background Subtraction Procedure ...')
-        for idx, tup in enumerate(self.rect_coords):
-            data_subset = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
-                                              tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+        for idx, lst in enumerate(self.rect_coords):
+            # rect_coords is a list of lists in form [ydata, xdata, bool(has been plotted)]
+            data_subset = self.leeddat.dat_3d[lst[0]-self.leeddat.box_rad:lst[0]+self.leeddat.box_rad,
+                                              lst[1]-self.leeddat.box_rad:lst[1]+self.leeddat.box_rad,
                                               :]
             adj_ilist = []  # create list to hold adjusted intensities
             # iterate over each image in the data subset
@@ -2096,7 +2242,7 @@ class Viewer(QtWidgets.QWidget):
                 total_int = img.sum()
                 per_sum = (img[0, :] + img[0:, -1] + img[-1, :] + img[:, 0]).sum()  # sum edges
                 per_sum -= (img[0, 0] + img[0, -1] + img[-1, -1] + img[-1, 0])  # subtract corners for double counting
-                per_sum  = (per_sum / float(8*self.leeddat.box_rad - 4))*(2*self.leeddat.box_rad)**2
+                per_sum = (per_sum / float(8*self.leeddat.box_rad - 4))*(2*self.leeddat.box_rad)**2
 
                 corrected_int = total_int - per_sum
                 bkgnd.append(per_sum)
@@ -2200,7 +2346,7 @@ class Viewer(QtWidgets.QWidget):
 
         num_curves = len(self.current_selections)
         last_raw_curve_idx = int(num_curves/2) -1  # manually cast to int for py3 compliance
-        if self.Debug:
+        if self.DEBUG:
             print("Number of total curves to plot = {}".format(num_curves))
             print("Index of last raw curve = {}".format(last_raw_curve_idx))
 
@@ -2365,11 +2511,11 @@ class Viewer(QtWidgets.QWidget):
         if data is None:
             # Output data from main window
             # for each element in rect_coords - spin up a qthread to output the data to file
-            for idx, tup in enumerate(self.rect_coords):
+            for idx, lst in enumerate(self.rect_coords):
 
                 # generate raw data to pass to new thread to be output
-                int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
-                                              tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+                int_win = self.leeddat.dat_3d[lst[0]-self.leeddat.box_rad:lst[0]+self.leeddat.box_rad,
+                                              lst[1]-self.leeddat.box_rad:lst[1]+self.leeddat.box_rad,
                                               :]
                 ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
                 elist = self.leeddat.elist
@@ -2636,6 +2782,7 @@ class Viewer(QtWidgets.QWidget):
             print('Resetting data directory to previous setting, {}'.format(prev_ddir))
             return
 
+    @QtCore.pyqtSlot(np.ndarray)
     def retrieve_LEEM_data(self, dat):
         """
         Catch the emitted numpy ndarray emitted from QThread when finished loading data
@@ -2655,11 +2802,13 @@ class Viewer(QtWidgets.QWidget):
         self.set_energy_parameters(dat='LEEM')
         self.format_slider()
         self.hasdisplayed_leem = True
+        self.has_loaded_data = True
+        self.update_image_slider(self.leemdat.dat_3d.shape[2]-1)
 
-        if not self.has_loaded_data:
-            self.update_image_slider(self.leemdat.dat_3d.shape[2]-1)
-            self.has_loaded_data = True
-            return
+        # if not self.has_loaded_data:
+        #     self.update_image_slider(self.leemdat.dat_3d.shape[2]-1)
+        #     self.has_loaded_data = True
+        #     return
         # self.update_image_slider(0)
         return
 
@@ -2707,10 +2856,10 @@ class Viewer(QtWidgets.QWidget):
         self.leem_IV_mask = []
         if not self.Style:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist,
-                                                                                   self.leemdat.curimg)), fontsize=16)
+                                                                                   self.leemdat.curimg)), fontsize=18)
         else:
             self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist,
-                                                                                   self.leemdat.curimg)), fontsize=16, color='white')
+                                                                                   self.leemdat.curimg)), fontsize=18, color='white')
         self.LEEM_canvas.draw()
 
     def show_LEEM_Data(self, data, imgnum):
@@ -2724,11 +2873,12 @@ class Viewer(QtWidgets.QWidget):
         """
         self.leemdat.curimg = imgnum
         img = data[0:, 0:, self.leemdat.curimg]
+        self.current_LEEM_eV = LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)
 
         if self.Style:
-            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16, color='white')
+            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=18, color='white')
         else:
-            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=16)
+            self.LEEM_ax.set_title('LEEM Image: E= ' + str(LF.filenumber_to_energy(self.leemdat.elist, self.leemdat.curimg)) +' eV', fontsize=18)
 
         self.LEEM_ax.imshow(img, cmap=cm.Greys_r)
         self.LEEM_canvas.draw()
@@ -2815,6 +2965,77 @@ class Viewer(QtWidgets.QWidget):
         self.leem_IV_mask.append(0)
         self.init_Plot_Axes()
         self.LEEM_canvas.draw()
+
+    def LEEM_LineProfile(self):
+        """
+        triggered from LEEM_Menu
+        :return:
+        """
+        self.LEEM_fig.canvas.mpl_disconnect(self.LEEM_click_handler)
+        self.num_line_clicks = 0
+        self.line = []
+        self.LineProfile_cid = self.LEEM_fig.canvas.mpl_connect("button_release_event", self.LEEM_create_LineProfile)
+
+    def LEEM_create_LineProfile(self, event):
+        """
+        called on click
+        :param event:
+        :return:
+        """
+        if not self.hasdisplayed_leem:
+            return
+
+        if not event.inaxes == self.LEEM_ax:
+            return
+
+        self.num_line_clicks += 1
+
+        if self.num_line_clicks == 1:
+            self.line = [(int(event.xdata), int(event.ydata))]  # inital coords for line
+            return
+        elif self.num_line_clicks == 2:
+            print("Creating Line Profile ...")
+            self.line.append((int(event.xdata), int(event.ydata)))
+            idx = LF.energy_to_filenumber(self.leemdat.elist, self.current_LEEM_eV)
+
+            # get list of numpy coordinates along the line between the two points
+            # these coordinates are in (r,c) format, which is equivalent to (y,x)
+            # This could be replaced with numpy interpolation if needed in the future
+            # Currently unclear which method would be more performant
+
+            points = b_line(self.line[0][0], self.line[0][1], self.line[1][0], self.line[1][1])  # (r, c)
+            self.num_line_clicks = 0
+            xd = [pt[0] for pt in points]  # column coordinates
+            yd = [pt[1] for pt in points]  # row coordinates
+
+            # reverse coordinate order to transform from (r,c) to mpl coordinates
+            line = mlines.Line2D(yd, xd, linewidth=2, color='r')
+
+            self.LEEM_ax.add_line(line)
+            self.LEEM_canvas.draw()
+
+            # create new window with line profile plot data
+            lpdata = [self.leemdat.dat_3d[pt[0], pt[1], idx] for pt in points]
+            self.lpwindow = ExternalWindow(size=(0.45*self.max_width, 0.45*self.max_height),
+                                           num_plots=1,
+                                           canvas=self.LEEM_canvas,
+                                           line=line)
+            # ensure window length for smoothing algorithm is even
+            wl = int(0.1*len(lpdata))
+            if not wl % 2 == 0:
+                wl += 1
+            self.lpwindow.pltax.plot(range(len(lpdata)),
+                           LF.smooth(lpdata, window_len=wl, window_type='flat'),
+                           color='k')
+            self.lpwindow.pltax.set_xlabel('Position along LineProfile')
+            self.lpwindow.pltax.set_ylabel('Intensity [arb. units]')
+            self.lpwindow.show()
+
+            # reset click handler to normal leem click
+            self.LEEM_fig.canvas.mpl_disconnect(self.LineProfile_cid)
+            self.LEEM_click_handler = self.LEEM_fig.canvas.mpl_connect("button_release_event", self.leem_click)
+            self.num_line_clicks = 0
+            return
 
     def popout_LEEM_IV(self):
         """
@@ -3044,14 +3265,14 @@ class Viewer(QtWidgets.QWidget):
 
             plt.grid(False)
             if self._Style:
-                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
-                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
-                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
+                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=18, color='w')
+                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=18, color='w')
+                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='w')
                 self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
             else:
-                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20)
-                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20)
-                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20)
+                self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=18)
+                self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=18)
+                self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=18)
                 self.leem_rect_iv_ax.tick_params(labelcolor='b', top='off', right='off')
             self.leem_rect_plot_window.show()
             self.leem_rect_canvas.draw()
@@ -3079,14 +3300,14 @@ class Viewer(QtWidgets.QWidget):
             ilist = [img.sum() for img in np.rollaxis(data_slice, 2)]
             self.leem_rect_iv_ax.plot(self.leemdat.elist, LF.smooth(ilist), color=self.colors[idx + 1])
         if self._Style:
-            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20, color='w')
-            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20, color='w')
-            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20, color='w')
+            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=18, color='w')
+            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=18, color='w')
+            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='w')
             self.leem_rect_iv_ax.tick_params(labelcolor='w', top='off', right='off')
         else:
-            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=20)
-            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=20)
-            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=20)
+            self.leem_rect_iv_ax.set_title("LEEM-I(V) Selection Average", fontsize=18)
+            self.leem_rect_iv_ax.set_xlabel("Energy (eV)", fontsize=18)
+            self.leem_rect_iv_ax.set_ylabel("Intensity (arb. units)", fontsize=18)
             self.leem_rect_iv_ax.tick_params(labelcolor='b', top='off', right='off')
         self.leem_rect_canvas.draw()
 
@@ -3180,17 +3401,19 @@ class Viewer(QtWidgets.QWidget):
         for idx, tup in enumerate(self.leem_IV_list):
             ax.plot(tup[0], LF.smooth(tup[1], self.smooth_window_len, self.smooth_window_type), color=self.colors[tup[4]])
         if self.Style:
-            ax.set_title("LEEM I(V)-Smoothed", fontsize=16, color='w')
-            ax.set_ylabel("Intensity (arb. units)", fontsize=16, color='w')
-            ax.set_xlabel("Energy (eV)", fontsize=16, color='w')
+            ax.set_title("LEEM I(V)-Smoothed", fontsize=18, color='w')
+            ax.set_ylabel("Intensity (arb. units)", fontsize=18, color='w')
+            ax.set_xlabel("Energy (eV)", fontsize=18, color='w')
         else:
-            ax.set_title("LEEM I(V)-Smoothed", fontsize=16)
-            ax.set_ylabel("Intensity (arb. units)", fontsize=16)
-            ax.set_xlabel("Energy (eV)", fontsize=16)
+            ax.set_title("LEEM I(V)-Smoothed", fontsize=18)
+            ax.set_ylabel("Intensity (arb. units)", fontsize=18)
+            ax.set_xlabel("Energy (eV)", fontsize=18)
         can.draw()
 
+    # DEPRECATED
     def count_layers_old(self):
         """
+        DEPRECATED
         Attempt to count the number of minima for each I(V) curve by iterating over all
         pixels in the topmost image in the most efficient way using np.nditer()
         This method iterates over the 3d numpy array in stored memory order
@@ -3280,8 +3503,11 @@ class Viewer(QtWidgets.QWidget):
 
         self.discrete_imshow(self.img_mask_count, cmap=cm.Spectral)
 
+    # DEPRECATED
     def check_flat_old(self, xd, yd):
         """
+        DEPRECATED
+
         NOTE: Consider moving this function to data.py in the LeemData class
         :param xd:
             array-like set of x values
@@ -3306,6 +3532,7 @@ class Viewer(QtWidgets.QWidget):
             isflat = True
         return (isflat, mins[0])
 
+    # DEPRECATED
     def check_flat(self, data, thresh=5):
         '''
         :param data:
@@ -3326,7 +3553,15 @@ class Viewer(QtWidgets.QWidget):
         else:
             return mins[0]
 
+    # DEPRECATED
     def count_helper(self):
+        """
+        DEPRECATED
+        Called from LEEM Menu
+        Queries User for Energy Window then places call to count_layers_new()
+        to perform minima counting in the selected energy regime.
+        :return none:
+        """
         def_min_e = 0
         def_max_e = 5.1
 
@@ -3349,6 +3584,7 @@ class Viewer(QtWidgets.QWidget):
         self.count_layers_new(data=self.leemdat.dat_3d[:, :, min_index:max_index],
                               ecut=self.leemdat.elist[min_index:max_index])
 
+    # DEPRECATED: Multiprocessing is busted with Qt
     def count_layers_new(self, data, ecut):
         '''
         Method for counting the number of minima in a LEEM-I(V) curve
@@ -3379,14 +3615,149 @@ class Viewer(QtWidgets.QWidget):
         self.discrete_imshow(outs)
         return
 
+    def count_extrema_optimized(self):
+        """
+        Called from LEEM Menu
+        :return none:
+        """
+        if not self.hasdisplayed_leem:
+            return
+
+        def_min_e = 0
+        def_max_e = 5.1
+
+        # query user to set minimum energy
+        min_e, ok = QtWidgets.QInputDialog.getDouble(self, "Set Minimum Energy",
+                                                 "Input a float value for Min Energy greater or equal to 0.",
+                                                 0, 0, 10, 1)
+        if not ok:
+            min_e = def_min_e  # use default if input was canceled
+
+        # query and set max energy
+        max_e, ok = QtWidgets.QInputDialog.getDouble(self, "Set Maximum Energy",
+                                                 "Input a float value for Max Energy less than or equal to 15.",
+                                                 0, 0, 10, 1)
+        if not ok:
+            max_e = def_max_e  # use default if input was canceled
+
+        min_index = self.leemdat.elist.index(min_e)
+        max_index = self.leemdat.elist.index(max_e)
+
+
+        print("Beginning calculation of I(V) minima - WARNING: this may take a few moments ...")
+        self.ts = time.time()
+        self.smooth_data_for_count(data=self.leemdat.dat_3d[:, :, min_index:max_index],
+                                   elist=self.leemdat.elist[min_index:max_index])
+
+    @QtCore.pyqtSlot(np.ndarray)
+    def retrieve_smoothed_data(self, data):
+        """
+        PYQT SLOT
+        :param data: output from separate thread stored to local vairable in GUI thread
+        :return none:
+        """
+        print("Done computing smoothed I(V) data")
+        self.smoothed_data = data
+
+    def smooth_data_for_count(self, data, elist):
+        """
+        Called from count_extrema_optimized
+        :param data: slice of main data set through user selected energy window
+        :param elist: slice of main energy list to user selected points
+        :return none:
+        """
+        self.smoothed_data = None
+        self.thread = WorkerThread(task='SMOOTH', data=data)
+        try:
+            self.thread.disconnect()
+        except:
+            pass
+        self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_smoothed_data)
+        self.connect(self.thread, QtCore.SIGNAL('finished()'), self.count_extrema)
+        print("Starting Thread to compute smoothed I(V) data ...")
+        self.thread.start()
+
+    @QtCore.pyqtSlot(np.ndarray)
+    def retrieve_image_mask(self, mask):
+        """
+        PYQT SLOT
+        :param mask: output from separate thread stored to local variable in GUI thread
+        :return none:
+        """
+        self.image_mask = mask
+
+    def count_extrema(self):
+        """
+        Use a separate thread to process the smoothed I(V) data cut to a user selected energy window
+        Make an image map of the surface that is color coded to the number of minima counted in
+        the I(V) curve extracted from each pixel
+        :return:
+        """
+        if self.smoothed_data is None:
+            print("ERROR: Data has not yet been smoothed - possibly thread has not finished")
+            return
+        self.image_mask = None
+        self.thread = WorkerThread(task='COUNT_MINIMA', data=self.smoothed_data)
+        try:
+            self.thread.disconnect()
+        except:
+            pass
+        self.connect(self.thread, QtCore.SIGNAL('output(PyQt_PyObject)'), self.retrieve_image_mask)
+        self.connect(self.thread, QtCore.SIGNAL('finished()'), self.finished_counting)
+        print("Starting thread to count  minima in I(V) data ...")
+        self.thread.start()
+
+    @QtCore.pyqtSlot()
+    def finished_counting(self):
+        """
+        PYQT SLOT
+        :return none:
+        """
+        print("Done counting minima in LEEM-I(V) ...")
+        self.tf = time.time() - self.ts
+        fmt = divmod(self.tf, 60)  # Decompose time into minutes and seconds
+        print("Elapsed time: {0} minutes and {1} seconds.".format(fmt[0], fmt[1]))
+        if self.image_mask is None:
+            print("Error: image mask data not received from thread ...")
+            return
+        self.discrete_imshow(data=self.image_mask)
+
+    # TODO: Finish implementing this ...
+    def count_current_curves(self):
+        if not self.hasplotted_leem:
+            return
+        if not self.circs:
+            return
+
+        # TODO: query user for energy window
+        # TODO: adapt detect_peaks._plot() to show minima locations on I(V) curves
+        print("Starting I(V) minima analysis for current LEEM-I(V) curves ...")
+        self.ts = time.time()
+        current_curves = []
+        mins = []
+        for circ in self.circs:
+            r = int(circ.center[1])
+            c = int(circ.center[0])
+            iv = self.leemdat.dat_3d[r, c, :]
+            if self.smooth_window_len and self.smooth_window_type:
+                siv = LF.smooth(iv, window_len=self.smooth_window_len, window_type=self.smooth_window_type)
+            else:
+                siv = LF.smooth(iv)
+            current_curves.append(siv)
+            minima = LF.count_extrema(siv, mins=True, locs=True)
+            mins.append(minima)
+        self.tf = time.time()
+        fmt = divmod(self.tf - self.ts, 60)
+        print("Done Analyzing I(V) Minima: Elapsed {0} minutes and {1} seconds".format(fmt[0], fmt[1]))
+
     def discrete_imshow(self, data, clrmp=cm.Spectral):
-        '''
+        """
         :param data:
             2d numpy array to be plotted
         :param clrmp:
             mpl color map
         :return none:
-        '''
+        """
 
         max_val = np.max(data)
         min_val = np.min(data)
@@ -3411,10 +3782,12 @@ class Viewer(QtWidgets.QWidget):
         self.count_window.setLayout(cvbox)
 
         self.cplot_ax.imshow(data, interpolation='none', cmap=cmap)
+        self.cplot_ax.set_title("Surface Image false-colored to # minima in LEEM-I(V)")
         ax2 = self.cfig.add_axes([0.95, 0.1, 0.03, 0.8])
         cb = colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,
         spacing='proportional', ticks=bounds, boundaries=bounds, format='%1i')
-
+        cb.set_label("# minima")
+        plt.grid(False)
         self.count_window.show()
 
     def old_discrete_imshow(self, data, cmap, title=None):

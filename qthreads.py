@@ -13,8 +13,10 @@ Common tasks for the worker thread will be:
 
 """
 
+import os
 import LEEMFUNCTIONS as LF
 import numpy as np
+from detect_peaks import detect_peaks as dp
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 # TODO: Consider splitting to multiple classes for separate tasks
@@ -33,18 +35,27 @@ class WorkerThread(QtCore.QThread):
                 calculations or for outputting to text
         imht: integer image height dimension
         imwd: integer image width dimension
+        name: string name for output file when saving I(V) data to text
+        bits: int refering to 8bit or 16bit images
+        ext: string file extension
+        byte: string 'L or 'B' denoting endian-ness of data
+        outpath: string path to directory in which to output .dat files
+        files: list of strings of file names to be output as raw data to outpath
     """
 
     # Pyqt5 Signals must be declared at class level
-    outputSIGNAL = QtCore.pyqtSignal('PyQt_PyObject')
+    done = QtCore.pyqtSignal()
+    outputSIGNAL = QtCore.pyqtSignal(np.ndarray)
 
     def __init__(self, task=None, **kwargs):
         super(WorkerThread, self).__init__()
         self.task = task
         # Get parameters as dictionary and validate against keys
         self.params = kwargs
+        # path refers to input data path
+        # output data path is labeled as outpath
         self.valid_keys = ['path', 'data', 'ilist', 'elist',
-                           'imht', 'imwd', 'name', 'bits', 'ext', 'byte']
+                           'imht', 'imwd', 'name', 'bits', 'ext', 'byte', 'outpath', 'files']
         for key in self.params.keys():
             if key not in self.valid_keys:
                 print('Terminating - ERROR Invalid Task Parameter: {}'.format(key))
@@ -101,6 +112,16 @@ class WorkerThread(QtCore.QThread):
             self.quit()
             self.exit()  # restrict action to one task
 
+        elif self.task == 'SMOOTH':
+            self.smooth()
+            self.quit()
+            self.exit()  # restrict action to one task
+
+        elif self.task == 'GEN_DAT_FILES':
+            self.gen_Dat_Files()
+            self.quit()
+            self.exit()  # restrict action to one task
+
         else:
             print('Terminating: Unknown task ...')
             self.quit()
@@ -140,7 +161,7 @@ class WorkerThread(QtCore.QThread):
         # Old way:
         # self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)
         # New Way:
-        self.outputSIGNAL.emit(dat_3d)
+        self.outputSIGNAL.emit(dat_3d) # type: np.ndarray
 
     def load_LEED_Images(self):
         """
@@ -173,7 +194,7 @@ class WorkerThread(QtCore.QThread):
             # Old way:
             # self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), data)
             # New Way:
-            self.outputSIGNAL.emit(data)
+            self.outputSIGNAL.emit(data) # type: np.ndarray
 
     def load_LEEM(self):
         """
@@ -209,7 +230,7 @@ class WorkerThread(QtCore.QThread):
         # Old way:
         # self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), dat_3d)
         # New Way:
-        self.outputSIGNAL.emit(dat_3d)
+        self.outputSIGNAL.emit(dat_3d) # type: np.ndarray
 
     def load_LEEM_Images(self):
         """
@@ -235,7 +256,7 @@ class WorkerThread(QtCore.QThread):
         # Old way:
         # self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), data)
         # New Way:
-        self.outputSIGNAL.emit(data)
+        self.outputSIGNAL.emit(data) # type: np.ndarray
 
     def output_to_Text(self):
         """
@@ -255,8 +276,83 @@ class WorkerThread(QtCore.QThread):
 
     def count_Minima(self):
         """
+        Count number of minima in each I(V) curve
+        Store number of minima from curve at data[r,c, :] in image mask[r,c]
+        emit image_mask as pyqtSignal to return the result to main GUI Thread
+        :return:
+        """
+        # requires params: data
+        # :param data: 3D numpy array containing I(V) data cut to specified energy window
+        if 'data' not in self.params.keys():
+            print('Terminating - ERROR: incorrect parameters for COUNT_MINIMA task')
+            print('Required Parameters: data - 3d numpy array')
+            return
+        top_image = self.params['data'][:, :, 0]
+        it = np.nditer(top_image, flags=['multi_index'])
+        mask = np.zeros((self.params['data'].shape[0],
+                         self.params['data'].shape[1]))
+
+        print("Minima Counting:")
+        print("    input_data shape: {}".format(self.params['data'].shape))
+        print("    input_data type:  {}".format(self.params['data'].dtype))
+        print("    number of curves to process:  {}".format(top_image.size))
+        while not it.finished:
+            r = it.multi_index[0]
+            c = it.multi_index[1]
+            # dp() method returns coordinates of extrema found
+            # dp( valley=True) returns only the minima
+            # len(dp()) then gives the number of minima
+            mask[r, c] = len(dp(self.params['data'][r, c, :], valley=True, mpd=10))
+            it.iternext()
+        # self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), mask)
+        self.outputSIGNAL.emit(mask) # type: np.ndarray
+
+    def smooth(self):
+        if 'data' not in self.params.keys():
+            print('Terminating - ERROR: incorrect parameters for smooth task')
+            print('Required Parameters: data - 3d numpy array')
+            return
+        smth = np.apply_along_axis(LF.smooth, 2, self.params['data'], window_len=10, window_type='flat')
+        # self.emit(QtCore.SIGNAL('output(PyQt_PyObject)'), smth)
+        self.outputSIGNAL.emit(smth)  # type: np.ndarray
+
+    def gen_Dat_Files(self):
+        """
 
         :return:
         """
-        # requires params: data, elist
-        pass
+        # requires:
+        # path - input path
+        # outpath - output path
+        # files - list of files to output
+        # imwd
+        # imht
+        # bits
+        # byte
+        reqs = ['path', 'outpath', 'files', 'imht', 'imwd', 'bits', 'byte']
+        for req in reqs:
+            if req not in self.params.keys():
+                print("Error: Required Parameter {} is missing from call to gen_Dat_Files() ...".format(req))
+                return
+        files = self.params['files']
+        indir = self.params['path']
+        outdir = self.params['outpath']
+        h = self.params['imht']
+        w = self.params['imwd']
+        bits = self.params['bits']
+        byte_order = self.params['byte']
+
+        if bits == 16 or bits == 2:
+            bytes_per_pixel = 2
+        elif bits == 8 or bits == 1:
+            bytes_per_pixel = 1
+
+        for file in files:
+            with open(os.path.join(indir, file), 'rb') as infile:
+                header = len(infile.read()) - bytes_per_pixel * w * h
+                infile.seek(0)
+                fmtstr = byte_order + 'u' + str(bytes_per_pixel)
+                data = np.fromstring(infile.read()[header:], fmtstr).reshape((h, w))
+                with open(os.path.join(outdir, file.split('.')[0]+'.dat'), 'wb') as outfile:
+                    data.tofile(outfile)
+        self.done.emit()

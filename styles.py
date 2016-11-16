@@ -8,8 +8,8 @@ class PyLeemStyles(object):
         """
         but_style = """
             QPushButton {
-                color: #333;
-                color: #333;
+                color: 	#373737;
+                color: 	#373737;
                 border: 2px solid #555;
                 border-radius: 11px;
                 padding: 5px;
@@ -21,8 +21,8 @@ class PyLeemStyles(object):
         """
         group_style = """
             QGroupBox {
-                background-color: rgb(48, 47, 47);
-                border: 8px solid rgb(108, 122, 137);
+                background-color: rgb(43, 43, 43);
+                border: 8px solid rgb(55, 55, 55);
                 border-radius: 8px
                 }
         """
@@ -69,8 +69,28 @@ class PyLeemStyles(object):
         }
 
         """
-        keys = ['tab', 'can', 'group', 'menu', 'but']
-        values = [tab_style, can_style, group_style, menu_style, but_style]
+        # color: #eff0f1;
+        widget_style = """
+            .QWidget {
+            color: #eff0f1;
+            background-color: #2b2b2b;
+            selection-background-color:#3daee9;
+            selection-color: #eff0f1;
+            background-clip: border;
+            border-image: none;
+            border: 0px transparent black;
+            outline: 0;
+        }
+        """
+        # may be added later
+        input_style = """
+            QInputDialog {
+
+            }
+        """
+
+        keys = ['tab', 'can', 'group', 'menu', 'but', 'widget']
+        values = [tab_style, can_style, group_style, menu_style, but_style, widget_style]
 
         self.css_dict = dict(zip(keys, values))
 

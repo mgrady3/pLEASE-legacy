@@ -50,6 +50,8 @@ class Experiment(object):
         :return:
         """
         with open(fl, 'r') as f:
+            # print(fl)
+            # print(type(f))
             self.loaded_settings = yaml.load(f)
         try:
             # Parse Settings into sub groups
