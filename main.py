@@ -45,8 +45,10 @@ def main():
     # print(os.path.join(graphics_path, 'pLEASE.png'))
     splash = QtGui.QSplashScreen(splash_picture, QtCore.Qt.WindowStaysOnTopHint)
     splash.setMask(splash_picture.mask())
-    splash.show()
-    time.sleep(3.5)
+    now = time.time()
+    while time.time() - now < 3:
+        time.sleep(0.001)
+        app.processEvents()
 
     # Start UI
     view = gui.Viewer()
