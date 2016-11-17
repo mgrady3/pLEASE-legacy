@@ -19,13 +19,20 @@ def embed_ipy(parent, passthrough=None):
             and then call any of their show() or draw() methods.
     :return: dict with reference to jupyter widget and ipython kernel
     """
+    # print("Inside embed_ipy() ...")
+    # print("instantiating kernel manager ...")
     kernel_manager = QtInProcessKernelManager()
+    # print("starting kernel ...")
     kernel_manager.start_kernel()
     kernel = kernel_manager.kernel
-    kernel.gui = 'qt5'
+    # print("Setting kernel gui ...")
+    kernel.gui = 'qt'
 
+    # print("instantiating client ...")
     kernel_client = kernel_manager.client()
+    # print("Starting kernel channels")
     kernel_client.start_channels()
+    # print("Setting kernel namespace to parent Widget")
     kernel_client.namespace = parent
 
     def stop():
@@ -33,6 +40,7 @@ def embed_ipy(parent, passthrough=None):
         kernel_manager.shutdown_kernel()
 
     layout = QtWidgets.QVBoxLayout(parent)
+    print("Instantiating JupyterWidget")
     widget = RichJupyterWidget(parent=parent)
     layout.addWidget(widget)
     widget.kernel_manager = kernel_manager

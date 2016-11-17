@@ -55,8 +55,8 @@ class Viewer(QtWidgets.QWidget):
     """
     # Config Flags - controlled via class properties
     _Style = True
-    _DEBUG = True
-    _ERROR = True
+    _DEBUG = False
+    _ERROR = False
 
     def __init__(self, parent=None):
         """
