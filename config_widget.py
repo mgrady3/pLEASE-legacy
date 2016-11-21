@@ -8,6 +8,8 @@ class ConfigWidget(QtGui.QWidget):
 
         self.do_output = False
         self.data_dir = ''
+        self.has_selected_data_dir = False
+        self.has_selected_output_dir = True
 
         self.setWindowTitle("Enter settings for Experiment YAML File")
         self.title_label = QtGui.QLabel("Enter Settings to Save as YAML File")
@@ -182,10 +184,12 @@ class ConfigWidget(QtGui.QWidget):
 
     def select_data(self):
         self.data_dir = QtGui.QFileDialog.getExistingDirectory(caption="Select Data Directory")
+        self.has_selected_data_dir = True
         return
 
     def select_output_location(self):
         self.output_dir = QtGui.QFileDialog.getExistingDirectory(caption="Select location to output .yaml file")
+        self.has_selected_output_dir = True
         return
 
     def toggle_image_type_active(self):
@@ -205,6 +209,13 @@ class ConfigWidget(QtGui.QWidget):
 
 
         """
+        if not self.has_selected_data_dir:
+            print("Please Select Data Dir ...")
+            return
+        if not self.has_selected_output_dir:
+            print("Please Select Ouptut Dir ...")
+            return
+
         print("Validating input ...")
 
         # file name validation:
