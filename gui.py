@@ -971,7 +971,7 @@ class Viewer(QtGui.QWidget):
                 if data_type == "Raw":
                     f.write(tab + "Bit Size:  {0}\n".format(str(bit_size)))
                     f.write(tab + "Byte Order:  {0}".format(str(byte_order)))
-            print("Experiment YAML config file written to {0}".format(str(os.path.join(ddir, file_name))))
+            print("Experiment YAML config file written to {0}".format(str(os.path.join(out_dir, file_name))))
 
 
     def generate_config(self):
@@ -3491,14 +3491,14 @@ class Viewer(QtGui.QWidget):
 
         # query user to set minimum energy
         min_e, ok = QtGui.QInputDialog.getDouble(self, "Set Minimum Energy",
-                                                 "Input a float value for Min Energy greater or equal to 0.",
+                                                 "Input a float value for Min Energy greater or equal to {}.".format(self.leemdat.elist[0]),
                                                  0, 0, 10, 1)
         if not ok:
             min_e = def_min_e  # use default if input was canceled
 
         # query and set max energy
         max_e, ok = QtGui.QInputDialog.getDouble(self, "Set Maximum Energy",
-                                                 "Input a float value for Max Energy less than or equal to 15.",
+                                                 "Input a float value for Max Energy less than or equal to {}.".format(self.leemdat.elist[-1]),
                                                  0, 0, 10, 1)
         if not ok:
             max_e = def_max_e  # use default if input was canceled
