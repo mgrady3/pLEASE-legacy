@@ -459,8 +459,21 @@ class Viewer(QtGui.QWidget):
         config_Tab_groupbox.setLayout(config_Tab_group_button_box)
 
         config_Tab_Vbox.addWidget(config_Tab_groupbox)
-        config_Tab_Vbox.addStretch(1)
-        config_Tab_bottom_button_Hbox.addStretch(1)
+        #config_Tab_Vbox.addStretch()
+        config_Tab_Vbox.addWidget(self.h_line())
+
+        # setup smooth settings area
+        smooth_vbox = QtGui.QVBoxLayout()
+        smooth_label = QtGui.QLabel("Toggle Smoothing Settings")
+        smooth_vbox.addWidget(smooth_label)
+
+
+
+
+
+
+        config_Tab_Vbox.addStretch()
+        config_Tab_bottom_button_Hbox.addStretch()
         config_Tab_bottom_button_Hbox.addWidget(self.quitbut)
         config_Tab_Vbox.addLayout(config_Tab_bottom_button_Hbox)
         self.Config_Tab.setLayout(config_Tab_Vbox)
@@ -720,6 +733,12 @@ class Viewer(QtGui.QWidget):
 
         embed_ipy(self.ipyconsole, passthrough=pass_through_vars)
         return
+
+    def h_line(self):
+        f = QtGui.QFrame()
+        f.setFrameShape(QtGui.QFrame.HLine)
+        f.setFrameShadow(QtGui.QFrame.Sunken)
+        return f
 
     ###########################################################################################
     # Static Methods
