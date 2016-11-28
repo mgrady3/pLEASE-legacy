@@ -49,7 +49,7 @@ class Viewer(QtGui.QWidget):
     """
     # Config Flags - controlled via class properties
     _Style = True
-    _DEBUG = False
+    _DEBUG = True
     _ERROR = True
 
     def __init__(self, parent=None):
@@ -946,6 +946,7 @@ class Viewer(QtGui.QWidget):
             min_energy = self.config_settings["Min Energy"]
             max_energy = self.config_settings["Max Energy"]
             step_energy = self.config_settings["Step Energy"]
+            bit_size = self.config_settings["Bits"]
 
             # Additional params
             if data_type == 'Image':
@@ -959,7 +960,6 @@ class Viewer(QtGui.QWidget):
                     return
             elif data_type == 'Raw':
                 file_ext = '.dat'
-                bit_size = self.config_settings["Bits"]
                 byte_order = self.config_settings["Byte Order"]
                 if byte_order == "Big-Endian (Motorola)":
                     byte_order = 'B'
@@ -987,8 +987,8 @@ class Viewer(QtGui.QWidget):
                 f.write(tab + "Data Path:  \"{0}\"\n".format(str(ddir)))
                 f.write("\n")
                 f.write("# Additional Parameters\n")
+                f.write(tab + "Bit Size:  {0}\n".format(str(bit_size)))
                 if data_type == "Raw":
-                    f.write(tab + "Bit Size:  {0}\n".format(str(bit_size)))
                     f.write(tab + "Byte Order:  {0}".format(str(byte_order)))
             print("Experiment YAML config file written to {0}".format(str(os.path.join(out_dir, file_name))))
 
@@ -1282,6 +1282,7 @@ class Viewer(QtGui.QWidget):
         self.tabs.setCurrentWidget(self.LEEM_Tab)
         # self.LEEM_Tab.show()
 
+        self.set_energy_parameters(dat="LEEM")
 
         # if self.exp.data_type == 'Raw' or self.exp.data_type == 'raw' or self.exp.data_type == 'RAW':
         if self.exp.data_type.lower() == 'raw':
@@ -1347,6 +1348,8 @@ class Viewer(QtGui.QWidget):
         # Shift focus to LEED tab when loading LEED data
         self.tabs.setCurrentWidget(self.LEED_Tab)
         # self.LEED_Tab.show()
+
+        self.set_energy_parameters(dat="LEED")
 
         if self.exp.data_type.lower() == 'raw':
             try:
@@ -1636,6 +1639,8 @@ class Viewer(QtGui.QWidget):
                 while energy_list[-1] != self.exp.maxe:
                     energy_list.append(round(energy_list[-1] + self.exp.stepe, 2))
                 self.leemdat.elist = energy_list
+                if self._DEBUG:
+                    print("Length of leemdat.elist = {}".format(len(self.leemdat.elist)))
 
             elif dat == 'LEEM' and self.prev_exp is not None:
                 # dat = LEEM but most current exp is not a LEEM exp
@@ -1645,12 +1650,16 @@ class Viewer(QtGui.QWidget):
                     while energy_list[-1] != self.prev_exp.maxe:
                         energy_list.append(round(energy_list[-1] + self.prev_exp.stepe, 2))
                     self.leemdat.elist = energy_list
+                    if self._DEBUG:
+                        print("Length of leemdat.elist = {}".format(len(self.leemdat.elist)))
 
             elif dat == 'LEED' and self.exp.exp_type == 'LEED':
                 energy_list = [self.exp.mine]
                 while energy_list[-1] != self.exp.maxe:
                     energy_list.append(round(energy_list[-1] + self.exp.stepe, 2))
                 self.leeddat.elist = energy_list
+                if self._DEBUG:
+                    print("Length of leeddat.elist = {}".format(len(self.leeddat.elist)))
 
             elif dat == 'LEED' and self.prev_exp is not None:
                 # dat = LEED but most current exp is not a LEED exp
@@ -1659,7 +1668,9 @@ class Viewer(QtGui.QWidget):
                     energy_list = [self.prev_exp.mine]
                     while energy_list[-1] != self.prev_exp.maxe:
                         energy_list.append(round(energy_list[-1] + self.prev_exp.stepe, 2))
-                    self.leemdat.elist = energy_list
+                    self.leeddat.elist = energy_list
+                    if self._DEBUG:
+                        print("Length of leeddat.elist = {}".format(len(self.leeddat.elist)))
 
             return
 

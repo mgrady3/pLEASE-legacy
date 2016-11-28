@@ -64,7 +64,8 @@ class Experiment(object):
             self.data_type = exp_settings['Data Type']
             self.ext = exp_settings['File Format']
             self.bit = exp_settings['Bit Size']
-            self.byte_order = exp_settings['Byte Order']
+            if self.data_type == 'Raw':
+                self.byte_order = exp_settings['Byte Order']
             self.mine = eng_settings['Min']
             self.maxe = eng_settings['Max']
             self.stepe = eng_settings['Step']

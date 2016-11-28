@@ -267,27 +267,37 @@ def get_img_array(path, ext=None, swap=False):
         # Raw Data - implement this later
         pass
     else:
-        # Handle Tiff and Png with '.tif' and '.png'
+        # Handle Tiff and Png with '.tif', '.tiff',  and '.png'
         print('Searching for {0} files in path: {1}'.format(ext, path))
         files = [name for name in os.listdir(path) if name.endswith(ext)]
 
-        print('Number of Files found: {}'.format(len(files)))
-        if not files and ext=='.tif':
-            print('Error: No Files Found')
+        if not files and ext == '.tif':
+            # ext = .tif, but not files found, try ext=.tiff
+            # print('Error: No Files Found')
             print('Directory does not contain files with \'.tif\' extensions')
             print('Trying \'.tiff\' instead')
             files = [name for name in os.listdir(path) if name.endswith('.tiff')]
-            if not files:
-                print('Error: No Files Found')
-                print('Aborting Loading ...')
-                return None
+
+        elif not files and ext == '.tiff':
+            # ext=.tiff but no files found, try .tif
+            print('Directory does not contain files with \'.tiff\' extensions')
+            print('Trying \'.tif\' instead')
+            files = [name for name in os.listdir(path) if name.endswith('.tif')]
+
         elif not files:
             # ext must be '.png' but no files were found
-            print('Error no Files Found')
             print('Directory does not contain files with \'.png\' extensions')
             print('Aborting Loading ...')
             return None
 
+        if not files:
+            # still no files found
+            print('Error no Files Found')
+            print('Please verify settings in Experiment CONFIG file and try loading again')
+            return None
+
+        # at this point we have found a list of files to parse
+        print("Found {} data files to parse.".format(len(files)))
         files.sort()
         arr_list = []
         for fl in files:
