@@ -45,10 +45,15 @@ def main():
     # print(os.path.join(graphics_path, 'pLEASE.png'))
     splash = QtGui.QSplashScreen(splash_picture, QtCore.Qt.WindowStaysOnTopHint)
     splash.setMask(splash_picture.mask())
-    now = time.time()
-    while time.time() - now < 3:
-        time.sleep(0.001)
-        app.processEvents()
+    if sys.platform.lower() == 'darwin' or sys.platform.lower() == 'win32':
+        # OS X & Windoze can just sleep three seconds with out problems blocking event loop
+        time.sleep(3)
+    else:
+        # Linux needs to call app.processEvents() sleep doesn't block Qt event loop
+        now = time.time()
+        while time.time() - now < 3:
+            time.sleep(0.001)
+            app.processEvents()
 
     # Start UI
     view = gui.Viewer()

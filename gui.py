@@ -459,7 +459,56 @@ class Viewer(QtGui.QWidget):
         config_Tab_groupbox.setLayout(config_Tab_group_button_box)
 
         config_Tab_Vbox.addWidget(config_Tab_groupbox)
+        config_Tab_Vbox.addWidget(self.h_line())
+
+
+        # Smooth settings
+        smooth_vbox = QtGui.QVBoxLayout()
+        smooth_column = QtGui.QHBoxLayout()
+        smooth_group = QtGui.QGroupBox()
+
+        self.settings_label = QtGui.QLabel("Data Smoothing Settings")
+        smooth_vbox.addWidget(self.settings_label)
+
+        self.smooth_checkbox = QtGui.QCheckBox()
+        self.smooth_checkbox.setText("Enable Smoothing")
+        self.smooth_checkbox.stateChanged.connect(self.smooth_state_change)
+        smooth_vbox.addWidget(self.smooth_checkbox)
+
+        window_hbox = QtGui.QHBoxLayout()
+        self.window_label = QtGui.QLabel("Select Window Type")
+        self.smooth_window_type_menu = QtGui.QComboBox()
+        self.smooth_window_type_menu.addItem("Flat")
+        self.smooth_window_type_menu.addItem("Hanning")
+        self.smooth_window_type_menu.addItem("Hamming")
+        self.smooth_window_type_menu.addItem("Bartlett")
+        self.smooth_window_type_menu.addItem("Blackman")
+        window_hbox.addWidget(self.window_label)
+        window_hbox.addWidget(self.smooth_window_type_menu)
+        smooth_vbox.addLayout(window_hbox)
+
+        window_len_box = QtGui.QHBoxLayout()
+        self.window_len_label = QtGui.QLabel("Enter Window Length [even integer]")
+        self.window_len_entry = QtGui.QLineEdit()
+
+        window_len_box.addWidget(self.window_len_label)
+        window_len_box.addWidget(self.window_len_entry)
+        smooth_vbox.addLayout(window_len_box)
+
+        self.apply_settings_button = QtGui.QPushButton("Apply Smoothing Settings", self)
+        self.apply_settings_button.clicked.connect(self.validate_smoothing_settings)
+        smooth_vbox.addWidget(self.apply_settings_button)
+
+        smooth_column.addLayout(smooth_vbox)
+        smooth_column.addWidget(self.v_line())
+        smooth_column.addStretch()
+
+        smooth_group.setLayout(smooth_column)
+
+        config_Tab_Vbox.addWidget(smooth_group)
         config_Tab_Vbox.addStretch(1)
+        config_Tab_Vbox.addStretch(1)
+
         config_Tab_bottom_button_Hbox.addStretch(1)
         config_Tab_bottom_button_Hbox.addWidget(self.quitbut)
         config_Tab_Vbox.addLayout(config_Tab_bottom_button_Hbox)
@@ -470,8 +519,8 @@ class Viewer(QtGui.QWidget):
         Setup Menu bar at top of main window
         :return none:
         """
-        if sys.platform == 'darwin':
-            QtGui.qt_mac_set_native_menubar(False)
+        # if sys.platform == 'darwin':
+        #    QtGui.qt_mac_set_native_menubar(False)
 
         self.menubar = QtGui.QMenuBar()
         self.menubar.setStyleSheet(self.styles['menu'])
@@ -721,6 +770,54 @@ class Viewer(QtGui.QWidget):
         embed_ipy(self.ipyconsole, passthrough=pass_through_vars)
         return
 
+    def h_line(self):
+        f = QtGui.QFrame()
+        f.setFrameShape(QtGui.QFrame.HLine)
+        f.setFrameShadow(QtGui.QFrame.Sunken)
+        return f
+
+    def v_line(self):
+        f = QtGui.QFrame()
+        f.setFrameShape(QtGui.QFrame.VLine)
+        f.setFrameShadow(QtGui.QFrame.Sunken)
+        return f
+
+    @QtCore.pyqtSlot()
+    def smooth_state_change(self):
+        if self.smooth_checkbox.isChecked():
+            self.smooth_leed_plot = True
+            self.smooth_leem_plot = True
+
+        else:
+            self.smooth_leed_plot = False
+            self.smooth_leem_plot = False
+
+        return
+
+    def validate_smoothing_settings(self):
+        window_type = str(self.smooth_window_type_menu.currentText())
+        window_len = str(self.window_len_entry.text())
+        print("Currently selected smoothing settings: {0} {1}".format(window_type, window_len))
+
+        try:
+            window_len = int(window_len)
+        except TypeError:
+            print("Error: Window Length setting must be entered as an even integer")
+            return
+        if window_len <= 0:
+            print("Error: Window Length mut be positive even integer")
+            return
+        elif window_len % 2 != 0:
+            print("Error: Window Length was odd. Using closest even integer")
+            window_len += 1
+        if window_type.lower() not in ['flat', 'hanning',
+                                       'hamming', 'bartlett',
+                                       'blackman']:
+            print("Error: Invalid Window Type for data smoothing.")
+            return
+
+        self.smooth_window_type = window_type.lower()
+        self.smooth_window_len = window_len
     ###########################################################################################
     # Static Methods
     ###########################################################################################
