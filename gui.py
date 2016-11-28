@@ -533,12 +533,10 @@ class Viewer(QtGui.QWidget):
         genDatFileAction.triggered.connect(self.gen_dat_files_from_images_new)
         fileMenu.addAction(genDatFileAction)
 
-
         loadExperimentAction = QtGui.QAction('Load Experiment', self)
         loadExperimentAction.setShortcut('Ctrl+X')
         loadExperimentAction.triggered.connect(self.load_experiment)
         fileMenu.addAction(loadExperimentAction)
-
 
         outputLEEMAction = QtGui.QAction('Output LEEM to Text', self)
         outputLEEMAction.setShortcut('Ctrl+O')
