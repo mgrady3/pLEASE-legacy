@@ -49,7 +49,7 @@ class Viewer(QtGui.QWidget):
     """
     # Config Flags - controlled via class properties
     _Style = True
-    _DEBUG = True
+    _DEBUG = False
     _ERROR = True
 
     def __init__(self, parent=None):
