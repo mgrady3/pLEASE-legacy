@@ -276,26 +276,25 @@ class ConfigWidget(QtGui.QWidget):
             print("Error: Image Height must be >= 0.")
             return
 
-        if data_type == 'Raw':
-            # Bit Depth validation:
-            im_bits = str(self.im_bits_menu.currentText())
-            try:
-                im_bits = int(im_bits)
-            except ValueError:
-                # shouldn't be possible
-                print("Error: Invalid image bit depth. Non-integer")
-                return
-            if im_bits not in [8, 16]:
-                print("Error: Invalid image bit depth. Only 8-bit and 16-bit images supported")
-                return
 
+        # Bit Depth validation:
+        im_bits = str(self.im_bits_menu.currentText())
+        try:
+            im_bits = int(im_bits)
+        except ValueError:
+            # shouldn't be possible
+            print("Error: Invalid image bit depth. Non-integer")
+            return
+        if im_bits not in [8, 16]:
+            print("Error: Invalid image bit depth. Only 8-bit and 16-bit images supported")
+            return
+        if data_type == 'Raw':
             im_byte_order = str(self.im_byte_order_menu.currentText())
             if im_byte_order not in ["Little-Endian (Intel)", "Big-Endian (Motorola)"]:
                 # shouldn't be possible
                 print("Error: Invalid Byte Order Specified")
                 return
         else:
-            im_bits = None
             im_byte_order = None
 
         # Energy Param validation:
