@@ -38,6 +38,7 @@ from matplotlib import colors as clrs
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt4 import QtGui, QtCore
+from PyQt4.Qt import PYQT_VERSION_STR
 from scipy.stats import linregress as lreg  # this should likely be in another file and not part of GUI
 
 
@@ -519,8 +520,9 @@ class Viewer(QtGui.QWidget):
         Setup Menu bar at top of main window
         :return none:
         """
-        # if sys.platform == 'darwin':
-        #    QtGui.qt_mac_set_native_menubar(False)
+        if sys.platform == 'darwin' and PYQT_VERSION_STR.startswith('4'):
+            # set non-native menubar for OS X systems using PyQt4
+            QtGui.qt_mac_set_native_menubar(False)
 
         self.menubar = QtGui.QMenuBar()
         self.menubar.setStyleSheet(self.styles['menu'])
