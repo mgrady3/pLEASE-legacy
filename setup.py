@@ -38,7 +38,7 @@ setup(
     package_data={'PLEASE':['*.png', './icons/*.png']},
     requires=['numpy', 'matplotlib', 'scipy', 'pillow', 'pyqt4', 'qtconsole',
               'opencv_python', 'pyyaml', 'seaborn', 'qdarkstyle', 'tifffile'],
-    version='0.5.2',
+    version='0.9.5',
     description='Software for the analysis of Low Energy Electron Microscopy data',
     long_description= """
 PLEASE is a software package built for analysis of Low Energy Electron Microscopy data sets with specific emphasis on analysis of IV data sets.
@@ -49,7 +49,8 @@ For more info see https://github.com/mgrady3/pLEASE or contact the authors via E
     author_email='max.grady@gmail.com',
     url='https://github.com/mgrady3/pLEASE',
     download_url='https://github.com/mgrady3/pLEASE/archive/master.zip',
-    keywords=['LEEM', 'surface science', 'image analysis', 'I(V) spectra'],
+    keywords=['LEEM', 'LEED', 'Surface science', 'Image Analysis',
+              'Microscopy', 'I(V) spectra', 'Material Science'],
     license='GPLv3',
     platforms='any',
     classifiers=[
