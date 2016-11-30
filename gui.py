@@ -167,9 +167,12 @@ class Viewer(QtGui.QWidget):
 
         self.smooth_leed_plot = False
         self.smooth_leem_plot = False
-        self.smooth_window_type = 'hanning'  # default value
-        self.smooth_window_len = 8  # default value
-        self.smooth_file_output = False
+        self.smooth_LEED_window_type = 'flat'  # default value
+        self.smooth_LEED_window_len = 4  # default value
+        self.smooth_LEEM_window_type = 'flat'
+        self.smooth_LEEM_window_len = 10  # default value
+        self.smooth_LEED_file_output = False
+        self.smooth_LEEM_file_output = False
 
         self.background = []
         self.background_curves = []
@@ -464,46 +467,85 @@ class Viewer(QtGui.QWidget):
 
 
         # Smooth settings
-        smooth_vbox = QtGui.QVBoxLayout()
+        smooth_LEED_vbox = QtGui.QVBoxLayout()
         smooth_column = QtGui.QHBoxLayout()
         smooth_group = QtGui.QGroupBox()
 
-        self.settings_label = QtGui.QLabel("Data Smoothing Settings")
-        smooth_vbox.addWidget(self.settings_label)
+        # LEED
+        self.LEED_settings_label = QtGui.QLabel("LEED Data Smoothing Settings")
+        smooth_LEED_vbox.addWidget(self.LEED_settings_label)
 
-        self.smooth_checkbox = QtGui.QCheckBox()
-        self.smooth_checkbox.setText("Enable Smoothing")
-        self.smooth_checkbox.stateChanged.connect(self.smooth_state_change)
-        smooth_vbox.addWidget(self.smooth_checkbox)
+        self.smooth_LEED_checkbox = QtGui.QCheckBox()
+        self.smooth_LEED_checkbox.setText("Enable Smoothing")
+        self.smooth_LEED_checkbox.stateChanged.connect(self.smooth_LEED_state_change)
+        smooth_LEED_vbox.addWidget(self.smooth_LEED_checkbox)
 
-        window_hbox = QtGui.QHBoxLayout()
-        self.window_label = QtGui.QLabel("Select Window Type")
-        self.smooth_window_type_menu = QtGui.QComboBox()
-        self.smooth_window_type_menu.addItem("Flat")
-        self.smooth_window_type_menu.addItem("Hanning")
-        self.smooth_window_type_menu.addItem("Hamming")
-        self.smooth_window_type_menu.addItem("Bartlett")
-        self.smooth_window_type_menu.addItem("Blackman")
-        window_hbox.addWidget(self.window_label)
-        window_hbox.addWidget(self.smooth_window_type_menu)
-        smooth_vbox.addLayout(window_hbox)
+        window_LEED_hbox = QtGui.QHBoxLayout()
+        self.LEED_window_label = QtGui.QLabel("Select Window Type")
+        self.smooth_LEED_window_type_menu = QtGui.QComboBox()
+        self.smooth_LEED_window_type_menu.addItem("Flat")
+        self.smooth_LEED_window_type_menu.addItem("Hanning")
+        self.smooth_LEED_window_type_menu.addItem("Hamming")
+        self.smooth_LEED_window_type_menu.addItem("Bartlett")
+        self.smooth_LEED_window_type_menu.addItem("Blackman")
+        window_LEED_hbox.addWidget(self.LEED_window_label)
+        window_LEED_hbox.addWidget(self.smooth_LEED_window_type_menu)
+        smooth_LEED_vbox.addLayout(window_LEED_hbox)
 
-        window_len_box = QtGui.QHBoxLayout()
-        self.window_len_label = QtGui.QLabel("Enter Window Length [even integer]")
-        self.window_len_entry = QtGui.QLineEdit()
+        LEED_window_len_box = QtGui.QHBoxLayout()
+        self.LEED_window_len_label = QtGui.QLabel("Enter Window Length [even integer]")
+        self.LEED_window_len_entry = QtGui.QLineEdit()
 
-        window_len_box.addWidget(self.window_len_label)
-        window_len_box.addWidget(self.window_len_entry)
-        smooth_vbox.addLayout(window_len_box)
+        LEED_window_len_box.addWidget(self.LEED_window_len_label)
+        LEED_window_len_box.addWidget(self.LEED_window_len_entry)
+        smooth_LEED_vbox.addLayout(LEED_window_len_box)
 
-        self.apply_settings_button = QtGui.QPushButton("Apply Smoothing Settings", self)
-        self.apply_settings_button.clicked.connect(self.validate_smoothing_settings)
-        smooth_vbox.addWidget(self.apply_settings_button)
+        self.apply_settings_LEED_button = QtGui.QPushButton("Apply Smoothing Settings", self)
+        self.apply_settings_LEED_button.clicked.connect(lambda: self.validate_smoothing_settings(but="LEED"))
+        smooth_LEED_vbox.addWidget(self.apply_settings_LEED_button)
 
-        smooth_column.addLayout(smooth_vbox)
+        smooth_column.addLayout(smooth_LEED_vbox)
+        smooth_column.addStretch()
         smooth_column.addWidget(self.v_line())
         smooth_column.addStretch()
 
+        # LEEM
+        smooth_LEEM_vbox = QtGui.QVBoxLayout()
+        smooth_group = QtGui.QGroupBox()
+
+        self.LEEM_settings_label = QtGui.QLabel("LEEM Data Smoothing Settings")
+        smooth_LEEM_vbox.addWidget(self.LEEM_settings_label)
+
+        self.smooth_LEEM_checkbox = QtGui.QCheckBox()
+        self.smooth_LEEM_checkbox.setText("Enable Smoothing")
+        self.smooth_LEEM_checkbox.stateChanged.connect(self.smooth_LEEM_state_change)
+        smooth_LEEM_vbox.addWidget(self.smooth_LEEM_checkbox)
+
+        window_LEEM_hbox = QtGui.QHBoxLayout()
+        self.LEEM_window_label = QtGui.QLabel("Select Window Type")
+        self.smooth_LEEM_window_type_menu = QtGui.QComboBox()
+        self.smooth_LEEM_window_type_menu.addItem("Flat")
+        self.smooth_LEEM_window_type_menu.addItem("Hanning")
+        self.smooth_LEEM_window_type_menu.addItem("Hamming")
+        self.smooth_LEEM_window_type_menu.addItem("Bartlett")
+        self.smooth_LEEM_window_type_menu.addItem("Blackman")
+        window_LEEM_hbox.addWidget(self.LEEM_window_label)
+        window_LEEM_hbox.addWidget(self.smooth_LEEM_window_type_menu)
+        smooth_LEEM_vbox.addLayout(window_LEEM_hbox)
+
+        LEEM_window_len_box = QtGui.QHBoxLayout()
+        self.LEEM_window_len_label = QtGui.QLabel("Enter Window Length [even integer]")
+        self.LEEM_window_len_entry = QtGui.QLineEdit()
+
+        LEEM_window_len_box.addWidget(self.LEEM_window_len_label)
+        LEEM_window_len_box.addWidget(self.LEEM_window_len_entry)
+        smooth_LEEM_vbox.addLayout(LEEM_window_len_box)
+
+        self.apply_settings_LEEM_button = QtGui.QPushButton("Apply Smoothing Settings", self)
+        self.apply_settings_LEEM_button.clicked.connect(lambda: self.validate_smoothing_settings(but="LEEM"))
+        smooth_LEEM_vbox.addWidget(self.apply_settings_LEEM_button)
+
+        smooth_column.addLayout(smooth_LEEM_vbox)
         smooth_group.setLayout(smooth_column)
 
         config_Tab_Vbox.addWidget(smooth_group)
@@ -542,12 +584,12 @@ class Viewer(QtGui.QWidget):
 
         outputLEEMAction = QtGui.QAction('Output LEEM to Text', self)
         outputLEEMAction.setShortcut('Ctrl+O')
-        outputLEEMAction.triggered.connect(lambda: self.output_to_text(data='LEEM', smth=self.smooth_file_output))
+        outputLEEMAction.triggered.connect(lambda: self.output_to_text(data='LEEM', smth=self.smooth_LEEM_file_output))
         fileMenu.addAction(outputLEEMAction)
 
         outputLEEDAction = QtGui.QAction('Output LEED to Text', self)
         outputLEEDAction.setShortcut('Ctrl+Shift+O')
-        outputLEEDAction.triggered.connect(lambda: self.output_LEED_to_Text(data=None, smth=self.smooth_file_output))
+        outputLEEDAction.triggered.connect(lambda: self.output_LEED_to_Text(data=None, smth=self.smooth_LEED_file_output))
         fileMenu.addAction(outputLEEDAction)
 
         genConfigAction = QtGui.QAction("Generate Experiment Config File", self)
@@ -751,12 +793,14 @@ class Viewer(QtGui.QWidget):
         print("Starting an IPython Session ... ")
         self.ipyconsole = QtGui.QWidget()
         self.ipyconsole.show()
-        test_pass = {"leemdat": self.leemdat}
+        # test_pass = {"leemdat": self.leemdat}
 
         # dict of vars to pass into namespace of the IPython kernel
         pass_through_vars = {}
 
         # fill variables to pass in a logical manner
+        # Caution must be used when handling data passed into IPython namespace
+        # This should be only used for debugging introspection and should NEVER alter the data
         if self.hasdisplayed_leed:
             pass_through_vars["leeddat"] = self.leeddat
         if self.hasdisplayed_leem:
@@ -783,20 +827,38 @@ class Viewer(QtGui.QWidget):
         return f
 
     @QtCore.pyqtSlot()
-    def smooth_state_change(self):
-        if self.smooth_checkbox.isChecked():
+    def smooth_LEED_state_change(self):
+        if self.smooth_LEED_checkbox.isChecked():
             self.smooth_leed_plot = True
-            self.smooth_leem_plot = True
-
+            self.smooth_LEED_file_output = True
         else:
             self.smooth_leed_plot = False
-            self.smooth_leem_plot = False
-
+            self.smooth_LEED_file_output = False
         return
 
-    def validate_smoothing_settings(self):
-        window_type = str(self.smooth_window_type_menu.currentText())
-        window_len = str(self.window_len_entry.text())
+    @QtCore.pyqtSlot()
+    def smooth_LEEM_state_change(self):
+        if self.smooth_LEEM_checkbox.isChecked():
+            self.smooth_leem_plot = True
+            self.smooth_LEEM_file_output = True
+        else:
+            self.smooth_leem_plot = False
+            self.smooth_LEEM_file_output = False
+        return
+
+    def validate_smoothing_settings(self, but=None):
+        if but is None:
+            return
+        elif but == 'LEED':
+            window_type = str(self.smooth_LEED_window_type_menu.currentText())
+            window_len = str(self.LEED_window_len_entry.text())
+        elif but == 'LEEM':
+            window_type = str(self.smooth_LEEM_window_type_menu.currentText())
+            window_len = str(self.LEEM_window_len_entry.text())
+        else:
+            print("Invalid smooth button label")
+            return
+
         print("Currently selected smoothing settings: {0} {1}".format(window_type, window_len))
 
         try:
@@ -816,8 +878,14 @@ class Viewer(QtGui.QWidget):
             print("Error: Invalid Window Type for data smoothing.")
             return
 
-        self.smooth_window_type = window_type.lower()
-        self.smooth_window_len = window_len
+        if but == "LEED":
+            self.smooth_LEED_window_type = window_type.lower()
+            self.smooth_LEED_window_len = window_len
+        else:
+            self.smooth_LEEM_window_type = window_type.lower()
+            self.smooth_LEEM_window_len = window_len
+        return
+
     ###########################################################################################
     # Static Methods
     ###########################################################################################
@@ -883,6 +951,7 @@ class Viewer(QtGui.QWidget):
         window = GenDatWindow()
         return
 
+    # DEPRECATED
     def gen_dat_files_from_images(self):
         """
         Query user for directory containing image files and a directory to output data to
@@ -967,7 +1036,6 @@ class Viewer(QtGui.QWidget):
                     print("Error: Loaded Experiment does not contain appropriate Image Parameters ...")
                     return
 
-                # TODO: put this into a separate QThread so as to not block the main UI for 10-30 seconds
                 # call gen_dat_files with user entries
                 LF.gen_dat_files(dirname=infiledir, outdirname=outfiledir, ext=extension,
                                  w=width, h=height, byte_depth=depth)
@@ -981,7 +1049,6 @@ class Viewer(QtGui.QWidget):
             print("Error: Unable to parse user selection")
             return
 
-        # TODO: put this into a separate QThread so as to not block the main UI for 10-30 seconds
         # call gen_dat_files with user entries
         LF.gen_dat_files(dirname=infiledir, outdirname=outfiledir, ext=extension,
                          w=width, h=height, byte_depth=depth)
@@ -1958,8 +2025,8 @@ class Viewer(QtGui.QWidget):
 
                 if self.smooth_leed_plot:
                     print('Plotting and Storing Smoothed Data ...')
-                    self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
-                    self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type),
+                    self.current_selections.append((LF.smooth(ilist, self.smooth_LEED_window_len, self.smooth_LEED_window_type), self.smooth_colors[idx]))
+                    self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_LEED_window_len, self.smooth_LEED_window_type),
                                          color=self.smooth_colors[idx])
 
                 else:
@@ -2030,6 +2097,7 @@ class Viewer(QtGui.QWidget):
             self.Debug = True
         return
 
+    # Deprecated
     def toggle_smoothing(self):
         """
         Toggle settings for data smoothing
@@ -2303,7 +2371,7 @@ class Viewer(QtGui.QWidget):
         nvbox.addWidget(self.nmpl_toolbar1)
         # raw data output button
         rawoutbut = QtGui.QPushButton("Output to Text", self)
-        rawoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.raw_selections, smth=self.smooth_file_output))  # output button
+        rawoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.raw_selections, smth=self.smooth_LEED_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(rawoutbut)
         self.pop_window1.setLayout(nvbox)
@@ -2316,7 +2384,7 @@ class Viewer(QtGui.QWidget):
         nhbox.addWidget(self.nmpl_toolbar2)
         # corrected data output button
         coroutputbutton = QtGui.QPushButton("Output to Text", self)
-        coroutputbutton.clicked.connect(lambda: self.output_LEED_to_Text(data=self.cor_data, smth=self.smooth_file_output))  # output button
+        coroutputbutton.clicked.connect(lambda: self.output_LEED_to_Text(data=self.cor_data, smth=self.smooth_LEED_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(coroutputbutton)
         nvbox.addLayout(nhbox)
@@ -2330,7 +2398,7 @@ class Viewer(QtGui.QWidget):
         nhbox.addWidget(self.nmpl_toolbar3)
         # extracted background output button
         exbackoutbut = QtGui.QPushButton("Output to Text", self)
-        exbackoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.ex_back, smth=self.smooth_file_output))  # output button
+        exbackoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.ex_back, smth=self.smooth_LEED_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(exbackoutbut)
         self.pop_window3.setLayout(nvbox)
@@ -2342,7 +2410,7 @@ class Viewer(QtGui.QWidget):
         nvbox.addLayout(nhbox)
         nvbox.addWidget(self.nmpl_toolbar4)
         avgbackoutbut = QtGui.QPushButton("Output to Text", self)
-        avgbackoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.avg_back, smth=self.smooth_file_output))  # output button
+        avgbackoutbut.clicked.connect(lambda: self.output_LEED_to_Text(data=self.avg_back, smth=self.smooth_LEED_file_output))  # output button
         nhbox.addStretch(1)
         nhbox.addWidget(avgbackoutbut)
         self.pop_window4.setLayout(nvbox)
@@ -2452,8 +2520,8 @@ class Viewer(QtGui.QWidget):
                 elist = tup[0]
                 ilist = tup[1]
                 if smth:
-                    ilist = LF.smooth(ilist, window_len=self.smooth_window_len,
-                                      window_type=self.smooth_window_type)
+                    ilist = LF.smooth(ilist, window_len=self.smooth_LEEM_window_len,
+                                      window_type=self.smooth_LEEM_window_type)
 
                 self.thread = WorkerThread(task='OUTPUT_TO_TEXT',
                                            elist=elist, ilist=ilist,
@@ -2471,7 +2539,7 @@ class Viewer(QtGui.QWidget):
         if self.leeddat.average_ilist is None:
             pass
         else:
-            self.output_LEED_to_Text(data=self.leeddat.average_ilist, smth=self.smooth_file_output)
+            self.output_LEED_to_Text(data=self.leeddat.average_ilist, smth=self.smooth_LEED_file_output)
         return
 
     def output_LEED_to_Text(self, data=None, smth=None):
@@ -2517,8 +2585,8 @@ class Viewer(QtGui.QWidget):
                 elist = self.leeddat.elist
 
                 # check if smoothing is enabled
-                if self.smooth_file_output:
-                    ilist = LF.smooth(ilist)
+                if self.smooth_LEED_file_output:
+                    ilist = LF.smooth(ilist, window_len=self.smooth_LEED_window_len, window_type=self.smooth_LEED_window_type)
                 # full file name
 
                 # check for single file output
@@ -2614,8 +2682,8 @@ class Viewer(QtGui.QWidget):
 
             if self.smooth_leed_plot:
                 print('Plotting and Storing Smoothed Data ...')
-                self.current_selections.append((LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type), self.smooth_colors[idx]))
-                self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_window_len, self.smooth_window_type),
+                self.current_selections.append((LF.smooth(ilist, self.smooth_LEED_window_len, self.smooth_LEED_window_type), self.smooth_colors[idx]))
+                self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_LEED_window_len, self.smooth_LEED_window_type),
                                      color=self.smooth_colors[idx])
             else:
                 print('Plotting and Storing Raw Data ...')
@@ -2928,8 +2996,8 @@ class Viewer(QtGui.QWidget):
 
         if self.smooth_leem_plot:
             self.LEEM_IV_ax.plot(self.leemdat.elist, LF.smooth(self.leemdat.ilist,
-                                                               self.smooth_window_len,
-                                                               self.smooth_window_type),
+                                                               self.smooth_LEEM_window_len,
+                                                               self.smooth_LEEM_window_type),
                                  color=self.colors[self.click_count-1]
                                  )
         else:
@@ -3312,7 +3380,7 @@ class Viewer(QtGui.QWidget):
             # Smooth data before taking derivative:
             if self.smooth_leem_plot:
                 # use user settings
-                data = LF.smooth(data, self.smooth_window_len, self.smooth_window_type)
+                data = LF.smooth(data, self.smooth_LEEM_window_len, self.smooth_LEEM_window_type)
             else:
                 # use default settings
                 data = LF.smooth(data)
@@ -3320,7 +3388,7 @@ class Viewer(QtGui.QWidget):
             data = np.diff(data)/np.diff(self.leemdat.elist)
 
             if self.smooth_leem_plot:
-                self.LEEM_IV_ax.plot(self.leemdat.elist[:-1], LF.smooth(data, self.smooth_window_len, self.smooth_window_type), color=self.colors[color_idx])
+                self.LEEM_IV_ax.plot(self.leemdat.elist[:-1], LF.smooth(data, self.smooth_LEEM_window_len, self.smooth_LEEM_window_type), color=self.colors[color_idx])
             else:
                 self.LEEM_IV_ax.plot(self.leemdat.elist[:-1], data, color=self.colors[color_idx])
         self.LEEM_IV_ax.set_title("LEEM dI/dV")
