@@ -2039,6 +2039,58 @@ class Viewer(QtGui.QWidget):
         self.LEED_IV_canvas.draw()
         return
 
+    def new_leed_extract(self):
+        """
+        extract I(V) data from currently selected areas in self.leeddat.dat3d
+        :return none:
+        """
+        if (self.rect_count == 0) or (not self.rects) or (not self.rect_coords):
+            # no data selected; do nothing
+            print('No Data Selected to Plot')
+            return
+
+        if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
+            print("! Warning Data does not match current Energy Parameters !")
+            print("Can not plot data due to mismatch ...")
+            return
+
+        self.hasplotted_leed = True
+
+        # Loop for each user selection
+        for idx, lst in enumerate(self.rect_coords):
+
+            if lst[2] is False:
+                # Loop for each image in stack to generate ilist
+                ilist = []
+                for img in np.rollaxis(self.leeddat.dat_3d, 2):
+
+                    # generate window based on user selection coordinates
+                    r_u = lst[0]
+                    c_u = lst[1]
+                    win = img[r_u - self.leeddat.box_rad:r_u + self.leeddat.box_rad,
+                              c_u - self.leeddat.box_rad:c_u + self.leeddat.box_rad]
+                    # tup = (r_u, c_u)
+                    new_win = self.get_beam_max_update_slice(int_win=win, win_coords=(r_u, c_u), img=img)
+                    # average
+                    # ilist.append(new_win.sum()/((2*self.leeddat.box_rad)**2))
+                    # no average
+                    ilist.append(new_win.sum())
+
+                if self.smooth_leed_plot:
+                    print('Plotting and Storing Smoothed Data ...')
+                    self.current_selections.append((LF.smooth(ilist, self.smooth_LEED_window_len, self.smooth_LEED_window_type), self.smooth_colors[idx]))
+                    self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_LEED_window_len, self.smooth_LEED_window_type),
+                                         color=self.smooth_colors[idx])
+                else:
+                    print('Plotting and Storing Raw Data ...')
+                    self.current_selections.append((ilist, self.colors[idx]))
+                    self.LEED_IV_ax.plot(self.leeddat.elist, ilist, color=self.colors[idx])
+
+                lst[2] = True
+
+        self.LEED_IV_canvas.draw()
+        return
+
     def average_current_IV(self):
         """
         Average the I values of the current selected curves then re-plot the average versus elist.
@@ -2646,52 +2698,8 @@ class Viewer(QtGui.QWidget):
         ntl_r = new_top_left_coords[0]
         ntl_c = new_top_left_coords[1]
 
-        return img[ntl_r:ntl_r+2*self.leeddat.box_rad,
-                   ntl_c:ntl_c+2*self.leeddat.box_rad]
-
-    def new_leed_extract(self):
-        """
-        extract I(V) data from currently selected areas in self.leeddat.dat3d
-        :return none:
-        """
-        if (self.rect_count == 0) or (not self.rects) or (not self.rect_coords):
-            # no data selected; do nothing
-            print('No Data Selected to Plot')
-            return
-
-        if self.leeddat.dat_3d.shape[2] != len(self.leeddat.elist):
-            print("! Warning Data does not match current Energy Parameters !")
-            print("Can not plot data due to mismatch ...")
-            return
-
-        self.hasplotted_leed = True
-
-        # Loop for each user selection
-        for idx, tup in enumerate(self.rect_coords):
-
-            # Loop for each image in stack to generate ilist
-            ilist = []
-            for img in np.rollaxis(self.leeddat.dat_3d, 2):
-
-                # generate window based on user selection coordinates
-                r_u, c_u = tup
-                win = img[r_u - self.leeddat.box_rad:r_u + self.leeddat.box_rad,
-                          c_u - self.leeddat.box_rad:c_u + self.leeddat.box_rad]
-                new_win = self.get_beam_max_update_slice(int_win=win, win_coords=tup, img=img)
-                ilist.append(new_win.sum()/((2*self.leeddat.box_rad)**2))
-
-            if self.smooth_leed_plot:
-                print('Plotting and Storing Smoothed Data ...')
-                self.current_selections.append((LF.smooth(ilist, self.smooth_LEED_window_len, self.smooth_LEED_window_type), self.smooth_colors[idx]))
-                self.LEED_IV_ax.plot(self.leeddat.elist, LF.smooth(ilist, self.smooth_LEED_window_len, self.smooth_LEED_window_type),
-                                     color=self.smooth_colors[idx])
-            else:
-                print('Plotting and Storing Raw Data ...')
-                self.current_selections.append((ilist, self.colors[idx]))
-                self.LEED_IV_ax.plot(self.leeddat.elist, ilist, color=self.colors[idx])
-
-        self.LEED_IV_canvas.draw()
-        return
+        return img[int(ntl_r):int(ntl_r+2*self.leeddat.box_rad),
+                   int(ntl_c):int(ntl_c+2*self.leeddat.box_rad)]
 
     def shift_user_selection(self):
         """
