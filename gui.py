@@ -2010,7 +2010,7 @@ class Viewer(QtGui.QWidget):
         tot_pix = (2*self.leeddat.box_rad)**2
         for idx, lst in enumerate(self.rect_coords):
 
-            if lst[2] == False:
+            if lst[2] is False:
                 # Data has not been plotted
 
                 # generate 3d slice of main data array
