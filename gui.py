@@ -1924,7 +1924,8 @@ class Viewer(QtGui.QWidget):
             # self.LEED_img_ax.add_patch(test)
             # bug fixed for double plotting data Oct. 26 2016
             # append data as list so bool flag can be altered later when data is plotted
-            self.rect_coords.append([event.ydata, event.xdata, False])  # store location of central pixel + plot flag
+            # add reference to current box_size so extraction uses proper box size
+            self.rect_coords.append([event.ydata, event.xdata, False, self.leeddat.box_rad])
 
             self.LEED_img_ax.add_artist(self.rects[-1])
             self.rects[-1].set_lw(1)
@@ -2015,8 +2016,9 @@ class Viewer(QtGui.QWidget):
 
                 # generate 3d slice of main data array
                 # this represents the integration window projected along the third array axis
-                int_win = self.leeddat.dat_3d[int(lst[0]-self.leeddat.box_rad):int(lst[0]+self.leeddat.box_rad),
-                                              int(lst[1]-self.leeddat.box_rad):int(lst[1]+self.leeddat.box_rad),
+                stored_rad = lst[3]  # get value of leeddat.box_rad when selection was made
+                int_win = self.leeddat.dat_3d[int(lst[0]-stored_rad):int(lst[0]+stored_rad),
+                                              int(lst[1]-stored_rad):int(lst[1]+stored_rad),
                                               :]
                 # plot unaveraged intensity 3/30/2016
                 # ilist = [img.sum()/tot_pix for img in np.rollaxis(int_win, 2)]
@@ -2062,15 +2064,16 @@ class Viewer(QtGui.QWidget):
             if lst[2] is False:
                 # Loop for each image in stack to generate ilist
                 ilist = []
+                stored_rad = lst[3]  # get value of leeddat.box_rad when selection was made
                 for img in np.rollaxis(self.leeddat.dat_3d, 2):
 
                     # generate window based on user selection coordinates
                     r_u = lst[0]
                     c_u = lst[1]
-                    win = img[r_u - self.leeddat.box_rad:r_u + self.leeddat.box_rad,
-                              c_u - self.leeddat.box_rad:c_u + self.leeddat.box_rad]
+                    win = img[int(r_u - stored_rad):int(r_u + stored_rad),
+                              int(c_u - stored_rad):int(c_u + stored_rad)]
                     # tup = (r_u, c_u)
-                    new_win = self.get_beam_max_update_slice(int_win=win, win_coords=(r_u, c_u), img=img)
+                    new_win = self.get_beam_max_update_slice(int_win=win, win_coords=(r_u, c_u, stored_rad), img=img)
                     # average
                     # ilist.append(new_win.sum()/((2*self.leeddat.box_rad)**2))
                     # no average
@@ -2102,8 +2105,9 @@ class Viewer(QtGui.QWidget):
             return
         current_curves = []
         for idx, lst in enumerate(self.rect_coords):
-            int_win = self.leeddat.dat_3d[lst[0] - self.leeddat.box_rad:lst[0] + self.leeddat.box_rad,
-                                          lst[1] - self.leeddat.box_rad:lst[1] + self.leeddat.box_rad,
+            stored_rad = lst[3]
+            int_win = self.leeddat.dat_3d[lst[0] - stored_rad:lst[0] + stored_rad,
+                                          lst[1] - stored_rad:lst[1] + stored_rad,
                                           :]
             current_curves.append([img.sum() for img in np.rollaxis(int_win, 2)])
 
@@ -2333,9 +2337,10 @@ class Viewer(QtGui.QWidget):
 
         self.background_curves = []
         print('Starting Background Subtraction Procedure ...')
-        for idx, tup in enumerate(self.rect_coords):
-            data_subset = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
-                                              tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+        for idx, lst in enumerate(self.rect_coords):
+            stored_rad = lst[3]
+            data_subset = self.leeddat.dat_3d[int(lst[0]-stored_rad):int(lst[0]+stored_rad),
+                                              int(lst[1]-stored_rad):int(lst[1]+stored_rad),
                                               :]
             adj_ilist = []  # create list to hold adjusted intensities
             # iterate over each image in the data subset
@@ -2365,7 +2370,7 @@ class Viewer(QtGui.QWidget):
                 total_int = img.sum()
                 per_sum = (img[0, :] + img[0:, -1] + img[-1, :] + img[:, 0]).sum()  # sum edges
                 per_sum -= (img[0, 0] + img[0, -1] + img[-1, -1] + img[-1, 0])  # subtract corners for double counting
-                per_sum = (per_sum / float(8*self.leeddat.box_rad - 4))*(2*self.leeddat.box_rad)**2
+                per_sum = (per_sum / float(8*stored_rad - 4))*(2*stored_rad)**2
 
                 corrected_int = total_int - per_sum
                 bkgnd.append(per_sum)
@@ -2627,11 +2632,12 @@ class Viewer(QtGui.QWidget):
         if data is None:
             # Output data from main window
             # for each element in rect_coords - spin up a qthread to output the data to file
-            for idx, tup in enumerate(self.rect_coords):
+            for idx, lst in enumerate(self.rect_coords):
 
                 # generate raw data to pass to new thread to be output
-                int_win = self.leeddat.dat_3d[tup[0]-self.leeddat.box_rad:tup[0]+self.leeddat.box_rad,
-                                              tup[1]-self.leeddat.box_rad:tup[1]+self.leeddat.box_rad,
+                stored_rad = lst[3]
+                int_win = self.leeddat.dat_3d[int(lst[0]-stored_rad):int(lst[0]+stored_rad),
+                                              int(lst[1]-stored_rad):int(lst[1]+stored_rad),
                                               :]
                 ilist = [img.sum() for img in np.rollaxis(int_win, 2)]
                 elist = self.leeddat.elist
@@ -2685,22 +2691,25 @@ class Viewer(QtGui.QWidget):
         :param win_coords:
             tuple containing the coordinates of the center of
             int_win relative to (0,0,:) in leeddat.dat3d
+            third elemtn of tuple is the box_rad at the time of user selection
         :param img:
             full 2d array of pixels. represents one slice from image stack
         :return new_slice:
             2d numpy array sliced from leeddat.dat3d
         """
         c_bm, r_bm = LF.find_local_maximum(int_win)  # find_local_max outputs (x,y) from opencv
-        r_u, c_u = win_coords
+        r_u, c_u, stored_rad = win_coords
+
         # coordinates of top left corner for new int window centered on beam max
-        new_top_left_coords = (r_u + r_bm - 2*self.leeddat.box_rad,
-                               c_u + c_bm - 2*self.leeddat.box_rad)
+        new_top_left_coords = (r_u + r_bm - 2*stored_rad,
+                               c_u + c_bm - 2*stored_rad)
         ntl_r = new_top_left_coords[0]
         ntl_c = new_top_left_coords[1]
 
-        return img[int(ntl_r):int(ntl_r+2*self.leeddat.box_rad),
-                   int(ntl_c):int(ntl_c+2*self.leeddat.box_rad)]
+        return img[int(ntl_r):int(ntl_r+2*stored_rad),
+                   int(ntl_c):int(ntl_c+2*stored_rad)]
 
+    # Deprecated / Doesn't work
     def shift_user_selection(self):
         """
         Using opencv, find the relative beam maximum nearest to the user selection.
