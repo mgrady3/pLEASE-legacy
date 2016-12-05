@@ -3054,6 +3054,7 @@ class Viewer(QtGui.QWidget):
         if self.num_line_clicks == 1:
             self.line = [(int(event.xdata), int(event.ydata))]  # inital coords for line
             return
+
         elif self.num_line_clicks == 2:
             print("Creating Line Profile ...")
             self.line.append((int(event.xdata), int(event.ydata)))
