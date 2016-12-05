@@ -1,3 +1,12 @@
+"""
+Main script to run PLEASE
+
+Version = 0.9.8
+Author = Maxwell Grady
+Affiliation = University of New Hampshire
+Date = Dec 2016
+"""
+
 # Attempt to set QT_API version through sip before loading any PyQt modules
 import sys
 if sys.version_info[0] == 2 and sys.version_info[1] >= 7:  # python 2.7
