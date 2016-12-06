@@ -31,7 +31,7 @@ else:
 
 
 import gui
-import os
+import osd
 #  import sys
 import time
 import qdarkstyle
