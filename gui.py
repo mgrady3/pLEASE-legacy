@@ -681,6 +681,12 @@ class Viewer(QtGui.QWidget):
         clearPlotsOnlyAction.triggered.connect(self.clear_LEED_plots_only)
         LEEDMenu.addAction(clearPlotsOnlyAction)
 
+        undoAction = QtGui.QAction('Undo Selection', self)
+        undoAction.setShortcut('Ctrl+Z')
+        undoAction.setStatusTip('Clear Last LEED Selection')
+        undoAction.triggered.connect(self.undo_LEED_selection)
+        LEEDMenu.addAction(undoAction)
+
         # LEEM Menu
         LEEMMenu = self.menubar.addMenu('LEEM Actions')
         loadLEEMAction = QtGui.QAction('Load LEEM Data', self)
@@ -1936,6 +1942,27 @@ class Viewer(QtGui.QWidget):
         else:
             print('Resetting Click Count and Clearing Current Patches ...')
             self.clear_LEED_click()
+
+    def undo_LEED_selection(self):
+        """
+        Method to remove the last rectangular integration window selected
+        Removes last window if it has not yet been extracted
+        :return:
+        """
+        # LEED_click() increments self.rect_count,
+        # appends a patch to self.rects,
+        # and appends coordinates to self.rect_coords
+        # These all need to be undone in order to properly reset to the last selection
+        if self.rect_coords[-1][2] is True:
+            print("Error: Can not undo selection after extracting and plotting I(V)")
+            return
+
+        self.rect_count -= 1
+        self.rects.pop().remove()
+        del self.rect_coords[-1]
+        self.LEED_IV_canvas.draw()
+        print("Removed last User LEED selection.")
+
 
     def clear_LEED_click(self):
         """
