@@ -162,8 +162,8 @@ class Viewer(QtGui.QWidget):
 
         self.smooth_leed_plot = False
         self.smooth_leem_plot = False
-        self.smooth_window_type = 'hanning'  # default value
-        self.smooth_window_len = 8  # default value
+        self.smooth_window_type = 'flat'  # default value
+        self.smooth_window_len = 10  # default value
         self.smooth_file_output = False
 
         self.background = []
