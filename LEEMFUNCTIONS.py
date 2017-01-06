@@ -507,7 +507,7 @@ def find_local_maximum(window, radius=25):
     # Now radius is settable from the process calling find_local_maximum()
     radius = radius
     # radius = 25
-    orig = window.copy()
+    # orig = window.copy()
     blur = cv2.GaussianBlur(window, (radius, radius), 0)
 
     (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(blur, mask=None)

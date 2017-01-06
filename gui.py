@@ -2071,6 +2071,8 @@ class Viewer(QtGui.QWidget):
     def new_leed_extract(self):
         """
         extract I(V) data from currently selected areas in self.leeddat.dat3d
+        For each step through energy space,
+          attempt to re-center the user selection on the electron beam maximum
         :return none:
         """
         if (self.rect_count == 0) or (not self.rects) or (not self.rect_coords):
@@ -2708,7 +2710,8 @@ class Viewer(QtGui.QWidget):
             print('Done Writing Files ...')
             return
 
-    def get_beam_max_update_slice(self, int_win, win_coords, img):
+    @staticmethod
+    def get_beam_max_update_slice(int_win, win_coords, img):
         """
         Given a 2d integration window centered on a user selected point,
         find the beam maximum in the integration window then return a
@@ -2724,14 +2727,21 @@ class Viewer(QtGui.QWidget):
         :return new_slice:
             2d numpy array sliced from leeddat.dat3d
         """
-        c_bm, r_bm = LF.find_local_maximum(int_win)  # find_local_max outputs (x,y) from opencv
         r_u, c_u, stored_rad = win_coords
+        # default radius for find_local_max is 25.
+        # use smaller radius if a box radius smaller than 25 is selected
+        # GaussianKernel needs an odd window size -> use next largest odd number
+        rad = min(25, stored_rad)
+        if rad % 2 == 0:
+            rad += 1
+        c_bm, r_bm = LF.find_local_maximum(int_win, radius=rad)  # find_local_max outputs (x,y) from opencv
+
 
         # coordinates of top left corner for new int window centered on beam max
         new_top_left_coords = (r_u + r_bm - 2*stored_rad,
                                c_u + c_bm - 2*stored_rad)
-        ntl_r = new_top_left_coords[0]
-        ntl_c = new_top_left_coords[1]
+        ntl_r = new_top_left_coords[0]  # row
+        ntl_c = new_top_left_coords[1]  # col
 
         return img[int(ntl_r):int(ntl_r+2*stored_rad),
                    int(ntl_c):int(ntl_c+2*stored_rad)]
