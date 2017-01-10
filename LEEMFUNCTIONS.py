@@ -17,6 +17,7 @@ class ParseError(Exception):
         self.errors = errors
         self.message = message
 
+
 def filenumber_to_energy(el, im):
     """
     Convert filenumber to energy in eV
@@ -32,6 +33,7 @@ def filenumber_to_energy(el, im):
         print("Returning 0 by default")
         return 0
 
+
 def energy_to_filenumber(el, val):
     """
     Convert energy value in eV to image file number
@@ -39,7 +41,11 @@ def energy_to_filenumber(el, val):
     :argument val: single decimal float representing an electron energy in eV
     :return el.index(val): integer filenumber corresponding to the energy val
     """
-    return el.index(val)
+    try:
+        return el.index(val)
+    except ValueError:
+        print("Error: the value, {0}, does not appear in energy list.".format(val))
+        return None
 
 
 def process_LEEM_Data(dirname, ht=0, wd=0, bits=None, byte='L'):
