@@ -56,7 +56,7 @@ class Viewer(QtWidgets.QWidget):
     # Config Flags - controlled via class properties
     _Style = True
     _DEBUG = False
-    _ERROR = False
+    _ERROR = True
 
     def __init__(self, parent=None):
         """
@@ -451,11 +451,11 @@ class Viewer(QtWidgets.QWidget):
         self.quitbut = QtWidgets.QPushButton('Quit', self)
         self.quitbut.clicked.connect(self.Quit)
 
-        self.set_energy__leem_but = QtWidgets.QPushButton('Set Energy LEEM', self)
-        self.set_energy__leem_but.clicked.connect(lambda: self.set_energy_parameters('leem'))
+        self.set_energy_leem_but = QtWidgets.QPushButton('Set Energy LEEM', self)
+        self.set_energy_leem_but.clicked.connect(lambda: self.set_energy_parameters('leem'))
 
-        self.set_energy__leed_but = QtWidgets.QPushButton('Set Energy LEED', self)
-        self.set_energy__leed_but.clicked.connect(lambda: self.set_energy_parameters('leed'))
+        self.set_energy_leed_but = QtWidgets.QPushButton('Set Energy LEED', self)
+        self.set_energy_leed_but.clicked.connect(lambda: self.set_energy_parameters('leed'))
 
         self.toggle_debug = QtWidgets.QPushButton('Toggle Debug', self)
         self.toggle_debug.clicked.connect(self.toggle_debug_setting)
@@ -466,7 +466,7 @@ class Viewer(QtWidgets.QWidget):
         self.swap_byte_order_LEEM = QtWidgets.QPushButton('Swap LEEM Bytes', self)
         self.swap_byte_order_LEEM.clicked.connect(lambda: self.swap_byte_order(dat='LEEM'))
 
-        buts = [self.set_energy__leem_but, self.set_energy__leed_but, self.toggle_debug,
+        buts = [self.set_energy_leem_but, self.set_energy_leed_but, self.toggle_debug,
                 self.swap_byte_order_LEED, self.swap_byte_order_LEEM]
 
         config_Tab_group_button_box.addStretch()
@@ -477,8 +477,96 @@ class Viewer(QtWidgets.QWidget):
         config_Tab_groupbox.setLayout(config_Tab_group_button_box)
 
         config_Tab_Vbox.addWidget(config_Tab_groupbox)
-        config_Tab_Vbox.addStretch()
-        config_Tab_bottom_button_Hbox.addStretch()
+        config_Tab_Vbox.addWidget(self.h_line())
+
+
+        # Smooth settings
+        smooth_LEED_vbox = QtWidgets.QVBoxLayout()
+        smooth_column = QtWidgets.QHBoxLayout()
+        smooth_group = QtWidgets.QGroupBox()
+
+        # LEED
+        self.LEED_settings_label = QtWidgets.QLabel("LEED Data Smoothing Settings")
+        smooth_LEED_vbox.addWidget(self.LEED_settings_label)
+
+        self.smooth_LEED_checkbox = QtWidgets.QCheckBox()
+        self.smooth_LEED_checkbox.setText("Enable Smoothing")
+        self.smooth_LEED_checkbox.stateChanged.connect(self.smooth_LEED_state_change)
+        smooth_LEED_vbox.addWidget(self.smooth_LEED_checkbox)
+
+        window_LEED_hbox = QtWidgets.QHBoxLayout()
+        self.LEED_window_label = QtWidgets.QLabel("Select Window Type")
+        self.smooth_LEED_window_type_menu = QtWidgets.QComboBox()
+        self.smooth_LEED_window_type_menu.addItem("Flat")
+        self.smooth_LEED_window_type_menu.addItem("Hanning")
+        self.smooth_LEED_window_type_menu.addItem("Hamming")
+        self.smooth_LEED_window_type_menu.addItem("Bartlett")
+        self.smooth_LEED_window_type_menu.addItem("Blackman")
+        window_LEED_hbox.addWidget(self.LEED_window_label)
+        window_LEED_hbox.addWidget(self.smooth_LEED_window_type_menu)
+        smooth_LEED_vbox.addLayout(window_LEED_hbox)
+
+        LEED_window_len_box = QtWidgets.QHBoxLayout()
+        self.LEED_window_len_label = QtWidgets.QLabel("Enter Window Length [even integer]")
+        self.LEED_window_len_entry = QtWidgets.QLineEdit()
+
+        LEED_window_len_box.addWidget(self.LEED_window_len_label)
+        LEED_window_len_box.addWidget(self.LEED_window_len_entry)
+        smooth_LEED_vbox.addLayout(LEED_window_len_box)
+
+        self.apply_settings_LEED_button = QtWidgets.QPushButton("Apply Smoothing Settings", self)
+        self.apply_settings_LEED_button.clicked.connect(lambda: self.validate_smoothing_settings(but="LEED"))
+        smooth_LEED_vbox.addWidget(self.apply_settings_LEED_button)
+
+        smooth_column.addLayout(smooth_LEED_vbox)
+        smooth_column.addStretch()
+        smooth_column.addWidget(self.v_line())
+        smooth_column.addStretch()
+
+        # LEEM
+        smooth_LEEM_vbox = QtWidgets.QVBoxLayout()
+        smooth_group = QtWidgets.QGroupBox()
+
+        self.LEEM_settings_label = QtWidgets.QLabel("LEEM Data Smoothing Settings")
+        smooth_LEEM_vbox.addWidget(self.LEEM_settings_label)
+
+        self.smooth_LEEM_checkbox = QtWidgets.QCheckBox()
+        self.smooth_LEEM_checkbox.setText("Enable Smoothing")
+        self.smooth_LEEM_checkbox.stateChanged.connect(self.smooth_LEEM_state_change)
+        smooth_LEEM_vbox.addWidget(self.smooth_LEEM_checkbox)
+
+        window_LEEM_hbox = QtWidgets.QHBoxLayout()
+        self.LEEM_window_label = QtWidgets.QLabel("Select Window Type")
+        self.smooth_LEEM_window_type_menu = QtWidgets.QComboBox()
+        self.smooth_LEEM_window_type_menu.addItem("Flat")
+        self.smooth_LEEM_window_type_menu.addItem("Hanning")
+        self.smooth_LEEM_window_type_menu.addItem("Hamming")
+        self.smooth_LEEM_window_type_menu.addItem("Bartlett")
+        self.smooth_LEEM_window_type_menu.addItem("Blackman")
+        window_LEEM_hbox.addWidget(self.LEEM_window_label)
+        window_LEEM_hbox.addWidget(self.smooth_LEEM_window_type_menu)
+        smooth_LEEM_vbox.addLayout(window_LEEM_hbox)
+
+        LEEM_window_len_box = QtWidgets.QHBoxLayout()
+        self.LEEM_window_len_label = QtWidgets.QLabel("Enter Window Length [even integer]")
+        self.LEEM_window_len_entry = QtWidgets.QLineEdit()
+
+        LEEM_window_len_box.addWidget(self.LEEM_window_len_label)
+        LEEM_window_len_box.addWidget(self.LEEM_window_len_entry)
+        smooth_LEEM_vbox.addLayout(LEEM_window_len_box)
+
+        self.apply_settings_LEEM_button = QtWidgets.QPushButton("Apply Smoothing Settings", self)
+        self.apply_settings_LEEM_button.clicked.connect(lambda: self.validate_smoothing_settings(but="LEEM"))
+        smooth_LEEM_vbox.addWidget(self.apply_settings_LEEM_button)
+
+        smooth_column.addLayout(smooth_LEEM_vbox)
+        smooth_group.setLayout(smooth_column)
+
+        config_Tab_Vbox.addWidget(smooth_group)
+        config_Tab_Vbox.addStretch(1)
+        config_Tab_Vbox.addStretch(1)
+
+        config_Tab_bottom_button_Hbox.addStretch(1)
         config_Tab_bottom_button_Hbox.addWidget(self.quitbut)
         config_Tab_Vbox.addLayout(config_Tab_bottom_button_Hbox)
         self.Config_Tab.setLayout(config_Tab_Vbox)
@@ -744,9 +832,83 @@ class Viewer(QtWidgets.QWidget):
         embed_ipy(self.ipyconsole, passthrough=pass_through_vars)
         return
 
+    @QtCore.pyqtSlot()
+    def smooth_LEED_state_change(self):
+        if self.smooth_LEED_checkbox.isChecked():
+            self.smooth_leed_plot = True
+            self.smooth_LEED_file_output = True
+        else:
+            self.smooth_leed_plot = False
+            self.smooth_LEED_file_output = False
+        return
+
+    @QtCore.pyqtSlot()
+    def smooth_LEEM_state_change(self):
+        if self.smooth_LEEM_checkbox.isChecked():
+            self.smooth_leem_plot = True
+            self.smooth_LEEM_file_output = True
+        else:
+            self.smooth_leem_plot = False
+            self.smooth_LEEM_file_output = False
+        return
+
+    def validate_smoothing_settings(self, but=None):
+        if but is None:
+            return
+        elif but == 'LEED':
+            window_type = str(self.smooth_LEED_window_type_menu.currentText())
+            window_len = str(self.LEED_window_len_entry.text())
+        elif but == 'LEEM':
+            window_type = str(self.smooth_LEEM_window_type_menu.currentText())
+            window_len = str(self.LEEM_window_len_entry.text())
+        else:
+            print("Invalid smooth button label")
+            return
+
+        print("Currently selected smoothing settings: {0} {1}".format(window_type, window_len))
+
+        try:
+            window_len = int(window_len)
+        except TypeError:
+            print("Error: Window Length setting must be entered as an even integer")
+            return
+        if window_len <= 0:
+            print("Error: Window Length mut be positive even integer")
+            return
+        elif window_len % 2 != 0:
+            print("Error: Window Length was odd. Using closest even integer")
+            window_len += 1
+        if window_type.lower() not in ['flat', 'hanning',
+                                       'hamming', 'bartlett',
+                                       'blackman']:
+            print("Error: Invalid Window Type for data smoothing.")
+            return
+
+        if but == "LEED":
+            self.smooth_LEED_window_type = window_type.lower()
+            self.smooth_LEED_window_len = window_len
+        else:
+            self.smooth_LEEM_window_type = window_type.lower()
+            self.smooth_LEEM_window_len = window_len
+        return
+
     ###########################################################################################
     # Static Methods
     ###########################################################################################
+    @staticmethod
+    def h_line():
+        f = QtWidgets.QFrame()
+        f.setFrameShape(QtWidgets.QFrame.HLine)
+        f.setFrameShadow(QtWidgets.QFrame.Sunken)
+        return f
+
+    @staticmethod
+    def v_line():
+        f = QtWidgets.QFrame()
+        f.setFrameShape(QtWidgets.QFrame.VLine)
+        f.setFrameShadow(QtWidgets.QFrame.Sunken)
+        return f
+
 
     @staticmethod
     def welcome():
