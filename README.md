@@ -1,7 +1,8 @@
 # PLEASE: Python Low-energy Electron Analysis SuitE
-## This reposiotory contains the old codebase for PLEASE
+## This reposiotory contains the old codebase for PLEASE and is no longer maintained.
 ## The code has since been updated and rewritten and will now be hosted in a new repository.
 ## The significance of this rewrite marks the move to version 1.0.0 of the PLEASE software package.
+## The most recent update of this project can be found at https://www.github.com/mgrady3/PLEASE
 
 ###### Last Update: 3/22/2017 
 #### Author: 
